@@ -80,6 +80,7 @@ export class TaskService {
 		if (dto.startAt !== undefined) task.startAt = dto.startAt ? new Date(dto.startAt) : null
 		if (dto.dueAt !== undefined) task.dueAt = dto.dueAt ? new Date(dto.dueAt) : null
 		if (dto.title !== undefined) task.title = dto.title
+		if (dto.is_message_send !== undefined) task.is_message_send = dto.is_message_send
 		if (dto.description !== undefined) task.description = dto.description
 		if (dto.assigneeId !== undefined) task.assigneeId = dto.assigneeId
 		if (dto.status !== undefined) task.status = dto.status

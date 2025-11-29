@@ -12,12 +12,12 @@ export declare class ChatService {
     private messageRepo;
     private userRepo;
     constructor(chatRoomRepo: Repository<ChatRoomEntity>, memberRepo: Repository<ChatRoomMemberEntity>, messageRepo: Repository<MessageEntity>, userRepo: Repository<UserEntity>);
-    createDirectChat(userId: number, params: CreateDirectChatDto): Promise<ChatRoomEntity>;
-    createGroup(userId: number, params: CreateGroupDto): Promise<ChatRoomEntity>;
-    addMembers(userId: number, params: AddMemberDto): Promise<ChatRoomEntity>;
-    getRoomById(roomId: number, userId: number): Promise<ChatRoomEntity>;
-    getUserRooms(userId: number): Promise<ChatRoomEntity[]>;
-    getMessages(roomId: number, userId: number, page?: number, limit?: number): Promise<MessageEntity[]>;
-    sendMessage(roomId: number, senderId: number, content: string): Promise<MessageEntity | null>;
+    createDirectChat(userId: number, params: CreateDirectChatDto): Promise<any>;
+    createGroup(userId: number, params: CreateGroupDto): Promise<any>;
+    addMembers(userId: number, params: AddMemberDto): Promise<any>;
+    getRoomById(roomId: number, userId: number): Promise<any>;
+    getUserRooms(userId: number): Promise<any>;
+    getMessages(roomId: number, userId: number, page?: number, limit?: number): Promise<any>;
+    sendMessage(roomId: number, senderId: number, content: string): Promise<any>;
     markAsRead(roomId: number, userId: number): Promise<void>;
 }

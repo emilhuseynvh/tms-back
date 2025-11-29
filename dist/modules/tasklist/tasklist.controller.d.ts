@@ -5,8 +5,8 @@ import { FilterTaskListDto } from "./dto/filter-tasklist.dto";
 export declare class TaskListController {
     private taskListService;
     constructor(taskListService: TaskListService);
-    listByFolder(folderId: number, filters: FilterTaskListDto): Promise<import("../../entities/tasklist.entity").TaskListEntity[]>;
-    create(body: CreateTaskListDto): Promise<import("../../entities/tasklist.entity").TaskListEntity>;
+    listByFolder(folderId: number, filters: FilterTaskListDto): Promise<any>;
+    create(body: CreateTaskListDto): Promise<any>;
     updateTaskList(id: number, body: UpdateTaskListDto): Promise<{
         message: string;
     }>;

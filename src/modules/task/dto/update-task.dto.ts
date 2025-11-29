@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 import { TaskStatus } from "../../../shared/enums/task.enum";
 import { Type } from "class-transformer";
 
@@ -27,6 +27,11 @@ export class UpdateTaskDto {
 	@IsDateString()
 	@ApiProperty({ required: false })
 	dueAt?: string
+
+	@Type()
+	@IsBoolean()
+	@ApiProperty({ required: false })
+	is_message_send?: false
 
 	@Type()
 	@IsOptional()

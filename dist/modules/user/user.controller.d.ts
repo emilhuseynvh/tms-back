@@ -5,8 +5,8 @@ import { RoleEnum } from '../../shared/enums/role.enum';
 export declare class UserController {
     private userService;
     constructor(userService: UserService);
-    getAllUsers(role?: RoleEnum, search?: string): Promise<import("../../entities/user.entity").UserEntity[]>;
-    getUserById(id: number): Promise<import("../../entities/user.entity").UserEntity | null>;
+    getAllUsers(role?: RoleEnum, search?: string): Promise<any>;
+    getUserById(id: number): Promise<any>;
     createUser(body: CreateUserDto): Promise<{
         message: string;
     }>;

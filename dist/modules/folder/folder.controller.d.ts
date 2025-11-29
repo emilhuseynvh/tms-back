@@ -6,9 +6,9 @@ export declare class FolderController {
     private folderService;
     private cls;
     constructor(folderService: FolderService, cls: ClsService);
-    listAll(): Promise<import("../../entities/folder.entity").FolderEntity[]>;
-    create(body: CreateFolderDto): Promise<import("../../entities/folder.entity").FolderEntity>;
-    myFolders(): Promise<import("../../entities/folder.entity").FolderEntity[]>;
+    listAll(): Promise<any>;
+    create(body: CreateFolderDto): Promise<any>;
+    myFolders(): Promise<any>;
     updateFolder(id: number, body: UpdateFolderDto): Promise<{
         message: string;
     }>;

@@ -1,5 +1,4 @@
-import { CreateTaskListDto } from './create-tasklist.dto';
-declare const UpdateTaskListDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreateTaskListDto>>;
+declare const UpdateTaskListDto_base: any;
 export declare class UpdateTaskListDto extends UpdateTaskListDto_base {
 }
 export {};

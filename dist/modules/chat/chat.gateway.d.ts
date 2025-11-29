@@ -16,7 +16,7 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
     handleDisconnect(client: Socket): Promise<void>;
     handleMessage(data: SendMessageDto, client: Socket): Promise<{
         success: boolean;
-        message: import("../../entities/message.entity").MessageEntity | null;
+        message: any;
         error?: undefined;
     } | {
         success: boolean;

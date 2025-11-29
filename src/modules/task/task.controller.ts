@@ -35,7 +35,6 @@ export class TaskController {
 	async update(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateTaskDto) {
 		return await this.taskService.update(id, body)
 	}
-
 	@Delete(':id')
 	@Auth()
 	async deleteTask(@Param("id") id: number) {

@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
@@ -156,15 +157,14 @@ let ChatGateway = class ChatGateway {
 exports.ChatGateway = ChatGateway;
 __decorate([
     (0, websockets_1.WebSocketServer)(),
-    __metadata("design:type", socket_io_1.Server)
+    __metadata("design:type", typeof (_b = typeof socket_io_1.Server !== "undefined" && socket_io_1.Server) === "function" ? _b : Object)
 ], ChatGateway.prototype, "server", void 0);
 __decorate([
     (0, websockets_1.SubscribeMessage)('message:send'),
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [send_message_dto_1.SendMessageDto,
-        socket_io_1.Socket]),
+    __metadata("design:paramtypes", [send_message_dto_1.SendMessageDto, typeof (_c = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleMessage", null);
 __decorate([
@@ -172,7 +172,7 @@ __decorate([
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object, typeof (_d = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleJoinRoom", null);
 __decorate([
@@ -180,7 +180,7 @@ __decorate([
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object, typeof (_e = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleLeaveRoom", null);
 __decorate([
@@ -188,7 +188,7 @@ __decorate([
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object, typeof (_f = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleMarkAsRead", null);
 exports.ChatGateway = ChatGateway = __decorate([
@@ -199,8 +199,6 @@ exports.ChatGateway = ChatGateway = __decorate([
         namespace: '/chat',
     }),
     (0, common_1.UseGuards)(ws_auth_guard_1.WsAuthGuard),
-    __metadata("design:paramtypes", [chat_service_1.ChatService,
-        jwt_1.JwtService,
-        user_service_1.UserService])
+    __metadata("design:paramtypes", [chat_service_1.ChatService, typeof (_a = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _a : Object, user_service_1.UserService])
 ], ChatGateway);
 //# sourceMappingURL=chat.gateway.js.map

@@ -7,9 +7,9 @@ export declare class TaskController {
     private taskService;
     constructor(taskService: TaskService);
     listByTaskList(taskListId: number, filters: FilterTaskDto): Promise<import("../../entities/task.entity").TaskEntity[]>;
-    create(body: CreateTaskDto): Promise<import("../../entities/task.entity").TaskEntity>;
-    reorder(body: ReorderTaskDto): Promise<import("../../entities/task.entity").TaskEntity>;
-    update(id: number, body: UpdateTaskDto): Promise<import("../../entities/task.entity").TaskEntity>;
+    create(body: CreateTaskDto): Promise<any>;
+    reorder(body: ReorderTaskDto): Promise<any>;
+    update(id: number, body: UpdateTaskDto): Promise<any>;
     deleteTask(id: number): Promise<{
         message: string;
     }>;

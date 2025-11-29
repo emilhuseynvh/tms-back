@@ -10,9 +10,9 @@ export declare class UserService {
     private uploadRepo;
     private cls;
     constructor(userRepo: Repository<UserEntity>, uploadRepo: Repository<UploadsEntity>, cls: ClsService);
-    getUserById(id: number): Promise<UserEntity | null>;
-    list(role?: RoleEnum, search?: string): Promise<UserEntity[]>;
-    findByEmail(email: string): Promise<UserEntity | null>;
+    getUserById(id: number): Promise<any>;
+    list(role?: RoleEnum, search?: string): Promise<any>;
+    findByEmail(email: string): Promise<any>;
     create(params: CreateUserDto): Promise<{
         message: string;
     }>;

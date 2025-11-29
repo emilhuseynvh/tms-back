@@ -6,17 +6,6 @@ export declare class AuthService {
     private userRepo;
     private authUtils;
     constructor(userRepo: Repository<UserEntity>, authUtils: AuthUtils);
-    login(params: LoginDto): Promise<{
-        token: string;
-        id: number;
-        username: string;
-        avatarId: number | null;
-        phone: string;
-        email: string;
-        password: string;
-        role: import("../../shared/enums/role.enum").RoleEnum;
-        avatar: string;
-        createdAt: Date;
-    }>;
-    verifyToken(userId: number): Promise<UserEntity>;
+    login(params: LoginDto): Promise<any>;
+    verifyToken(userId: number): Promise<any>;
 }

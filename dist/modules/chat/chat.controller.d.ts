@@ -8,13 +8,13 @@ export declare class ChatController {
     private chatService;
     private cls;
     constructor(chatService: ChatService, cls: ClsService);
-    createDirectChat(params: CreateDirectChatDto): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
-    createGroup(params: CreateGroupDto): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
-    addMember(params: AddMemberDto): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
-    getRooms(): Promise<import("../../entities/chat-room.entity").ChatRoomEntity[]>;
-    getRoom(roomId: number): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
-    getMessages(roomId: number, page?: number, limit?: number): Promise<import("../../entities/message.entity").MessageEntity[]>;
-    sendMessage(roomId: number, params: SendMessageBodyDto): Promise<import("../../entities/message.entity").MessageEntity | null>;
+    createDirectChat(params: CreateDirectChatDto): Promise<any>;
+    createGroup(params: CreateGroupDto): Promise<any>;
+    addMember(params: AddMemberDto): Promise<any>;
+    getRooms(): Promise<any>;
+    getRoom(roomId: number): Promise<any>;
+    getMessages(roomId: number, page?: number, limit?: number): Promise<any>;
+    sendMessage(roomId: number, params: SendMessageBodyDto): Promise<any>;
     markAsRead(roomId: number): Promise<{
         message: string;
     }>;

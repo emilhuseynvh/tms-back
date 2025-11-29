@@ -30,6 +30,9 @@ export class TaskEntity extends BaseEntity {
 	@Column()
 	taskListId: number
 
+	@Column({ default: false })
+	is_message_send: boolean
+
 	@ManyToOne(() => TaskListEntity, (list) => list.tasks, { onDelete: 'CASCADE' })
 	taskList: TaskListEntity
 
