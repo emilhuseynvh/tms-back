@@ -19,7 +19,18 @@ async function bootstrap() {
     .build();
 
   app.enableCors()
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
+const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('', app, documentFactory, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+    customCssUrl: 'https://unpkg.com/swagger-ui-dist/swagger-ui.css',
+    customJs: [
+      'https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js',
+      'https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js',
+    ],
+    customfavIcon: 'https://unpkg.com/swagger-ui-dist/favicon-32x32.png'
+  });
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
