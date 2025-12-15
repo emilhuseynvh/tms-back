@@ -1,7 +1,7 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn, JoinTable } from "typeorm";
 import { TaskListEntity } from "./tasklist.entity";
 import { UserEntity } from "./user.entity";
-import { TaskStatus } from "../shared/enums/task.enum";
+import { TaskStatusEntity } from "./task-status.entity";
 
 
 @Entity('task')
@@ -21,8 +21,12 @@ export class TaskEntity extends BaseEntity {
 	@Column({ type: 'timestamp', nullable: true })
 	dueAt: Date | null
 
-	@Column({ type: 'enum', enum: TaskStatus, default: TaskStatus.OPEN })
-	status: TaskStatus
+	@Column({ nullable: true })
+	statusId: number
+
+	@ManyToOne(() => TaskStatusEntity, (status) => status.tasks, { nullable: true, onDelete: 'SET NULL', eager: true })
+	@JoinColumn({ name: 'statusId' })
+	status: TaskStatusEntity
 
 	@Column({ type: 'int', default: 0 })
 	order: number
@@ -37,12 +41,6 @@ export class TaskEntity extends BaseEntity {
 	taskList: TaskListEntity
 
 	@Column({ nullable: true })
-	assigneeId: number
-
-	@ManyToOne(() => UserEntity, (user) => user.id, { nullable: true, onDelete: 'SET NULL' })
-	assignee: UserEntity
-
-	@Column({ nullable: true })
 	parentId: number
 
 	@ManyToOne(() => TaskEntity, (task) => task.children, { nullable: true, onDelete: 'CASCADE' })
@@ -51,10 +49,17 @@ export class TaskEntity extends BaseEntity {
 	@OneToMany(() => TaskEntity, (task) => task.parent)
 	children: TaskEntity[]
 
+	@ManyToMany(() => UserEntity, { eager: true })
+	@JoinTable({
+		name: 'task_assignees',
+		joinColumn: { name: 'taskId' },
+		inverseJoinColumn: { name: 'userId' }
+	})
+	assignees: UserEntity[]
+
 	@CreateDateColumn()
 	createdAt: Date
 
 	@UpdateDateColumn()
 	updatedAt: Date
 }
-

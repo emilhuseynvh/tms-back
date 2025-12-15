@@ -1,6 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
-import { TaskStatus } from "../../../shared/enums/task.enum";
+import { IsArray, IsDateString, IsNumber, IsOptional, IsString } from "class-validator";
 import { Type } from "class-transformer";
 
 export class CreateTaskDto {
@@ -32,17 +31,18 @@ export class CreateTaskDto {
 	@ApiProperty()
 	taskListId: number
 
+	@Type(() => Number)
+	@IsOptional()
+	@IsArray()
+	@IsNumber({}, { each: true })
+	@ApiProperty({ type: [Number], required: false })
+	assigneeIds?: number[]
+
 	@Type()
 	@IsOptional()
 	@IsNumber()
 	@ApiProperty({ required: false })
-	assigneeId?: number
-
-	@Type()
-	@IsOptional()
-	@IsEnum(TaskStatus)
-	@ApiProperty({ enum: TaskStatus, required: false })
-	status?: TaskStatus
+	statusId?: number
 
 	@Type()
 	@IsOptional()
@@ -50,4 +50,3 @@ export class CreateTaskDto {
 	@ApiProperty({ required: false })
 	parentId?: number
 }
-

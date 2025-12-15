@@ -15,6 +15,7 @@ import { FolderModule } from './modules/folder/folder.module';
 import { TaskListModule } from './modules/tasklist/tasklist.module';
 import { TaskModule } from './modules/task/task.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { TaskStatusModule } from './modules/task-status/task-status.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ChatModule } from './modules/chat/chat.module';
     UploadsModule,
     FolderModule,
     TaskListModule,
+    TaskStatusModule,
     TaskModule,
     ChatModule
   ],
