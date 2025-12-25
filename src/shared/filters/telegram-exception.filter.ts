@@ -31,21 +31,18 @@ export class TelegramExceptionFilter implements ExceptionFilter {
 
 		const stack = exception instanceof Error ? exception.stack : undefined;
 
-		// 400, 401, 403, 404 kimi adi xətaları Telegram-a göndərmə
-		// Yalnız 500+ server xətalarını və ya gözlənilməz xətaları göndər
-		if (status >= 500 || !(exception instanceof HttpException)) {
-			const user = (request as any).user;
+		// Bütün xətaları Telegram-a göndər
+		const user = (request as any).user;
 
-			await this.telegramService.sendError({
-				message,
-				stack,
-				path: request.url,
-				method: request.method,
-				statusCode: status,
-				userId: user?.id,
-				body: request.body,
-			});
-		}
+		await this.telegramService.sendError({
+			message,
+			stack: status >= 500 ? stack : undefined, // Stack yalnız 500+ üçün
+			path: request.url,
+			method: request.method,
+			statusCode: status,
+			userId: user?.id,
+			body: request.body,
+		});
 
 		response.status(status).json({
 			statusCode: status,

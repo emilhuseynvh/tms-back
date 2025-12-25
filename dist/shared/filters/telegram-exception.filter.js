@@ -30,18 +30,16 @@ let TelegramExceptionFilter = class TelegramExceptionFilter {
                 ? exception.message
                 : 'Internal server error';
         const stack = exception instanceof Error ? exception.stack : undefined;
-        if (status >= 500 || !(exception instanceof common_1.HttpException)) {
-            const user = request.user;
-            await this.telegramService.sendError({
-                message,
-                stack,
-                path: request.url,
-                method: request.method,
-                statusCode: status,
-                userId: user?.id,
-                body: request.body,
-            });
-        }
+        const user = request.user;
+        await this.telegramService.sendError({
+            message,
+            stack: status >= 500 ? stack : undefined,
+            path: request.url,
+            method: request.method,
+            statusCode: status,
+            userId: user?.id,
+            body: request.body,
+        });
         response.status(status).json({
             statusCode: status,
             message,
