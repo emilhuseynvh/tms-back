@@ -4,9 +4,15 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { TelegramExceptionFilter } from './shared/filters/telegram-exception.filter';
+import { TelegramService } from './shared/services/telegram.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Telegram error notification
+  const telegramService = new TelegramService();
+  app.useGlobalFilters(new TelegramExceptionFilter(telegramService));
 
   app.setGlobalPrefix('api')
 

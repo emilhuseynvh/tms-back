@@ -5,8 +5,12 @@ const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
 const common_1 = require("@nestjs/common");
 const path_1 = require("path");
+const telegram_exception_filter_1 = require("./shared/filters/telegram-exception.filter");
+const telegram_service_1 = require("./shared/services/telegram.service");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const telegramService = new telegram_service_1.TelegramService();
+    app.useGlobalFilters(new telegram_exception_filter_1.TelegramExceptionFilter(telegramService));
     app.setGlobalPrefix('api');
     const config = new swagger_1.DocumentBuilder()
         .setTitle('Task managment system')
