@@ -13,11 +13,11 @@ export class TaskActivityEntity extends BaseEntity {
 	@JoinColumn({ name: 'taskId' })
 	task: TaskEntity
 
-	@Column({ nullable: true })
-	userId: number | null
+	@Column({ type: 'int', nullable: true })
+	userId: number
 
-	@Column({ nullable: true })
-	username: string | null
+	@Column({ type: 'varchar', nullable: true })
+	username: string
 
 	@Column({ type: 'jsonb' })
 	changes: Record<string, unknown>

@@ -1,0 +1,25 @@
+import { BaseEntity } from "typeorm";
+import { TaskListEntity } from "./tasklist.entity";
+import { UserEntity } from "./user.entity";
+import { TaskStatusEntity } from "./task-status.entity";
+export declare class TaskEntity extends BaseEntity {
+    id: number;
+    title: string;
+    description: string;
+    startAt: Date | null;
+    dueAt: Date | null;
+    statusId: number;
+    status: TaskStatusEntity;
+    order: number;
+    taskListId: number;
+    is_message_send: boolean;
+    link: string;
+    taskList: TaskListEntity;
+    parentId: number;
+    parent: TaskEntity;
+    children: TaskEntity[];
+    assignees: UserEntity[];
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date;
+}
