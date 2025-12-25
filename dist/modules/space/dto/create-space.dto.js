@@ -9,30 +9,26 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateTaskListDto = void 0;
+exports.CreateSpaceDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
+const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
-class CreateTaskListDto {
+class CreateSpaceDto {
     name;
-    folderId;
-    spaceId;
+    description;
 }
-exports.CreateTaskListDto = CreateTaskListDto;
+exports.CreateSpaceDto = CreateSpaceDto;
 __decorate([
+    (0, class_transformer_1.Type)(),
     (0, class_validator_1.IsString)(),
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
-], CreateTaskListDto.prototype, "name", void 0);
+], CreateSpaceDto.prototype, "name", void 0);
 __decorate([
+    (0, class_transformer_1.Type)(),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsString)(),
     (0, swagger_1.ApiProperty)({ required: false }),
-    __metadata("design:type", Number)
-], CreateTaskListDto.prototype, "folderId", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, swagger_1.ApiProperty)({ required: false }),
-    __metadata("design:type", Number)
-], CreateTaskListDto.prototype, "spaceId", void 0);
-//# sourceMappingURL=create-tasklist.dto.js.map
+    __metadata("design:type", String)
+], CreateSpaceDto.prototype, "description", void 0);
+//# sourceMappingURL=create-space.dto.js.map

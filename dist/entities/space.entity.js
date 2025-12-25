@@ -9,71 +9,66 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FolderEntity = void 0;
+exports.SpaceEntity = void 0;
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("./user.entity");
+const folder_entity_1 = require("./folder.entity");
 const tasklist_entity_1 = require("./tasklist.entity");
-const space_entity_1 = require("./space.entity");
-let FolderEntity = class FolderEntity extends typeorm_1.BaseEntity {
+let SpaceEntity = class SpaceEntity extends typeorm_1.BaseEntity {
     id;
     name;
     description;
     ownerId;
     owner;
-    spaceId;
-    space;
+    folders;
     taskLists;
     createdAt;
     updatedAt;
     deletedAt;
 };
-exports.FolderEntity = FolderEntity;
+exports.SpaceEntity = SpaceEntity;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
-], FolderEntity.prototype, "id", void 0);
+], SpaceEntity.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], FolderEntity.prototype, "name", void 0);
+], SpaceEntity.prototype, "name", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], FolderEntity.prototype, "description", void 0);
+], SpaceEntity.prototype, "description", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Number)
-], FolderEntity.prototype, "ownerId", void 0);
+], SpaceEntity.prototype, "ownerId", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, (user) => user.id, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'ownerId' }),
     __metadata("design:type", user_entity_1.UserEntity)
-], FolderEntity.prototype, "owner", void 0);
+], SpaceEntity.prototype, "owner", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", Number)
-], FolderEntity.prototype, "spaceId", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => space_entity_1.SpaceEntity, (space) => space.folders, { onDelete: 'CASCADE' }),
-    (0, typeorm_1.JoinColumn)({ name: 'spaceId' }),
-    __metadata("design:type", space_entity_1.SpaceEntity)
-], FolderEntity.prototype, "space", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => tasklist_entity_1.TaskListEntity, (list) => list.folder),
+    (0, typeorm_1.OneToMany)(() => folder_entity_1.FolderEntity, (folder) => folder.space),
     __metadata("design:type", Array)
-], FolderEntity.prototype, "taskLists", void 0);
+], SpaceEntity.prototype, "folders", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => tasklist_entity_1.TaskListEntity, (list) => list.space),
+    __metadata("design:type", Array)
+], SpaceEntity.prototype, "taskLists", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
-], FolderEntity.prototype, "createdAt", void 0);
+], SpaceEntity.prototype, "createdAt", void 0);
 __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)
-], FolderEntity.prototype, "updatedAt", void 0);
+], SpaceEntity.prototype, "updatedAt", void 0);
 __decorate([
     (0, typeorm_1.DeleteDateColumn)(),
     __metadata("design:type", Date)
-], FolderEntity.prototype, "deletedAt", void 0);
-exports.FolderEntity = FolderEntity = __decorate([
-    (0, typeorm_1.Entity)('folder')
-], FolderEntity);
-//# sourceMappingURL=folder.entity.js.map
+], SpaceEntity.prototype, "deletedAt", void 0);
+exports.SpaceEntity = SpaceEntity = __decorate([
+    (0, typeorm_1.Entity)('space')
+], SpaceEntity);
+//# sourceMappingURL=space.entity.js.map

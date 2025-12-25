@@ -14,6 +14,10 @@ const typeorm_1 = require("typeorm");
 const user_entity_1 = require("./user.entity");
 var ActivityType;
 (function (ActivityType) {
+    ActivityType["SPACE_CREATE"] = "space_create";
+    ActivityType["SPACE_UPDATE"] = "space_update";
+    ActivityType["SPACE_DELETE"] = "space_delete";
+    ActivityType["SPACE_RESTORE"] = "space_restore";
     ActivityType["FOLDER_CREATE"] = "folder_create";
     ActivityType["FOLDER_UPDATE"] = "folder_update";
     ActivityType["FOLDER_DELETE"] = "folder_delete";

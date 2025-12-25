@@ -16,6 +16,7 @@ const class_validator_1 = require("class-validator");
 class CreateFolderDto {
     name;
     description;
+    spaceId;
 }
 exports.CreateFolderDto = CreateFolderDto;
 __decorate([
@@ -31,4 +32,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", String)
 ], CreateFolderDto.prototype, "description", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Number)
+], CreateFolderDto.prototype, "spaceId", void 0);
 //# sourceMappingURL=create-folder.dto.js.map

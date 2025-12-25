@@ -12,82 +12,82 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FolderController = void 0;
+exports.SpaceController = void 0;
 const common_1 = require("@nestjs/common");
-const folder_service_1 = require("./folder.service");
-const create_folder_dto_1 = require("./dto/create-folder.dto");
-const update_folder_dto_1 = require("./dto/update-folder.dto");
+const space_service_1 = require("./space.service");
+const create_space_dto_1 = require("./dto/create-space.dto");
+const update_space_dto_1 = require("./dto/update-space.dto");
 const swagger_1 = require("@nestjs/swagger");
 const auth_decorator_1 = require("../../shared/decorators/auth.decorator");
 const nestjs_cls_1 = require("nestjs-cls");
-let FolderController = class FolderController {
-    folderService;
+let SpaceController = class SpaceController {
+    spaceService;
     cls;
-    constructor(folderService, cls) {
-        this.folderService = folderService;
+    constructor(spaceService, cls) {
+        this.spaceService = spaceService;
         this.cls = cls;
     }
     async listAll() {
-        return await this.folderService.listAll();
+        return await this.spaceService.listAll();
+    }
+    async mySpaces() {
+        const user = this.cls.get('user');
+        return await this.spaceService.listByOwner(user.id);
+    }
+    async getOne(id) {
+        return await this.spaceService.getOne(id);
     }
     async create(body) {
         const user = this.cls.get('user');
-        return await this.folderService.create(user.id, body);
+        return await this.spaceService.create(user.id, body);
     }
-    async myFolders() {
+    async updateSpace(id, body) {
         const user = this.cls.get('user');
-        return await this.folderService.listByOwner(user.id);
+        return await this.spaceService.updateSpace(id, user.id, body);
     }
-    async listBySpace(spaceId) {
-        return await this.folderService.listBySpace(spaceId);
-    }
-    async updateFolder(id, body) {
+    async deleteSpace(id) {
         const user = this.cls.get('user');
-        return await this.folderService.updateFolder(id, user.id, body);
-    }
-    async deleteFolder(id) {
-        const user = this.cls.get('user');
-        return await this.folderService.deleteFolder(id, user.id);
+        return await this.spaceService.deleteSpace(id, user.id);
     }
 };
-exports.FolderController = FolderController;
+exports.SpaceController = SpaceController;
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], FolderController.prototype, "listAll", null);
-__decorate([
-    (0, common_1.Post)(),
-    (0, auth_decorator_1.Auth)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_folder_dto_1.CreateFolderDto]),
-    __metadata("design:returntype", Promise)
-], FolderController.prototype, "create", null);
+], SpaceController.prototype, "listAll", null);
 __decorate([
     (0, common_1.Get)('me'),
     (0, auth_decorator_1.Auth)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], FolderController.prototype, "myFolders", null);
+], SpaceController.prototype, "mySpaces", null);
 __decorate([
-    (0, common_1.Get)('space/:spaceId'),
-    __param(0, (0, common_1.Param)('spaceId')),
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
-], FolderController.prototype, "listBySpace", null);
+], SpaceController.prototype, "getOne", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, auth_decorator_1.Auth)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_space_dto_1.CreateSpaceDto]),
+    __metadata("design:returntype", Promise)
+], SpaceController.prototype, "create", null);
 __decorate([
     (0, common_1.Post)(':id'),
     (0, auth_decorator_1.Auth)(),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, update_folder_dto_1.UpdateFolderDto]),
+    __metadata("design:paramtypes", [Number, update_space_dto_1.UpdateSpaceDto]),
     __metadata("design:returntype", Promise)
-], FolderController.prototype, "updateFolder", null);
+], SpaceController.prototype, "updateSpace", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, auth_decorator_1.Auth)(),
@@ -95,11 +95,11 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
-], FolderController.prototype, "deleteFolder", null);
-exports.FolderController = FolderController = __decorate([
-    (0, swagger_1.ApiTags)('folder'),
-    (0, common_1.Controller)('folder'),
-    __metadata("design:paramtypes", [folder_service_1.FolderService,
+], SpaceController.prototype, "deleteSpace", null);
+exports.SpaceController = SpaceController = __decorate([
+    (0, swagger_1.ApiTags)('space'),
+    (0, common_1.Controller)('space'),
+    __metadata("design:paramtypes", [space_service_1.SpaceService,
         nestjs_cls_1.ClsService])
-], FolderController);
-//# sourceMappingURL=folder.controller.js.map
+], SpaceController);
+//# sourceMappingURL=space.controller.js.map

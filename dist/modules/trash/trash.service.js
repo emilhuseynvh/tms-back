@@ -16,6 +16,7 @@ exports.TrashService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
+const space_entity_1 = require("../../entities/space.entity");
 const folder_entity_1 = require("../../entities/folder.entity");
 const tasklist_entity_1 = require("../../entities/tasklist.entity");
 const task_entity_1 = require("../../entities/task.entity");
@@ -23,12 +24,14 @@ const activity_log_service_1 = require("../activity-log/activity-log.service");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
 const nestjs_cls_1 = require("nestjs-cls");
 let TrashService = class TrashService {
+    spaceRepo;
     folderRepo;
     taskListRepo;
     taskRepo;
     activityLogService;
     cls;
-    constructor(folderRepo, taskListRepo, taskRepo, activityLogService, cls) {
+    constructor(spaceRepo, folderRepo, taskListRepo, taskRepo, activityLogService, cls) {
+        this.spaceRepo = spaceRepo;
         this.folderRepo = folderRepo;
         this.taskListRepo = taskListRepo;
         this.taskRepo = taskRepo;
@@ -38,6 +41,10 @@ let TrashService = class TrashService {
     async getTrash() {
         const user = this.cls.get('user');
         const isAdmin = user.role === 'admin';
+        const spacesQuery = this.spaceRepo.createQueryBuilder('space')
+            .withDeleted()
+            .leftJoinAndSelect('space.owner', 'owner')
+            .where('space.deletedAt IS NOT NULL');
         const foldersQuery = this.folderRepo.createQueryBuilder('folder')
             .withDeleted()
             .leftJoinAndSelect('folder.owner', 'owner')
@@ -45,25 +52,47 @@ let TrashService = class TrashService {
         const listsQuery = this.taskListRepo.createQueryBuilder('list')
             .withDeleted()
             .leftJoinAndSelect('list.folder', 'folder')
-            .leftJoinAndSelect('folder.owner', 'owner')
+            .leftJoinAndSelect('list.space', 'space')
+            .leftJoinAndSelect('folder.owner', 'folderOwner')
+            .leftJoinAndSelect('space.owner', 'spaceOwner')
             .where('list.deletedAt IS NOT NULL');
         const tasksQuery = this.taskRepo.createQueryBuilder('task')
             .withDeleted()
             .leftJoinAndSelect('task.taskList', 'taskList')
             .leftJoinAndSelect('taskList.folder', 'folder')
-            .leftJoinAndSelect('folder.owner', 'owner')
+            .leftJoinAndSelect('taskList.space', 'space')
+            .leftJoinAndSelect('folder.owner', 'folderOwner')
+            .leftJoinAndSelect('space.owner', 'spaceOwner')
             .where('task.deletedAt IS NOT NULL');
         if (!isAdmin) {
+            spacesQuery.andWhere('space.ownerId = :userId', { userId: user.id });
             foldersQuery.andWhere('folder.ownerId = :userId', { userId: user.id });
-            listsQuery.andWhere('folder.ownerId = :userId', { userId: user.id });
-            tasksQuery.andWhere('folder.ownerId = :userId', { userId: user.id });
+            listsQuery.andWhere('(folder.ownerId = :userId OR space.ownerId = :userId)', { userId: user.id });
+            tasksQuery.andWhere('(folder.ownerId = :userId OR space.ownerId = :userId)', { userId: user.id });
         }
-        const [folders, lists, tasks] = await Promise.all([
+        const [spaces, folders, lists, tasks] = await Promise.all([
+            spacesQuery.orderBy('space.deletedAt', 'DESC').getMany(),
             foldersQuery.orderBy('folder.deletedAt', 'DESC').getMany(),
             listsQuery.orderBy('list.deletedAt', 'DESC').getMany(),
             tasksQuery.orderBy('task.deletedAt', 'DESC').getMany()
         ]);
-        return { folders, lists, tasks };
+        return { spaces, folders, lists, tasks };
+    }
+    async restoreSpace(id) {
+        const user = this.cls.get('user');
+        const space = await this.spaceRepo.createQueryBuilder('space')
+            .withDeleted()
+            .where('space.id = :id', { id })
+            .andWhere('space.deletedAt IS NOT NULL')
+            .getOne();
+        if (!space)
+            throw new common_1.NotFoundException('Sahə tapılmadı!');
+        if (user.role !== 'admin' && space.ownerId !== user.id) {
+            throw new common_1.ForbiddenException('Bu sahəni bərpa etmək üçün icazəniz yoxdur!');
+        }
+        await this.spaceRepo.restore(id);
+        await this.activityLogService.log(activity_log_entity_1.ActivityType.SPACE_RESTORE, id, space.name, `"${space.name}" sahəsi bərpa edildi`);
+        return { message: 'Sahə bərpa edildi!' };
     }
     async restoreFolder(id) {
         const user = this.cls.get('user');
@@ -115,6 +144,21 @@ let TrashService = class TrashService {
         await this.taskRepo.restore(id);
         await this.activityLogService.log(activity_log_entity_1.ActivityType.TASK_RESTORE, id, task.title, `"${task.title}" tapşırığı bərpa edildi`);
         return { message: 'Tapşırıq bərpa edildi!' };
+    }
+    async permanentDeleteSpace(id) {
+        const user = this.cls.get('user');
+        const space = await this.spaceRepo.createQueryBuilder('space')
+            .withDeleted()
+            .where('space.id = :id', { id })
+            .andWhere('space.deletedAt IS NOT NULL')
+            .getOne();
+        if (!space)
+            throw new common_1.NotFoundException('Sahə tapılmadı!');
+        if (user.role !== 'admin' && space.ownerId !== user.id) {
+            throw new common_1.ForbiddenException('Bu sahəni silmək üçün icazəniz yoxdur!');
+        }
+        await this.spaceRepo.delete(id);
+        return { message: 'Sahə həmişəlik silindi!' };
     }
     async permanentDeleteFolder(id) {
         const user = this.cls.get('user');
@@ -168,10 +212,12 @@ let TrashService = class TrashService {
 exports.TrashService = TrashService;
 exports.TrashService = TrashService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(folder_entity_1.FolderEntity)),
-    __param(1, (0, typeorm_1.InjectRepository)(tasklist_entity_1.TaskListEntity)),
-    __param(2, (0, typeorm_1.InjectRepository)(task_entity_1.TaskEntity)),
+    __param(0, (0, typeorm_1.InjectRepository)(space_entity_1.SpaceEntity)),
+    __param(1, (0, typeorm_1.InjectRepository)(folder_entity_1.FolderEntity)),
+    __param(2, (0, typeorm_1.InjectRepository)(tasklist_entity_1.TaskListEntity)),
+    __param(3, (0, typeorm_1.InjectRepository)(task_entity_1.TaskEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         activity_log_service_1.ActivityLogService,

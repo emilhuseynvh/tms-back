@@ -18,8 +18,6 @@ const task_status_service_1 = require("./task-status.service");
 const create_task_status_dto_1 = require("./dto/create-task-status.dto");
 const update_task_status_dto_1 = require("./dto/update-task-status.dto");
 const auth_decorator_1 = require("../../shared/decorators/auth.decorator");
-const role_decorator_1 = require("../../shared/decorators/role.decorator");
-const role_guard_1 = require("../../guard/role.guard");
 let TaskStatusController = class TaskStatusController {
     taskStatusService;
     constructor(taskStatusService) {
@@ -57,9 +55,7 @@ __decorate([
 ], TaskStatusController.prototype, "getById", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, auth_decorator_1.Auth)(),
-    (0, role_decorator_1.Role)('admin'),
-    (0, common_1.UseGuards)(role_guard_1.RoleGuard),
+    (0, auth_decorator_1.Auth)('admin'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_task_status_dto_1.CreateTaskStatusDto]),
@@ -67,9 +63,7 @@ __decorate([
 ], TaskStatusController.prototype, "create", null);
 __decorate([
     (0, common_1.Post)(':id'),
-    (0, auth_decorator_1.Auth)(),
-    (0, role_decorator_1.Role)('admin'),
-    (0, common_1.UseGuards)(role_guard_1.RoleGuard),
+    (0, auth_decorator_1.Auth)('admin'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -78,9 +72,7 @@ __decorate([
 ], TaskStatusController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, auth_decorator_1.Auth)(),
-    (0, role_decorator_1.Role)('admin'),
-    (0, common_1.UseGuards)(role_guard_1.RoleGuard),
+    (0, auth_decorator_1.Auth)('admin'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),

@@ -9,6 +9,7 @@ export declare class FolderController {
     listAll(): Promise<import("../../entities/folder.entity").FolderEntity[]>;
     create(body: CreateFolderDto): Promise<import("../../entities/folder.entity").FolderEntity>;
     myFolders(): Promise<import("../../entities/folder.entity").FolderEntity[]>;
+    listBySpace(spaceId: number): Promise<import("../../entities/folder.entity").FolderEntity[]>;
     updateFolder(id: number, body: UpdateFolderDto): Promise<{
         message: string;
     }>;

@@ -33,11 +33,17 @@ let FolderService = class FolderService {
         this.activityLogService = activityLogService;
     }
     async create(ownerId, dto) {
-        const folder = this.folderRepo.create({ ...dto, ownerId });
+        const folder = this.folderRepo.create({
+            name: dto.name,
+            description: dto.description,
+            spaceId: dto.spaceId,
+            ownerId
+        });
         const savedFolder = await this.folderRepo.save(folder);
         const defaultList = this.taskListRepo.create({
             name: 'Siyahı',
-            folderId: savedFolder.id
+            folderId: savedFolder.id,
+            spaceId: dto.spaceId
         });
         await this.taskListRepo.save(defaultList);
         await this.activityLogService.log(activity_log_entity_1.ActivityType.FOLDER_CREATE, savedFolder.id, savedFolder.name, `"${savedFolder.name}" qovluğu yaradıldı`);
@@ -48,6 +54,13 @@ let FolderService = class FolderService {
     }
     async listByOwner(ownerId) {
         return await this.folderRepo.find({ where: { ownerId }, order: { createdAt: 'DESC' } });
+    }
+    async listBySpace(spaceId) {
+        return await this.folderRepo.find({
+            where: { spaceId },
+            order: { createdAt: 'DESC' },
+            relations: ['taskLists']
+        });
     }
     async updateFolder(id, userId, dto) {
         const folder = await this.folderRepo.findOne({ where: { id } });

@@ -25,6 +25,9 @@ let TrashController = class TrashController {
     async getTrash() {
         return await this.trashService.getTrash();
     }
+    async restoreSpace(id) {
+        return await this.trashService.restoreSpace(id);
+    }
     async restoreFolder(id) {
         return await this.trashService.restoreFolder(id);
     }
@@ -33,6 +36,9 @@ let TrashController = class TrashController {
     }
     async restoreTask(id) {
         return await this.trashService.restoreTask(id);
+    }
+    async permanentDeleteSpace(id) {
+        return await this.trashService.permanentDeleteSpace(id);
     }
     async permanentDeleteFolder(id) {
         return await this.trashService.permanentDeleteFolder(id);
@@ -52,6 +58,14 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], TrashController.prototype, "getTrash", null);
+__decorate([
+    (0, common_1.Post)('restore/space/:id'),
+    (0, auth_decorator_1.Auth)(),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], TrashController.prototype, "restoreSpace", null);
 __decorate([
     (0, common_1.Post)('restore/folder/:id'),
     (0, auth_decorator_1.Auth)(),
@@ -76,6 +90,14 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], TrashController.prototype, "restoreTask", null);
+__decorate([
+    (0, common_1.Delete)('space/:id'),
+    (0, auth_decorator_1.Auth)(),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], TrashController.prototype, "permanentDeleteSpace", null);
 __decorate([
     (0, common_1.Delete)('folder/:id'),
     (0, auth_decorator_1.Auth)(),

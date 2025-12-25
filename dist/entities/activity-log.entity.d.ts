@@ -1,6 +1,10 @@
 import { BaseEntity } from "typeorm";
 import { UserEntity } from "./user.entity";
 export declare enum ActivityType {
+    SPACE_CREATE = "space_create",
+    SPACE_UPDATE = "space_update",
+    SPACE_DELETE = "space_delete",
+    SPACE_RESTORE = "space_restore",
     FOLDER_CREATE = "folder_create",
     FOLDER_UPDATE = "folder_update",
     FOLDER_DELETE = "folder_delete",

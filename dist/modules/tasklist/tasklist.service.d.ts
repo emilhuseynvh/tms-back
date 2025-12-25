@@ -10,7 +10,8 @@ export declare class TaskListService {
     private cls;
     private activityLogService;
     constructor(taskListRepo: Repository<TaskListEntity>, cls: ClsService, activityLogService: ActivityLogService);
-    create(dto: CreateTaskListDto): Promise<TaskListEntity>;
+    create(dto: CreateTaskListDto): Promise<TaskListEntity[]>;
+    listBySpace(spaceId: number): Promise<TaskListEntity[]>;
     listByFolder(folderId: number, filters?: FilterTaskListDto): Promise<TaskListEntity[]>;
     updateTaskList(id: number, dto: UpdateTaskListDto): Promise<{
         message: string;

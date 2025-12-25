@@ -1,4 +1,5 @@
 export declare class CreateTaskListDto {
     name: string;
-    folderId: number;
+    folderId?: number;
+    spaceId?: number;
 }

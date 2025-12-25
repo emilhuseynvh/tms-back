@@ -6,28 +6,25 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TrashModule = void 0;
+exports.SpaceModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const space_entity_1 = require("../../entities/space.entity");
-const folder_entity_1 = require("../../entities/folder.entity");
-const tasklist_entity_1 = require("../../entities/tasklist.entity");
-const task_entity_1 = require("../../entities/task.entity");
-const trash_service_1 = require("./trash.service");
-const trash_controller_1 = require("./trash.controller");
+const space_service_1 = require("./space.service");
+const space_controller_1 = require("./space.controller");
 const activity_log_module_1 = require("../activity-log/activity-log.module");
-let TrashModule = class TrashModule {
+let SpaceModule = class SpaceModule {
 };
-exports.TrashModule = TrashModule;
-exports.TrashModule = TrashModule = __decorate([
+exports.SpaceModule = SpaceModule;
+exports.SpaceModule = SpaceModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([space_entity_1.SpaceEntity, folder_entity_1.FolderEntity, tasklist_entity_1.TaskListEntity, task_entity_1.TaskEntity]),
+            typeorm_1.TypeOrmModule.forFeature([space_entity_1.SpaceEntity]),
             activity_log_module_1.ActivityLogModule
         ],
-        controllers: [trash_controller_1.TrashController],
-        providers: [trash_service_1.TrashService],
-        exports: [trash_service_1.TrashService]
+        controllers: [space_controller_1.SpaceController],
+        providers: [space_service_1.SpaceService],
+        exports: [space_service_1.SpaceService]
     })
-], TrashModule);
-//# sourceMappingURL=trash.module.js.map
+], SpaceModule);
+//# sourceMappingURL=space.module.js.map

@@ -13,11 +13,14 @@ exports.TaskListEntity = void 0;
 const typeorm_1 = require("typeorm");
 const folder_entity_1 = require("./folder.entity");
 const task_entity_1 = require("./task.entity");
+const space_entity_1 = require("./space.entity");
 let TaskListEntity = class TaskListEntity extends typeorm_1.BaseEntity {
     id;
     name;
     folderId;
     folder;
+    spaceId;
+    space;
     tasks;
     createdAt;
     updatedAt;
@@ -33,13 +36,22 @@ __decorate([
     __metadata("design:type", String)
 ], TaskListEntity.prototype, "name", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Number)
 ], TaskListEntity.prototype, "folderId", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => folder_entity_1.FolderEntity, (folder) => folder.taskLists, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.ManyToOne)(() => folder_entity_1.FolderEntity, (folder) => folder.taskLists, { onDelete: 'CASCADE', nullable: true }),
     __metadata("design:type", folder_entity_1.FolderEntity)
 ], TaskListEntity.prototype, "folder", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Number)
+], TaskListEntity.prototype, "spaceId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => space_entity_1.SpaceEntity, (space) => space.taskLists, { onDelete: 'CASCADE', nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'spaceId' }),
+    __metadata("design:type", space_entity_1.SpaceEntity)
+], TaskListEntity.prototype, "space", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => task_entity_1.TaskEntity, (task) => task.taskList),
     __metadata("design:type", Array)

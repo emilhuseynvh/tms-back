@@ -30,6 +30,7 @@ const chat_module_1 = require("./modules/chat/chat.module");
 const task_status_module_1 = require("./modules/task-status/task-status.module");
 const activity_log_module_1 = require("./modules/activity-log/activity-log.module");
 const trash_module_1 = require("./modules/trash/trash.module");
+const space_module_1 = require("./modules/space/space.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -40,7 +41,7 @@ exports.AppModule = AppModule = __decorate([
             jwt_1.JwtModule.register({
                 global: true,
                 secret: config_1.default.superSecret,
-                signOptions: { expiresIn: '1d' }
+                signOptions: { expiresIn: '7d' }
             }),
             nestjs_cls_1.ClsModule.forRoot({
                 global: true,
@@ -61,7 +62,8 @@ exports.AppModule = AppModule = __decorate([
             task_module_1.TaskModule,
             chat_module_1.ChatModule,
             activity_log_module_1.ActivityLogModule,
-            trash_module_1.TrashModule
+            trash_module_1.TrashModule,
+            space_module_1.SpaceModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

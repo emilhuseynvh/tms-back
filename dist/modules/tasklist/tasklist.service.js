@@ -30,10 +30,24 @@ let TaskListService = class TaskListService {
         this.activityLogService = activityLogService;
     }
     async create(dto) {
-        const list = this.taskListRepo.create(dto);
+        if (!dto.folderId && !dto.spaceId) {
+            throw new common_1.BadRequestException('folderId və ya spaceId lazımdır');
+        }
+        const list = this.taskListRepo.create({
+            name: dto.name,
+            folderId: dto.folderId || null,
+            spaceId: dto.spaceId || null
+        });
         const savedList = await this.taskListRepo.save(list);
         await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_CREATE, savedList.id, savedList.name, `"${savedList.name}" siyahısı yaradıldı`);
         return savedList;
+    }
+    async listBySpace(spaceId) {
+        return await this.taskListRepo.find({
+            where: { spaceId, folderId: (0, typeorm_2.IsNull)() },
+            order: { createdAt: 'DESC' },
+            relations: ['tasks']
+        });
     }
     async listByFolder(folderId, filters) {
         const queryBuilder = this.taskListRepo.createQueryBuilder('taskList')
@@ -56,12 +70,13 @@ let TaskListService = class TaskListService {
     async updateTaskList(id, dto) {
         const taskList = await this.taskListRepo.findOne({
             where: { id },
-            relations: ['folder']
+            relations: ['folder', 'space']
         });
         if (!taskList)
             throw new common_1.NotFoundException('Siyahı tapılmadı');
         const user = this.cls.get('user');
-        if (user.role !== 'admin' && taskList.folder.ownerId !== user.id) {
+        const ownerId = taskList.folder?.ownerId || taskList.space?.ownerId;
+        if (user.role !== 'admin' && ownerId !== user.id) {
             throw new common_1.UnauthorizedException('Siyahını yeniləmək üçün icazəniz yoxdur');
         }
         const oldName = taskList.name;
@@ -73,12 +88,13 @@ let TaskListService = class TaskListService {
     async deleteTaskList(id) {
         const taskList = await this.taskListRepo.findOne({
             where: { id },
-            relations: ['folder']
+            relations: ['folder', 'space']
         });
         if (!taskList)
             throw new common_1.NotFoundException('Siyahı tapılmadı');
         const user = this.cls.get('user');
-        if (user.role !== 'admin' && taskList.folder.ownerId !== user.id) {
+        const ownerId = taskList.folder?.ownerId || taskList.space?.ownerId;
+        if (user.role !== 'admin' && ownerId !== user.id) {
             throw new common_1.UnauthorizedException('Siyahını silmək üçün icazəniz yoxdur');
         }
         await this.taskListRepo.softDelete({ id });

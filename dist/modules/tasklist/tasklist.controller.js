@@ -28,6 +28,9 @@ let TaskListController = class TaskListController {
     async listByFolder(folderId, filters) {
         return await this.taskListService.listByFolder(Number(folderId), filters);
     }
+    async listBySpace(spaceId) {
+        return await this.taskListService.listBySpace(Number(spaceId));
+    }
     async create(body) {
         return await this.taskListService.create(body);
     }
@@ -47,6 +50,13 @@ __decorate([
     __metadata("design:paramtypes", [Number, filter_tasklist_dto_1.FilterTaskListDto]),
     __metadata("design:returntype", Promise)
 ], TaskListController.prototype, "listByFolder", null);
+__decorate([
+    (0, common_1.Get)('space/:spaceId'),
+    __param(0, (0, common_1.Param)('spaceId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], TaskListController.prototype, "listBySpace", null);
 __decorate([
     (0, common_1.Post)(),
     (0, auth_decorator_1.Auth)(),

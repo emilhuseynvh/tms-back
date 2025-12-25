@@ -14,6 +14,7 @@ export declare class FolderService {
     create(ownerId: number, dto: CreateFolderDto): Promise<FolderEntity>;
     listAll(): Promise<FolderEntity[]>;
     listByOwner(ownerId: number): Promise<FolderEntity[]>;
+    listBySpace(spaceId: number): Promise<FolderEntity[]>;
     updateFolder(id: number, userId: number, dto: UpdateFolderDto): Promise<{
         message: string;
     }>;
