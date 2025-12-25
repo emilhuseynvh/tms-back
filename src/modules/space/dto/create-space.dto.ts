@@ -1,8 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
-export class CreateFolderDto {
+export class CreateSpaceDto {
 	@Type()
 	@IsString()
 	@ApiProperty()
@@ -13,10 +13,4 @@ export class CreateFolderDto {
 	@IsString()
 	@ApiProperty({ required: false })
 	description?: string
-
-	@Type()
-	@IsNumber()
-	@ApiProperty()
-	spaceId: number
 }
-

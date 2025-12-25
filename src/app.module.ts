@@ -18,6 +18,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { TaskStatusModule } from './modules/task-status/task-status.module';
 import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { TrashModule } from './modules/trash/trash.module';
+import { SpaceModule } from './modules/space/space.module';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { TrashModule } from './modules/trash/trash.module';
     JwtModule.register({
       global: true,
       secret: config.superSecret,
-      signOptions: { expiresIn: '1d' }
+      signOptions: { expiresIn: '7d' }
     }),
     ClsModule.forRoot({
       global: true,
@@ -46,7 +47,8 @@ import { TrashModule } from './modules/trash/trash.module';
     TaskModule,
     ChatModule,
     ActivityLogModule,
-    TrashModule
+    TrashModule,
+    SpaceModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -33,6 +33,11 @@ export class FolderController {
 		return await this.folderService.listByOwner(user.id)
 	}
 
+	@Get('space/:spaceId')
+	async listBySpace(@Param('spaceId') spaceId: number) {
+		return await this.folderService.listBySpace(spaceId)
+	}
+
 	@Post(':id')
 	@Auth()
 	async updateFolder(@Param("id") id: number, @Body() body: UpdateFolderDto) {

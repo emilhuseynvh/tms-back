@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Not, IsNull } from "typeorm";
+import { SpaceEntity } from "../../entities/space.entity";
 import { FolderEntity } from "../../entities/folder.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
 import { TaskEntity } from "../../entities/task.entity";
@@ -11,6 +12,8 @@ import { ClsService } from "nestjs-cls";
 @Injectable()
 export class TrashService {
 	constructor(
+		@InjectRepository(SpaceEntity)
+		private spaceRepo: Repository<SpaceEntity>,
 		@InjectRepository(FolderEntity)
 		private folderRepo: Repository<FolderEntity>,
 		@InjectRepository(TaskListEntity)
@@ -25,6 +28,11 @@ export class TrashService {
 		const user = this.cls.get('user')
 		const isAdmin = user.role === 'admin'
 
+		const spacesQuery = this.spaceRepo.createQueryBuilder('space')
+			.withDeleted()
+			.leftJoinAndSelect('space.owner', 'owner')
+			.where('space.deletedAt IS NOT NULL')
+
 		const foldersQuery = this.folderRepo.createQueryBuilder('folder')
 			.withDeleted()
 			.leftJoinAndSelect('folder.owner', 'owner')
@@ -33,29 +41,61 @@ export class TrashService {
 		const listsQuery = this.taskListRepo.createQueryBuilder('list')
 			.withDeleted()
 			.leftJoinAndSelect('list.folder', 'folder')
-			.leftJoinAndSelect('folder.owner', 'owner')
+			.leftJoinAndSelect('list.space', 'space')
+			.leftJoinAndSelect('folder.owner', 'folderOwner')
+			.leftJoinAndSelect('space.owner', 'spaceOwner')
 			.where('list.deletedAt IS NOT NULL')
 
 		const tasksQuery = this.taskRepo.createQueryBuilder('task')
 			.withDeleted()
 			.leftJoinAndSelect('task.taskList', 'taskList')
 			.leftJoinAndSelect('taskList.folder', 'folder')
-			.leftJoinAndSelect('folder.owner', 'owner')
+			.leftJoinAndSelect('taskList.space', 'space')
+			.leftJoinAndSelect('folder.owner', 'folderOwner')
+			.leftJoinAndSelect('space.owner', 'spaceOwner')
 			.where('task.deletedAt IS NOT NULL')
 
 		if (!isAdmin) {
+			spacesQuery.andWhere('space.ownerId = :userId', { userId: user.id })
 			foldersQuery.andWhere('folder.ownerId = :userId', { userId: user.id })
-			listsQuery.andWhere('folder.ownerId = :userId', { userId: user.id })
-			tasksQuery.andWhere('folder.ownerId = :userId', { userId: user.id })
+			listsQuery.andWhere('(folder.ownerId = :userId OR space.ownerId = :userId)', { userId: user.id })
+			tasksQuery.andWhere('(folder.ownerId = :userId OR space.ownerId = :userId)', { userId: user.id })
 		}
 
-		const [folders, lists, tasks] = await Promise.all([
+		const [spaces, folders, lists, tasks] = await Promise.all([
+			spacesQuery.orderBy('space.deletedAt', 'DESC').getMany(),
 			foldersQuery.orderBy('folder.deletedAt', 'DESC').getMany(),
 			listsQuery.orderBy('list.deletedAt', 'DESC').getMany(),
 			tasksQuery.orderBy('task.deletedAt', 'DESC').getMany()
 		])
 
-		return { folders, lists, tasks }
+		return { spaces, folders, lists, tasks }
+	}
+
+	async restoreSpace(id: number) {
+		const user = this.cls.get('user')
+		const space = await this.spaceRepo.createQueryBuilder('space')
+			.withDeleted()
+			.where('space.id = :id', { id })
+			.andWhere('space.deletedAt IS NOT NULL')
+			.getOne()
+
+		if (!space) throw new NotFoundException('Sahə tapılmadı!')
+
+		if (user.role !== 'admin' && space.ownerId !== user.id) {
+			throw new ForbiddenException('Bu sahəni bərpa etmək üçün icazəniz yoxdur!')
+		}
+
+		await this.spaceRepo.restore(id)
+
+		await this.activityLogService.log(
+			ActivityType.SPACE_RESTORE,
+			id,
+			space.name,
+			`"${space.name}" sahəsi bərpa edildi`
+		)
+
+		return { message: 'Sahə bərpa edildi!' }
 	}
 
 	async restoreFolder(id: number) {
@@ -137,6 +177,24 @@ export class TrashService {
 		)
 
 		return { message: 'Tapşırıq bərpa edildi!' }
+	}
+
+	async permanentDeleteSpace(id: number) {
+		const user = this.cls.get('user')
+		const space = await this.spaceRepo.createQueryBuilder('space')
+			.withDeleted()
+			.where('space.id = :id', { id })
+			.andWhere('space.deletedAt IS NOT NULL')
+			.getOne()
+
+		if (!space) throw new NotFoundException('Sahə tapılmadı!')
+
+		if (user.role !== 'admin' && space.ownerId !== user.id) {
+			throw new ForbiddenException('Bu sahəni silmək üçün icazəniz yoxdur!')
+		}
+
+		await this.spaceRepo.delete(id)
+		return { message: 'Sahə həmişəlik silindi!' }
 	}
 
 	async permanentDeleteFolder(id: number) {

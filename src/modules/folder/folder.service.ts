@@ -21,12 +21,18 @@ export class FolderService {
 	) { }
 
 	async create(ownerId: number, dto: CreateFolderDto) {
-		const folder = this.folderRepo.create({ ...dto, ownerId })
+		const folder = this.folderRepo.create({
+			name: dto.name,
+			description: dto.description,
+			spaceId: dto.spaceId,
+			ownerId
+		})
 		const savedFolder = await this.folderRepo.save(folder)
 
 		const defaultList = this.taskListRepo.create({
 			name: 'Siyahı',
-			folderId: savedFolder.id
+			folderId: savedFolder.id,
+			spaceId: dto.spaceId
 		})
 		await this.taskListRepo.save(defaultList)
 
@@ -46,6 +52,14 @@ export class FolderService {
 
 	async listByOwner(ownerId: number) {
 		return await this.folderRepo.find({ where: { ownerId }, order: { createdAt: 'DESC' } })
+	}
+
+	async listBySpace(spaceId: number) {
+		return await this.folderRepo.find({
+			where: { spaceId },
+			order: { createdAt: 'DESC' },
+			relations: ['taskLists']
+		})
 	}
 
 	async updateFolder(id: number, userId: number, dto: UpdateFolderDto) {

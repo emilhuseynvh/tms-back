@@ -19,6 +19,11 @@ export class TaskListController {
 		return await this.taskListService.listByFolder(Number(folderId), filters)
 	}
 
+	@Get('space/:spaceId')
+	async listBySpace(@Param('spaceId') spaceId: number) {
+		return await this.taskListService.listBySpace(Number(spaceId))
+	}
+
 	@Post()
 	@Auth()
 	async create(@Body() body: CreateTaskListDto) {

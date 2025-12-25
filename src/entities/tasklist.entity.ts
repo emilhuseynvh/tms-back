@@ -1,6 +1,7 @@
-import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { FolderEntity } from "./folder.entity";
 import { TaskEntity } from "./task.entity";
+import { SpaceEntity } from "./space.entity";
 
 @Entity('task_list')
 export class TaskListEntity extends BaseEntity {
@@ -10,11 +11,18 @@ export class TaskListEntity extends BaseEntity {
 	@Column()
 	name: string
 
-	@Column()
+	@Column({ nullable: true })
 	folderId: number
 
-	@ManyToOne(() => FolderEntity, (folder) => folder.taskLists, { onDelete: 'CASCADE' })
+	@ManyToOne(() => FolderEntity, (folder) => folder.taskLists, { onDelete: 'CASCADE', nullable: true })
 	folder: FolderEntity
+
+	@Column({ nullable: true })
+	spaceId: number
+
+	@ManyToOne(() => SpaceEntity, (space) => space.taskLists, { onDelete: 'CASCADE', nullable: true })
+	@JoinColumn({ name: 'spaceId' })
+	space: SpaceEntity
 
 	@OneToMany(() => TaskEntity, (task) => task.taskList)
 	tasks: TaskEntity[]

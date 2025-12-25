@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
 import { TaskListEntity } from "../../entities/tasklist.entity";
 import { CreateTaskListDto } from "./dto/create-tasklist.dto";
 import { UpdateTaskListDto } from "./dto/update-tasklist.dto";
@@ -19,7 +19,15 @@ export class TaskListService {
 	) { }
 
 	async create(dto: CreateTaskListDto) {
-		const list = this.taskListRepo.create(dto)
+		if (!dto.folderId && !dto.spaceId) {
+			throw new BadRequestException('folderId və ya spaceId lazımdır')
+		}
+
+		const list = this.taskListRepo.create({
+			name: dto.name,
+			folderId: dto.folderId || null,
+			spaceId: dto.spaceId || null
+		})
 		const savedList = await this.taskListRepo.save(list)
 
 		await this.activityLogService.log(
@@ -30,6 +38,14 @@ export class TaskListService {
 		)
 
 		return savedList
+	}
+
+	async listBySpace(spaceId: number) {
+		return await this.taskListRepo.find({
+			where: { spaceId, folderId: IsNull() },
+			order: { createdAt: 'DESC' },
+			relations: ['tasks']
+		})
 	}
 
 	async listByFolder(folderId: number, filters?: FilterTaskListDto) {
@@ -61,13 +77,14 @@ export class TaskListService {
 	async updateTaskList(id: number, dto: UpdateTaskListDto) {
 		const taskList = await this.taskListRepo.findOne({
 			where: { id },
-			relations: ['folder']
+			relations: ['folder', 'space']
 		})
 
 		if (!taskList) throw new NotFoundException('Siyahı tapılmadı')
 
 		const user = this.cls.get('user')
-		if (user.role !== 'admin' && taskList.folder.ownerId !== user.id) {
+		const ownerId = taskList.folder?.ownerId || taskList.space?.ownerId
+		if (user.role !== 'admin' && ownerId !== user.id) {
 			throw new UnauthorizedException('Siyahını yeniləmək üçün icazəniz yoxdur')
 		}
 
@@ -89,13 +106,14 @@ export class TaskListService {
 	async deleteTaskList(id: number) {
 		const taskList = await this.taskListRepo.findOne({
 			where: { id },
-			relations: ['folder']
+			relations: ['folder', 'space']
 		})
 
 		if (!taskList) throw new NotFoundException('Siyahı tapılmadı')
 
 		const user = this.cls.get('user')
-		if (user.role !== 'admin' && taskList.folder.ownerId !== user.id) {
+		const ownerId = taskList.folder?.ownerId || taskList.space?.ownerId
+		if (user.role !== 'admin' && ownerId !== user.id) {
 			throw new UnauthorizedException('Siyahını silmək üçün icazəniz yoxdur')
 		}
 

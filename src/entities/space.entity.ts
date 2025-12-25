@@ -1,10 +1,10 @@
 import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { UserEntity } from "./user.entity";
+import { FolderEntity } from "./folder.entity";
 import { TaskListEntity } from "./tasklist.entity";
-import { SpaceEntity } from "./space.entity";
 
-@Entity('folder')
-export class FolderEntity extends BaseEntity {
+@Entity('space')
+export class SpaceEntity extends BaseEntity {
 	@PrimaryGeneratedColumn()
 	id: number
 
@@ -17,17 +17,14 @@ export class FolderEntity extends BaseEntity {
 	@Column()
 	ownerId: number
 
-	@ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE' })
+	@ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'ownerId' })
 	owner: UserEntity
 
-	@Column()
-	spaceId: number
+	@OneToMany(() => FolderEntity, (folder) => folder.space)
+	folders: FolderEntity[]
 
-	@ManyToOne(() => SpaceEntity, (space) => space.folders, { onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'spaceId' })
-	space: SpaceEntity
-
-	@OneToMany(() => TaskListEntity, (list) => list.folder)
+	@OneToMany(() => TaskListEntity, (list) => list.space)
 	taskLists: TaskListEntity[]
 
 	@CreateDateColumn()
@@ -39,4 +36,3 @@ export class FolderEntity extends BaseEntity {
 	@DeleteDateColumn()
 	deletedAt: Date
 }
-

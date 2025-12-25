@@ -14,6 +14,12 @@ export class TrashController {
 		return await this.trashService.getTrash()
 	}
 
+	@Post('restore/space/:id')
+	@Auth()
+	async restoreSpace(@Param('id', ParseIntPipe) id: number) {
+		return await this.trashService.restoreSpace(id)
+	}
+
 	@Post('restore/folder/:id')
 	@Auth()
 	async restoreFolder(@Param('id', ParseIntPipe) id: number) {
@@ -30,6 +36,12 @@ export class TrashController {
 	@Auth()
 	async restoreTask(@Param('id', ParseIntPipe) id: number) {
 		return await this.trashService.restoreTask(id)
+	}
+
+	@Delete('space/:id')
+	@Auth()
+	async permanentDeleteSpace(@Param('id', ParseIntPipe) id: number) {
+		return await this.trashService.permanentDeleteSpace(id)
 	}
 
 	@Delete('folder/:id')
