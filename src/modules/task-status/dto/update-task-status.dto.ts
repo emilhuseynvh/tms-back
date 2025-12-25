@@ -8,4 +8,16 @@ export class UpdateTaskStatusDto {
 	@IsString()
 	@ApiProperty({ required: false })
 	name?: string
+
+	@Type()
+	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false })
+	color?: string
+
+	@Type()
+	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false })
+	icon?: string
 }

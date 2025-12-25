@@ -1,4 +1,4 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn, JoinTable } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn, JoinTable } from "typeorm";
 import { TaskListEntity } from "./tasklist.entity";
 import { UserEntity } from "./user.entity";
 import { TaskStatusEntity } from "./task-status.entity";
@@ -37,6 +37,9 @@ export class TaskEntity extends BaseEntity {
 	@Column({ default: false })
 	is_message_send: boolean
 
+	@Column({ nullable: true, type: 'text' })
+	link: string
+
 	@ManyToOne(() => TaskListEntity, (list) => list.tasks, { onDelete: 'CASCADE' })
 	taskList: TaskListEntity
 
@@ -62,4 +65,7 @@ export class TaskEntity extends BaseEntity {
 
 	@UpdateDateColumn()
 	updatedAt: Date
+
+	@DeleteDateColumn()
+	deletedAt: Date
 }

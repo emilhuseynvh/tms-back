@@ -9,6 +9,12 @@ export class TaskStatusEntity extends BaseEntity {
 	@Column({ unique: true })
 	name: string
 
+	@Column({ default: '#3B82F6' })
+	color: string
+
+	@Column({ default: 'circle' })
+	icon: string
+
 	@OneToMany(() => TaskEntity, (task) => task.status)
 	tasks: TaskEntity[]
 

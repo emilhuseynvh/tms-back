@@ -44,4 +44,9 @@ export class UpdateTaskDto {
 	@IsNumber()
 	@ApiProperty({ required: false })
 	taskListId?: number
+
+	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false })
+	link?: string
 }

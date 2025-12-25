@@ -10,6 +10,8 @@ import { UpdateTaskDto } from "./dto/update-task.dto";
 import { ReorderTaskDto } from "./dto/reorder-task.dto";
 import { FilterTaskDto } from "./dto/filter-task.dto";
 import { ClsService } from "nestjs-cls";
+import { ActivityLogService } from "../activity-log/activity-log.service";
+import { ActivityType } from "../../entities/activity-log.entity";
 
 @Injectable()
 export class TaskService {
@@ -20,7 +22,8 @@ export class TaskService {
 		private taskStatusRepo: Repository<TaskStatusEntity>,
 		@InjectRepository(TaskActivityEntity)
 		private taskActivityRepo: Repository<TaskActivityEntity>,
-		private cls: ClsService
+		private cls: ClsService,
+		private activityLogService: ActivityLogService
 	) { }
 
 	async create(dto: CreateTaskDto) {
@@ -33,13 +36,23 @@ export class TaskService {
 			description: dto.description ?? '',
 			taskListId: dto.taskListId,
 			statusId: dto.statusId ?? '',
-			startAt: dto.startAt ? new Date(dto.startAt) : null,
+			startAt: dto.startAt ? new Date(dto.startAt) : new Date(),
 			dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
 			parentId: dto.parentId || null,
 			order: count,
+			link: dto.link ?? null,
 			assignees: dto.assigneeIds?.map((id) => ({ id } as UserEntity)) || []
 		} as Partial<TaskEntity>)
-		return await this.taskRepo.save(task)
+		const savedTask = await this.taskRepo.save(task)
+
+		await this.activityLogService.log(
+			ActivityType.TASK_CREATE,
+			savedTask.id,
+			savedTask.title,
+			`"${savedTask.title}" tapşırığı yaradıldı`
+		)
+
+		return savedTask
 	}
 
 	async listByTaskList(taskListId: number, filters?: FilterTaskDto) {
@@ -102,6 +115,7 @@ export class TaskService {
 		this.collectChanges(changes, 'is_message_send', task.is_message_send, dto.is_message_send)
 		this.collectChanges(changes, 'statusId', task.statusId, dto.statusId)
 		this.collectChanges(changes, 'taskListId', task.taskListId, dto.taskListId)
+		this.collectChanges(changes, 'link', task.link, dto.link)
 
 		if (dto.assigneeIds !== undefined) {
 			const prev = (task.assignees || []).map((a) => a.id).sort()
@@ -120,6 +134,7 @@ export class TaskService {
 			task.assignees = dto.assigneeIds.map((id) => ({ id } as UserEntity))
 		}
 		if (dto.statusId !== undefined) task.statusId = dto.statusId
+		if (dto.link !== undefined) task.link = dto.link
 		if (dto.taskListId !== undefined && dto.taskListId !== task.taskListId) {
 			await this.taskRepo
 				.createQueryBuilder()
@@ -133,10 +148,30 @@ export class TaskService {
 			task.order = newIndex
 			const savedTask = await this.taskRepo.save(task)
 			await this.logTaskActivity(task.id, changes)
+
+			await this.activityLogService.log(
+				ActivityType.TASK_UPDATE,
+				id,
+				task.title,
+				`"${task.title}" tapşırığı yeniləndi`,
+				{ ...changes }
+			)
+
 			return savedTask
 		}
 		const savedTask = await this.taskRepo.save(task)
 		await this.logTaskActivity(task.id, changes)
+
+		if (Object.keys(changes).length > 0) {
+			await this.activityLogService.log(
+				ActivityType.TASK_UPDATE,
+				id,
+				task.title,
+				`"${task.title}" tapşırığı yeniləndi`,
+				{ ...changes }
+			)
+		}
+
 		return savedTask
 	}
 
@@ -216,8 +251,23 @@ export class TaskService {
 			throw new UnauthorizedException('Tapşırığı silmək üçün icazəniz yoxdur!')
 		}
 
-		await this.taskRepo.delete({ id })
+		await this.taskRepo.softDelete({ id })
+
+		await this.activityLogService.log(
+			ActivityType.TASK_DELETE,
+			id,
+			task.title,
+			`"${task.title}" tapşırığı silindi`
+		)
 
 		return { message: "Tapşırıq uğurla silindi!" }
+	}
+
+	async getTaskActivities(taskId: number, limit: number = 10) {
+		return await this.taskActivityRepo.find({
+			where: { taskId },
+			order: { createdAt: 'DESC' },
+			take: limit
+		})
 	}
 }

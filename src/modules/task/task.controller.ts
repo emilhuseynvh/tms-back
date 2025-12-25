@@ -40,5 +40,14 @@ export class TaskController {
 	async deleteTask(@Param("id") id: number) {
 		return await this.taskService.deleteTask(id)
 	}
+
+	@Get(':id/activities')
+	@Auth()
+	async getTaskActivities(
+		@Param('id', ParseIntPipe) id: number,
+		@Query('limit') limit?: number
+	) {
+		return await this.taskService.getTaskActivities(id, limit ? Number(limit) : 10)
+	}
 }
 

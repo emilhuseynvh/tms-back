@@ -16,6 +16,8 @@ import { TaskListModule } from './modules/tasklist/tasklist.module';
 import { TaskModule } from './modules/task/task.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { TaskStatusModule } from './modules/task-status/task-status.module';
+import { ActivityLogModule } from './modules/activity-log/activity-log.module';
+import { TrashModule } from './modules/trash/trash.module';
 
 @Module({
   imports: [
@@ -42,7 +44,9 @@ import { TaskStatusModule } from './modules/task-status/task-status.module';
     TaskListModule,
     TaskStatusModule,
     TaskModule,
-    ChatModule
+    ChatModule,
+    ActivityLogModule,
+    TrashModule
   ],
   controllers: [AppController],
   providers: [AppService],

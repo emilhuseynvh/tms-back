@@ -1,4 +1,4 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { UserEntity } from "./user.entity";
 import { TaskListEntity } from "./tasklist.entity";
 
@@ -27,5 +27,8 @@ export class FolderEntity extends BaseEntity {
 
 	@UpdateDateColumn()
 	updatedAt: Date
+
+	@DeleteDateColumn()
+	deletedAt: Date
 }
 

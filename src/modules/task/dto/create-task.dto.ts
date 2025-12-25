@@ -49,4 +49,10 @@ export class CreateTaskDto {
 	@IsNumber()
 	@ApiProperty({ required: false })
 	parentId?: number
+
+	@Type()
+	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false })
+	link?: string
 }

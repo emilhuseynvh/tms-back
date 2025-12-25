@@ -6,18 +6,30 @@ import { CreateTaskListDto } from "./dto/create-tasklist.dto";
 import { UpdateTaskListDto } from "./dto/update-tasklist.dto";
 import { FilterTaskListDto } from "./dto/filter-tasklist.dto";
 import { ClsService } from "nestjs-cls";
+import { ActivityLogService } from "../activity-log/activity-log.service";
+import { ActivityType } from "../../entities/activity-log.entity";
 
 @Injectable()
 export class TaskListService {
 	constructor(
 		@InjectRepository(TaskListEntity)
 		private taskListRepo: Repository<TaskListEntity>,
-		private cls: ClsService
+		private cls: ClsService,
+		private activityLogService: ActivityLogService
 	) { }
 
 	async create(dto: CreateTaskListDto) {
 		const list = this.taskListRepo.create(dto)
-		return await this.taskListRepo.save(list)
+		const savedList = await this.taskListRepo.save(list)
+
+		await this.activityLogService.log(
+			ActivityType.LIST_CREATE,
+			savedList.id,
+			savedList.name,
+			`"${savedList.name}" siyahısı yaradıldı`
+		)
+
+		return savedList
 	}
 
 	async listByFolder(folderId: number, filters?: FilterTaskListDto) {
@@ -59,8 +71,17 @@ export class TaskListService {
 			throw new UnauthorizedException('Siyahını yeniləmək üçün icazəniz yoxdur')
 		}
 
+		const oldName = taskList.name
 		Object.assign(taskList, dto)
 		await this.taskListRepo.save(taskList)
+
+		await this.activityLogService.log(
+			ActivityType.LIST_UPDATE,
+			id,
+			taskList.name,
+			`"${oldName}" siyahısı yeniləndi`,
+			{ ...dto }
+		)
 
 		return { message: "Siyahı uğurla yeniləndi" }
 	}
@@ -78,7 +99,14 @@ export class TaskListService {
 			throw new UnauthorizedException('Siyahını silmək üçün icazəniz yoxdur')
 		}
 
-		await this.taskListRepo.delete({ id })
+		await this.taskListRepo.softDelete({ id })
+
+		await this.activityLogService.log(
+			ActivityType.LIST_DELETE,
+			id,
+			taskList.name,
+			`"${taskList.name}" siyahısı silindi`
+		)
 
 		return { message: "Siyahı uğurla silindi" }
 	}
