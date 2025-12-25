@@ -37,7 +37,7 @@ __decorate([
 ], TaskListEntity.prototype, "name", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", Number)
+    __metadata("design:type", Object)
 ], TaskListEntity.prototype, "folderId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => folder_entity_1.FolderEntity, (folder) => folder.taskLists, { onDelete: 'CASCADE', nullable: true }),
@@ -45,7 +45,7 @@ __decorate([
 ], TaskListEntity.prototype, "folder", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", Number)
+    __metadata("design:type", Object)
 ], TaskListEntity.prototype, "spaceId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => space_entity_1.SpaceEntity, (space) => space.taskLists, { onDelete: 'CASCADE', nullable: true }),

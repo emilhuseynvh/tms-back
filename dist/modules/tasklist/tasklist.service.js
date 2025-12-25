@@ -33,11 +33,10 @@ let TaskListService = class TaskListService {
         if (!dto.folderId && !dto.spaceId) {
             throw new common_1.BadRequestException('folderId və ya spaceId lazımdır');
         }
-        const list = this.taskListRepo.create({
-            name: dto.name,
-            folderId: dto.folderId || null,
-            spaceId: dto.spaceId || null
-        });
+        const list = new tasklist_entity_1.TaskListEntity();
+        list.name = dto.name;
+        list.folderId = dto.folderId || null;
+        list.spaceId = dto.spaceId || null;
         const savedList = await this.taskListRepo.save(list);
         await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_CREATE, savedList.id, savedList.name, `"${savedList.name}" siyahısı yaradıldı`);
         return savedList;

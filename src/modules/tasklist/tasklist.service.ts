@@ -18,16 +18,16 @@ export class TaskListService {
 		private activityLogService: ActivityLogService
 	) { }
 
-	async create(dto: CreateTaskListDto) {
+	async create(dto: CreateTaskListDto): Promise<TaskListEntity> {
 		if (!dto.folderId && !dto.spaceId) {
 			throw new BadRequestException('folderId və ya spaceId lazımdır')
 		}
 
-		const list = this.taskListRepo.create({
-			name: dto.name,
-			folderId: dto.folderId || null,
-			spaceId: dto.spaceId || null
-		})
+		const list = new TaskListEntity()
+		list.name = dto.name
+		list.folderId = dto.folderId || null
+		list.spaceId = dto.spaceId || null
+
 		const savedList = await this.taskListRepo.save(list)
 
 		await this.activityLogService.log(

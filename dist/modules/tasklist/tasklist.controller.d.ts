@@ -7,7 +7,7 @@ export declare class TaskListController {
     constructor(taskListService: TaskListService);
     listByFolder(folderId: number, filters: FilterTaskListDto): Promise<import("../../entities/tasklist.entity").TaskListEntity[]>;
     listBySpace(spaceId: number): Promise<import("../../entities/tasklist.entity").TaskListEntity[]>;
-    create(body: CreateTaskListDto): Promise<import("../../entities/tasklist.entity").TaskListEntity[]>;
+    create(body: CreateTaskListDto): Promise<import("../../entities/tasklist.entity").TaskListEntity>;
     updateTaskList(id: number, body: UpdateTaskListDto): Promise<{
         message: string;
     }>;

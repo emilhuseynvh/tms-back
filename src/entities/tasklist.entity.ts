@@ -12,13 +12,13 @@ export class TaskListEntity extends BaseEntity {
 	name: string
 
 	@Column({ nullable: true })
-	folderId: number
+	folderId: number | null
 
 	@ManyToOne(() => FolderEntity, (folder) => folder.taskLists, { onDelete: 'CASCADE', nullable: true })
 	folder: FolderEntity
 
 	@Column({ nullable: true })
-	spaceId: number
+	spaceId: number | null
 
 	@ManyToOne(() => SpaceEntity, (space) => space.taskLists, { onDelete: 'CASCADE', nullable: true })
 	@JoinColumn({ name: 'spaceId' })

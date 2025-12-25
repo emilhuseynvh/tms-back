@@ -5,9 +5,9 @@ import { SpaceEntity } from "./space.entity";
 export declare class TaskListEntity extends BaseEntity {
     id: number;
     name: string;
-    folderId: number;
+    folderId: number | null;
     folder: FolderEntity;
-    spaceId: number;
+    spaceId: number | null;
     space: SpaceEntity;
     tasks: TaskEntity[];
     createdAt: Date;
