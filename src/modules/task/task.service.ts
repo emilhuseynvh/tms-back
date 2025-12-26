@@ -66,7 +66,7 @@ export class TaskService {
 			.andWhere('task.parentId IS NULL')
 
 		// User yalnız özünə assign edilmiş task-ları görür
-		if (!isAdmin) {
+		if (!isAdmin && user?.id) {
 			queryBuilder.andWhere(qb => {
 				const subQuery = qb.subQuery()
 					.select('1')

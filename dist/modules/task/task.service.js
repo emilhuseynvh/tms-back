@@ -64,7 +64,7 @@ let TaskService = class TaskService {
             .leftJoinAndSelect('task.assignees', 'assignees')
             .where('task.taskListId = :taskListId', { taskListId })
             .andWhere('task.parentId IS NULL');
-        if (!isAdmin) {
+        if (!isAdmin && user?.id) {
             queryBuilder.andWhere(qb => {
                 const subQuery = qb.subQuery()
                     .select('1')
