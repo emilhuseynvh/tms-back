@@ -60,6 +60,22 @@ let TelegramService = class TelegramService {
             console.error('Telegram notification failed:', err.message);
         }
     }
+    async sendMessage(text) {
+        if (!this.chatId) {
+            console.warn('TELEGRAM_CHAT_ID is not set');
+            return;
+        }
+        try {
+            await axios_1.default.post(`https://api.telegram.org/bot${this.botToken}/sendMessage`, {
+                chat_id: this.chatId,
+                text: text.substring(0, 4000),
+                parse_mode: 'HTML',
+            });
+        }
+        catch (err) {
+            console.error('Telegram notification failed:', err.message);
+        }
+    }
     escapeHtml(text) {
         return text
             .replace(/&/g, '&amp;')

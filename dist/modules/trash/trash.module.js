@@ -14,8 +14,10 @@ const folder_entity_1 = require("../../entities/folder.entity");
 const tasklist_entity_1 = require("../../entities/tasklist.entity");
 const task_entity_1 = require("../../entities/task.entity");
 const trash_service_1 = require("./trash.service");
+const trash_cleanup_service_1 = require("./trash-cleanup.service");
 const trash_controller_1 = require("./trash.controller");
 const activity_log_module_1 = require("../activity-log/activity-log.module");
+const telegram_service_1 = require("../../shared/services/telegram.service");
 let TrashModule = class TrashModule {
 };
 exports.TrashModule = TrashModule;
@@ -26,7 +28,7 @@ exports.TrashModule = TrashModule = __decorate([
             activity_log_module_1.ActivityLogModule
         ],
         controllers: [trash_controller_1.TrashController],
-        providers: [trash_service_1.TrashService],
+        providers: [trash_service_1.TrashService, trash_cleanup_service_1.TrashCleanupService, telegram_service_1.TelegramService],
         exports: [trash_service_1.TrashService]
     })
 ], TrashModule);

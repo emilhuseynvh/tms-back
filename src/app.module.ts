@@ -6,6 +6,7 @@ import database from './config/database';
 import { JwtModule } from '@nestjs/jwt';
 import config from './config';
 import { ClsModule } from 'nestjs-cls';
+import { ScheduleModule } from '@nestjs/schedule';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
@@ -34,6 +35,7 @@ import { SpaceModule } from './modules/space/space.module';
         mount: true
       }
     }),
+    ScheduleModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, 'uploads'),
       serveRoot: '/uploads',

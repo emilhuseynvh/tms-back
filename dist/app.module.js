@@ -18,6 +18,7 @@ const database_1 = __importDefault(require("./config/database"));
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = __importDefault(require("./config"));
 const nestjs_cls_1 = require("nestjs-cls");
+const schedule_1 = require("@nestjs/schedule");
 const user_module_1 = require("./modules/user/user.module");
 const auth_module_1 = require("./modules/auth/auth.module");
 const uploads_module_1 = require("./modules/uploads/uploads.module");
@@ -49,6 +50,7 @@ exports.AppModule = AppModule = __decorate([
                     mount: true
                 }
             }),
+            schedule_1.ScheduleModule.forRoot(),
             serve_static_1.ServeStaticModule.forRoot({
                 rootPath: (0, path_1.join)(__dirname, 'uploads'),
                 serveRoot: '/uploads',

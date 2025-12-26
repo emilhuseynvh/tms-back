@@ -5,8 +5,10 @@ import { FolderEntity } from "../../entities/folder.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
 import { TaskEntity } from "../../entities/task.entity";
 import { TrashService } from "./trash.service";
+import { TrashCleanupService } from "./trash-cleanup.service";
 import { TrashController } from "./trash.controller";
 import { ActivityLogModule } from "../activity-log/activity-log.module";
+import { TelegramService } from "../../shared/services/telegram.service";
 
 @Module({
 	imports: [
@@ -14,7 +16,7 @@ import { ActivityLogModule } from "../activity-log/activity-log.module";
 		ActivityLogModule
 	],
 	controllers: [TrashController],
-	providers: [TrashService],
+	providers: [TrashService, TrashCleanupService, TelegramService],
 	exports: [TrashService]
 })
 export class TrashModule { }

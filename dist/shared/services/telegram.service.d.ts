@@ -11,5 +11,6 @@ export declare class TelegramService {
         userId?: number;
         body?: any;
     }): Promise<void>;
+    sendMessage(text: string): Promise<void>;
     private escapeHtml;
 }
