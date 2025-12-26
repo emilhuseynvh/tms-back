@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/co
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { SpaceEntity } from "../../entities/space.entity";
+import { TaskEntity } from "../../entities/task.entity";
 import { CreateSpaceDto } from "./dto/create-space.dto";
 import { UpdateSpaceDto } from "./dto/update-space.dto";
 import { ClsService } from "nestjs-cls";
@@ -13,6 +14,8 @@ export class SpaceService {
 	constructor(
 		@InjectRepository(SpaceEntity)
 		private spaceRepo: Repository<SpaceEntity>,
+		@InjectRepository(TaskEntity)
+		private taskRepo: Repository<TaskEntity>,
 		private cls: ClsService,
 		private activityLogService: ActivityLogService
 	) { }
@@ -39,11 +42,43 @@ export class SpaceService {
 	}
 
 	async listByOwner(ownerId: number) {
-		return await this.spaceRepo.find({
-			where: { ownerId },
-			order: { createdAt: 'DESC' },
-			relations: ['folders', 'folders.taskLists', 'taskLists']
-		})
+		const user = this.cls.get('user')
+
+		// Admin bütün space-ləri görür
+		if (user.role === 'admin') {
+			return await this.spaceRepo.find({
+				order: { createdAt: 'DESC' },
+				relations: ['folders', 'folders.taskLists', 'taskLists']
+			})
+		}
+
+		// User yalnız assign edildiyi task-ların olduğu space-ləri görür
+		const assignedSpaceIds = await this.taskRepo
+			.createQueryBuilder('task')
+			.innerJoin('task.assignees', 'assignee', 'assignee.id = :userId', { userId: ownerId })
+			.innerJoin('task.taskList', 'taskList')
+			.leftJoin('taskList.folder', 'folder')
+			.leftJoin('taskList.space', 'directSpace')
+			.leftJoin('folder.space', 'folderSpace')
+			.select('DISTINCT COALESCE(directSpace.id, folderSpace.id)', 'spaceId')
+			.getRawMany()
+
+		const spaceIds = assignedSpaceIds
+			.map(r => r.spaceId)
+			.filter(id => id !== null)
+
+		if (spaceIds.length === 0) {
+			return []
+		}
+
+		return await this.spaceRepo
+			.createQueryBuilder('space')
+			.leftJoinAndSelect('space.folders', 'folders')
+			.leftJoinAndSelect('folders.taskLists', 'folderTaskLists')
+			.leftJoinAndSelect('space.taskLists', 'taskLists')
+			.where('space.id IN (:...spaceIds)', { spaceIds })
+			.orderBy('space.createdAt', 'DESC')
+			.getMany()
 	}
 
 	async getOne(id: number) {

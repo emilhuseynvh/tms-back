@@ -17,15 +17,18 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const space_entity_1 = require("../../entities/space.entity");
+const task_entity_1 = require("../../entities/task.entity");
 const nestjs_cls_1 = require("nestjs-cls");
 const activity_log_service_1 = require("../activity-log/activity-log.service");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
 let SpaceService = class SpaceService {
     spaceRepo;
+    taskRepo;
     cls;
     activityLogService;
-    constructor(spaceRepo, cls, activityLogService) {
+    constructor(spaceRepo, taskRepo, cls, activityLogService) {
         this.spaceRepo = spaceRepo;
+        this.taskRepo = taskRepo;
         this.cls = cls;
         this.activityLogService = activityLogService;
     }
@@ -42,11 +45,36 @@ let SpaceService = class SpaceService {
         });
     }
     async listByOwner(ownerId) {
-        return await this.spaceRepo.find({
-            where: { ownerId },
-            order: { createdAt: 'DESC' },
-            relations: ['folders', 'folders.taskLists', 'taskLists']
-        });
+        const user = this.cls.get('user');
+        if (user.role === 'admin') {
+            return await this.spaceRepo.find({
+                order: { createdAt: 'DESC' },
+                relations: ['folders', 'folders.taskLists', 'taskLists']
+            });
+        }
+        const assignedSpaceIds = await this.taskRepo
+            .createQueryBuilder('task')
+            .innerJoin('task.assignees', 'assignee', 'assignee.id = :userId', { userId: ownerId })
+            .innerJoin('task.taskList', 'taskList')
+            .leftJoin('taskList.folder', 'folder')
+            .leftJoin('taskList.space', 'directSpace')
+            .leftJoin('folder.space', 'folderSpace')
+            .select('DISTINCT COALESCE(directSpace.id, folderSpace.id)', 'spaceId')
+            .getRawMany();
+        const spaceIds = assignedSpaceIds
+            .map(r => r.spaceId)
+            .filter(id => id !== null);
+        if (spaceIds.length === 0) {
+            return [];
+        }
+        return await this.spaceRepo
+            .createQueryBuilder('space')
+            .leftJoinAndSelect('space.folders', 'folders')
+            .leftJoinAndSelect('folders.taskLists', 'folderTaskLists')
+            .leftJoinAndSelect('space.taskLists', 'taskLists')
+            .where('space.id IN (:...spaceIds)', { spaceIds })
+            .orderBy('space.createdAt', 'DESC')
+            .getMany();
     }
     async getOne(id) {
         const space = await this.spaceRepo.findOne({
@@ -88,7 +116,9 @@ exports.SpaceService = SpaceService;
 exports.SpaceService = SpaceService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(space_entity_1.SpaceEntity)),
+    __param(1, (0, typeorm_1.InjectRepository)(task_entity_1.TaskEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         nestjs_cls_1.ClsService,
         activity_log_service_1.ActivityLogService])
 ], SpaceService);

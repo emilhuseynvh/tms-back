@@ -57,11 +57,25 @@ let TaskService = class TaskService {
         return savedTask;
     }
     async listByTaskList(taskListId, filters) {
+        const user = this.cls.get('user');
+        const isAdmin = user?.role === 'admin';
         const queryBuilder = this.taskRepo.createQueryBuilder('task')
             .leftJoinAndSelect('task.status', 'status')
             .leftJoinAndSelect('task.assignees', 'assignees')
             .where('task.taskListId = :taskListId', { taskListId })
             .andWhere('task.parentId IS NULL');
+        if (!isAdmin) {
+            queryBuilder.andWhere(qb => {
+                const subQuery = qb.subQuery()
+                    .select('1')
+                    .from('task_assignees', 'ta')
+                    .where('ta.taskId = task.id')
+                    .andWhere('ta.userId = :userId')
+                    .getQuery();
+                return `EXISTS ${subQuery}`;
+            });
+            queryBuilder.setParameter('userId', user.id);
+        }
         if (filters?.search) {
             queryBuilder.andWhere('(task.title ILIKE :search OR task.description ILIKE :search)', { search: `%${filters.search}%` });
         }
@@ -75,17 +89,31 @@ let TaskService = class TaskService {
             .orderBy('task.order', 'ASC')
             .addOrderBy('task.createdAt', 'DESC')
             .getMany();
-        return await this.loadChildren(tasks);
+        return await this.loadChildren(tasks, isAdmin, user?.id);
     }
-    async loadChildren(tasks) {
+    async loadChildren(tasks, isAdmin = true, userId) {
         for (const task of tasks) {
-            const children = await this.taskRepo.find({
-                where: { parentId: task.id },
-                order: { order: 'ASC', createdAt: 'DESC' },
-                relations: ['assignees', 'status']
-            });
+            let childQuery = this.taskRepo.createQueryBuilder('task')
+                .leftJoinAndSelect('task.assignees', 'assignees')
+                .leftJoinAndSelect('task.status', 'status')
+                .where('task.parentId = :parentId', { parentId: task.id });
+            if (!isAdmin && userId) {
+                childQuery.andWhere(qb => {
+                    const subQuery = qb.subQuery()
+                        .select('1')
+                        .from('task_assignees', 'ta')
+                        .where('ta.taskId = task.id')
+                        .andWhere('ta.userId = :userId', { userId })
+                        .getQuery();
+                    return `EXISTS ${subQuery}`;
+                });
+            }
+            const children = await childQuery
+                .orderBy('task.order', 'ASC')
+                .addOrderBy('task.createdAt', 'DESC')
+                .getMany();
             if (children.length > 0) {
-                task.children = await this.loadChildren(children);
+                task.children = await this.loadChildren(children, isAdmin, userId);
             }
         }
         return tasks;
