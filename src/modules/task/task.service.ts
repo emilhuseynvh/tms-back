@@ -35,7 +35,7 @@ export class TaskService {
 			title: dto.title,
 			description: dto.description ?? '',
 			taskListId: dto.taskListId,
-			statusId: dto.statusId ?? '',
+			statusId: dto.statusId || null,
 			startAt: dto.startAt ? new Date(dto.startAt) : new Date(),
 			dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
 			parentId: dto.parentId || null,
