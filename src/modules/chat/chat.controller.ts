@@ -102,5 +102,14 @@ export class ChatController {
         await this.chatService.markAsRead(roomId, user.id);
         return { message: 'Mesajlar oxundu olaraq işarələndi!' };
     }
+
+    @Get('search')
+    @Auth()
+    @ApiOperation({ summary: 'İstifadəçilər və mesajlar arasında axtarış' })
+    @ApiQuery({ name: 'q', required: true, type: String, description: 'Axtarış sorğusu' })
+    async search(@Query('q') query: string) {
+        const user = this.cls.get('user');
+        return await this.chatService.search(user.id, query);
+    }
 }
 

@@ -108,6 +108,9 @@ export class FolderService {
 			throw new UnauthorizedException('Qovluğu silmək üçün icazəniz yoxdur!')
 		}
 
+		// Set deletedById before soft delete
+		folder.deletedById = user.id
+		await this.folderRepo.save(folder)
 		await this.folderRepo.softDelete({ id })
 
 		await this.activityLogService.log(

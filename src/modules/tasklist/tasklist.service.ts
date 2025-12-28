@@ -117,6 +117,9 @@ export class TaskListService {
 			throw new UnauthorizedException('Siyahını silmək üçün icazəniz yoxdur')
 		}
 
+		// Set deletedById before soft delete
+		taskList.deletedById = user.id
+		await this.taskListRepo.save(taskList)
 		await this.taskListRepo.softDelete({ id })
 
 		await this.activityLogService.log(

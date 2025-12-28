@@ -2,6 +2,7 @@ import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, JoinCol
 import { FolderEntity } from "./folder.entity";
 import { TaskEntity } from "./task.entity";
 import { SpaceEntity } from "./space.entity";
+import { UserEntity } from "./user.entity";
 
 @Entity('task_list')
 export class TaskListEntity extends BaseEntity {
@@ -26,6 +27,13 @@ export class TaskListEntity extends BaseEntity {
 
 	@OneToMany(() => TaskEntity, (task) => task.taskList)
 	tasks: TaskEntity[]
+
+	@Column({ nullable: true })
+	deletedById: number
+
+	@ManyToOne(() => UserEntity, { nullable: true })
+	@JoinColumn({ name: 'deletedById' })
+	deletedBy: UserEntity
 
 	@CreateDateColumn()
 	createdAt: Date

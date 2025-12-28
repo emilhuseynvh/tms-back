@@ -30,6 +30,13 @@ export class FolderEntity extends BaseEntity {
 	@OneToMany(() => TaskListEntity, (list) => list.folder)
 	taskLists: TaskListEntity[]
 
+	@Column({ nullable: true })
+	deletedById: number
+
+	@ManyToOne(() => UserEntity, { nullable: true })
+	@JoinColumn({ name: 'deletedById' })
+	deletedBy: UserEntity
+
 	@CreateDateColumn()
 	createdAt: Date
 

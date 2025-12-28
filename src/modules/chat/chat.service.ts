@@ -293,5 +293,65 @@ export class ChatService {
             .andWhere('senderId != :userId', { userId })
             .execute();
     }
+
+    async search(userId: number, query: string) {
+        if (!query || query.trim().length < 2) {
+            return { users: [], messages: [] };
+        }
+
+        const searchTerm = query.trim().toLowerCase();
+
+        // Search users
+        const users = await this.userRepo
+            .createQueryBuilder('user')
+            .leftJoinAndSelect('user.avatar', 'avatar')
+            .where('user.id != :userId', { userId })
+            .andWhere(
+                '(LOWER(user.username) LIKE :search OR LOWER(user.email) LIKE :search)',
+                { search: `%${searchTerm}%` }
+            )
+            .take(10)
+            .getMany();
+
+        // Get user's room IDs
+        const userRoomIds = await this.memberRepo
+            .createQueryBuilder('member')
+            .select('member.roomId')
+            .where('member.userId = :userId', { userId })
+            .getMany();
+
+        const roomIds = userRoomIds.map(m => m.roomId);
+
+        // Search messages in user's rooms
+        let messages: any[] = [];
+        if (roomIds.length > 0) {
+            messages = await this.messageRepo
+                .createQueryBuilder('message')
+                .leftJoinAndSelect('message.sender', 'sender')
+                .leftJoinAndSelect('sender.avatar', 'senderAvatar')
+                .leftJoinAndSelect('message.room', 'room')
+                .leftJoinAndSelect('room.members', 'members')
+                .leftJoinAndSelect('members.user', 'memberUser')
+                .leftJoinAndSelect('memberUser.avatar', 'memberAvatar')
+                .where('message.roomId IN (:...roomIds)', { roomIds })
+                .andWhere('LOWER(message.content) LIKE :search', { search: `%${searchTerm}%` })
+                .orderBy('message.createdAt', 'DESC')
+                .take(20)
+                .getMany();
+
+            // Add room display name for direct chats
+            for (const message of messages) {
+                if (message.room && message.room.type === ChatRoomType.DIRECT) {
+                    const otherMember = message.room.members.find((m: any) => m.userId !== userId);
+                    if (otherMember) {
+                        message.room.name = otherMember.user.username;
+                        (message.room as any).otherUser = otherMember.user;
+                    }
+                }
+            }
+        }
+
+        return { users, messages };
+    }
 }
 

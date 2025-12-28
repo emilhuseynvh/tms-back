@@ -57,6 +57,13 @@ export class TaskEntity extends BaseEntity {
 	})
 	assignees: UserEntity[]
 
+	@Column({ nullable: true })
+	deletedById: number
+
+	@ManyToOne(() => UserEntity, { nullable: true })
+	@JoinColumn({ name: 'deletedById' })
+	deletedBy: UserEntity
+
 	@CreateDateColumn()
 	createdAt: Date
 

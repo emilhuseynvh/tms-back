@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsDateString } from "class-validator";
+import { IsOptional, IsString, IsDateString, IsNumberString } from "class-validator";
 
 export class FilterTaskDto {
 	@IsOptional()
@@ -12,4 +12,12 @@ export class FilterTaskDto {
 	@IsOptional()
 	@IsDateString()
 	endDate?: string;
+
+	@IsOptional()
+	@IsNumberString()
+	statusId?: string;
+
+	@IsOptional()
+	@IsNumberString()
+	assigneeId?: string;
 }

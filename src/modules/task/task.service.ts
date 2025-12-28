@@ -104,15 +104,32 @@ export class TaskService {
 			queryBuilder.andWhere('task.startAt <= :endDate', { endDate: filters.endDate })
 		}
 
+		if (filters?.statusId) {
+			queryBuilder.andWhere('task.statusId = :statusId', { statusId: parseInt(filters.statusId) })
+		}
+
+		if (filters?.assigneeId) {
+			queryBuilder.andWhere(qb => {
+				const subQuery = qb.subQuery()
+					.select('1')
+					.from('task_assignees', 'ta_filter')
+					.where('ta_filter.taskId = task.id')
+					.andWhere('ta_filter.userId = :filterAssigneeId')
+					.getQuery()
+				return `EXISTS ${subQuery}`
+			})
+			queryBuilder.setParameter('filterAssigneeId', parseInt(filters.assigneeId))
+		}
+
 		const tasks = await queryBuilder
 			.orderBy('task.order', 'ASC')
 			.addOrderBy('task.createdAt', 'DESC')
 			.getMany()
 
-		return await this.loadChildren(tasks, isAdmin, user?.id)
+		return await this.loadChildren(tasks, isAdmin, user?.id, filters)
 	}
 
-	private async loadChildren(tasks: TaskEntity[], isAdmin: boolean = true, userId?: number): Promise<TaskEntity[]> {
+	private async loadChildren(tasks: TaskEntity[], isAdmin: boolean = true, userId?: number, filters?: FilterTaskDto): Promise<TaskEntity[]> {
 		for (const task of tasks) {
 			let childQuery = this.taskRepo.createQueryBuilder('task')
 				.leftJoinAndSelect('task.assignees', 'assignees')
@@ -132,13 +149,31 @@ export class TaskService {
 				})
 			}
 
+			// Apply filters to children
+			if (filters?.statusId) {
+				childQuery.andWhere('task.statusId = :childStatusId', { childStatusId: parseInt(filters.statusId) })
+			}
+
+			if (filters?.assigneeId) {
+				childQuery.andWhere(qb => {
+					const subQuery = qb.subQuery()
+						.select('1')
+						.from('task_assignees', 'ta_child_filter')
+						.where('ta_child_filter.taskId = task.id')
+						.andWhere('ta_child_filter.userId = :childFilterAssigneeId')
+						.getQuery()
+					return `EXISTS ${subQuery}`
+				})
+				childQuery.setParameter('childFilterAssigneeId', parseInt(filters.assigneeId))
+			}
+
 			const children = await childQuery
 				.orderBy('task.order', 'ASC')
 				.addOrderBy('task.createdAt', 'DESC')
 				.getMany()
 
 			if (children.length > 0) {
-				task.children = await this.loadChildren(children, isAdmin, userId)
+				task.children = await this.loadChildren(children, isAdmin, userId, filters)
 			}
 		}
 		return tasks
@@ -322,6 +357,9 @@ export class TaskService {
 			throw new UnauthorizedException('Tapşırığı silmək üçün icazəniz yoxdur!')
 		}
 
+		// Set deletedById before soft delete
+		task.deletedById = user.id
+		await this.taskRepo.save(task)
 		await this.taskRepo.softDelete({ id })
 
 		await this.activityLogService.log(
