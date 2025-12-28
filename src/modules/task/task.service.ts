@@ -135,8 +135,15 @@ export class TaskService {
 	}
 
 	async update(id: number, dto: UpdateTaskDto) {
+		console.log('=== UPDATE TASK ===')
+		console.log('Task ID:', id)
+		console.log('DTO:', JSON.stringify(dto))
+		console.log('dto.statusId:', dto.statusId, 'type:', typeof dto.statusId)
+
 		const task = await this.taskRepo.findOne({ where: { id }, relations: ['assignees'] })
 		if (!task) throw new NotFoundException('Task not found')
+
+		console.log('Current task.statusId:', task.statusId)
 
 		if (dto.statusId !== undefined && dto.statusId !== null) {
 			await this.ensureStatusExists(dto.statusId)
@@ -197,7 +204,16 @@ export class TaskService {
 				relations: ['assignees', 'status']
 			})
 		}
+		console.log('Before save - task.statusId:', task.statusId)
 		await this.taskRepo.save(task)
+
+		const updatedTask = await this.taskRepo.findOne({
+			where: { id },
+			relations: ['assignees', 'status']
+		})
+		console.log('After save - updatedTask.statusId:', updatedTask?.statusId)
+		console.log('After save - updatedTask.status:', updatedTask?.status)
+
 		await this.logTaskActivity(task.id, changes)
 
 		if (Object.keys(changes).length > 0) {
@@ -210,11 +226,7 @@ export class TaskService {
 			)
 		}
 
-		// Yenilənmiş task-ı bütün relation-larla qaytaraq
-		return await this.taskRepo.findOne({
-			where: { id },
-			relations: ['assignees', 'status']
-		})
+		return updatedTask
 	}
 
 	private async ensureStatusExists(statusId: number) {
