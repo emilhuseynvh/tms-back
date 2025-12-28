@@ -175,7 +175,11 @@ export class TaskService {
 		if (dto.assigneeIds !== undefined) {
 			task.assignees = dto.assigneeIds.map((id) => ({ id } as UserEntity))
 		}
-		if (dto.statusId !== undefined) task.statusId = dto.statusId
+		if (dto.statusId !== undefined) {
+			task.statusId = dto.statusId
+			// eager: true olduğu üçün status relation-ı statusId-ni override edə bilər, onu silirik
+			delete (task as any).status
+		}
 		if (dto.link !== undefined) task.link = dto.link
 		if (dto.taskListId !== undefined && dto.taskListId !== task.taskListId) {
 			await this.taskRepo
