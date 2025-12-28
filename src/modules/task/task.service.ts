@@ -181,7 +181,7 @@ export class TaskService {
 			const newIndex = await this.taskRepo.count({ where: { taskListId: dto.taskListId } })
 			task.taskListId = dto.taskListId
 			task.order = newIndex
-			const savedTask = await this.taskRepo.save(task)
+			await this.taskRepo.save(task)
 			await this.logTaskActivity(task.id, changes)
 
 			await this.activityLogService.log(
@@ -192,9 +192,12 @@ export class TaskService {
 				{ ...changes }
 			)
 
-			return savedTask
+			return await this.taskRepo.findOne({
+				where: { id },
+				relations: ['assignees', 'status']
+			})
 		}
-		const savedTask = await this.taskRepo.save(task)
+		await this.taskRepo.save(task)
 		await this.logTaskActivity(task.id, changes)
 
 		if (Object.keys(changes).length > 0) {
@@ -207,7 +210,11 @@ export class TaskService {
 			)
 		}
 
-		return savedTask
+		// Yenilənmiş task-ı bütün relation-larla qaytaraq
+		return await this.taskRepo.findOne({
+			where: { id },
+			relations: ['assignees', 'status']
+		})
 	}
 
 	private async ensureStatusExists(statusId: number) {
