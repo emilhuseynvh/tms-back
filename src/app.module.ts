@@ -20,6 +20,7 @@ import { TaskStatusModule } from './modules/task-status/task-status.module';
 import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { TrashModule } from './modules/trash/trash.module';
 import { SpaceModule } from './modules/space/space.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -50,7 +51,8 @@ import { SpaceModule } from './modules/space/space.module';
     ChatModule,
     ActivityLogModule,
     TrashModule,
-    SpaceModule
+    SpaceModule,
+    NotificationModule
   ],
   controllers: [AppController],
   providers: [AppService],

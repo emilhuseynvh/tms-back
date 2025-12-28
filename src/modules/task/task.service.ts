@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { TaskEntity } from "../../entities/task.entity";
@@ -12,6 +12,7 @@ import { FilterTaskDto } from "./dto/filter-task.dto";
 import { ClsService } from "nestjs-cls";
 import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
+import { NotificationService } from "../notification/notification.service";
 
 @Injectable()
 export class TaskService {
@@ -23,7 +24,9 @@ export class TaskService {
 		@InjectRepository(TaskActivityEntity)
 		private taskActivityRepo: Repository<TaskActivityEntity>,
 		private cls: ClsService,
-		private activityLogService: ActivityLogService
+		private activityLogService: ActivityLogService,
+		@Inject(forwardRef(() => NotificationService))
+		private notificationService: NotificationService
 	) { }
 
 	async create(dto: CreateTaskDto) {
@@ -44,6 +47,13 @@ export class TaskService {
 			assignees: dto.assigneeIds?.map((id) => ({ id } as UserEntity)) || []
 		} as Partial<TaskEntity>)
 		const savedTask = await this.taskRepo.save(task)
+
+		// Assign edilmiş userlər üçün notification record yarat
+		if (dto.assigneeIds && dto.assigneeIds.length > 0) {
+			for (const userId of dto.assigneeIds) {
+				await this.notificationService.createNotificationRecord(savedTask.id, userId)
+			}
+		}
 
 		await this.activityLogService.log(
 			ActivityType.TASK_CREATE,
@@ -135,15 +145,8 @@ export class TaskService {
 	}
 
 	async update(id: number, dto: UpdateTaskDto) {
-		console.log('=== UPDATE TASK ===')
-		console.log('Task ID:', id)
-		console.log('DTO:', JSON.stringify(dto))
-		console.log('dto.statusId:', dto.statusId, 'type:', typeof dto.statusId)
-
 		const task = await this.taskRepo.findOne({ where: { id }, relations: ['assignees'] })
 		if (!task) throw new NotFoundException('Task not found')
-
-		console.log('Current task.statusId:', task.statusId)
 
 		if (dto.statusId !== undefined && dto.statusId !== null) {
 			await this.ensureStatusExists(dto.statusId)
@@ -154,7 +157,6 @@ export class TaskService {
 		this.collectChanges(changes, 'description', task.description, dto.description)
 		this.collectChanges(changes, 'startAt', task.startAt, dto.startAt ? new Date(dto.startAt) : dto.startAt === null ? null : undefined)
 		this.collectChanges(changes, 'dueAt', task.dueAt, dto.dueAt ? new Date(dto.dueAt) : dto.dueAt === null ? null : undefined)
-		this.collectChanges(changes, 'is_message_send', task.is_message_send, dto.is_message_send)
 		this.collectChanges(changes, 'statusId', task.statusId, dto.statusId)
 		this.collectChanges(changes, 'taskListId', task.taskListId, dto.taskListId)
 		this.collectChanges(changes, 'link', task.link, dto.link)
@@ -170,9 +172,23 @@ export class TaskService {
 		if (dto.startAt !== undefined) task.startAt = dto.startAt ? new Date(dto.startAt) : null
 		if (dto.dueAt !== undefined) task.dueAt = dto.dueAt ? new Date(dto.dueAt) : null
 		if (dto.title !== undefined) task.title = dto.title
-		if (dto.is_message_send !== undefined) task.is_message_send = dto.is_message_send
 		if (dto.description !== undefined) task.description = dto.description
 		if (dto.assigneeIds !== undefined) {
+			const prevIds = (task.assignees || []).map((a) => a.id)
+			const nextIds = dto.assigneeIds
+
+			// Yeni əlavə olunan userlər üçün notification record yarat
+			const addedUserIds = nextIds.filter(id => !prevIds.includes(id))
+			for (const userId of addedUserIds) {
+				await this.notificationService.createNotificationRecord(id, userId)
+			}
+
+			// Çıxarılan userlər üçün notification record-u sil
+			const removedUserIds = prevIds.filter(id => !nextIds.includes(id))
+			for (const userId of removedUserIds) {
+				await this.notificationService.removeNotificationRecord(id, userId)
+			}
+
 			task.assignees = dto.assigneeIds.map((id) => ({ id } as UserEntity))
 		}
 		if (dto.statusId !== undefined) {
@@ -208,15 +224,12 @@ export class TaskService {
 				relations: ['assignees', 'status']
 			})
 		}
-		console.log('Before save - task.statusId:', task.statusId)
 		await this.taskRepo.save(task)
 
 		const updatedTask = await this.taskRepo.findOne({
 			where: { id },
 			relations: ['assignees', 'status']
 		})
-		console.log('After save - updatedTask.statusId:', updatedTask?.statusId)
-		console.log('After save - updatedTask.status:', updatedTask?.status)
 
 		await this.logTaskActivity(task.id, changes)
 

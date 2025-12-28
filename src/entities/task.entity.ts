@@ -34,9 +34,6 @@ export class TaskEntity extends BaseEntity {
 	@Column()
 	taskListId: number
 
-	@Column({ default: false })
-	is_message_send: boolean
-
 	@Column({ nullable: true, type: 'text' })
 	link: string
 

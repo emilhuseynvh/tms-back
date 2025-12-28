@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsBoolean, IsDateString, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsArray, IsDateString, IsNumber, IsOptional, IsString } from "class-validator";
 import { Type } from "class-transformer";
 
 export class UpdateTaskDto {
@@ -22,11 +22,6 @@ export class UpdateTaskDto {
 	@IsDateString()
 	@ApiProperty({ required: false })
 	dueAt?: string
-
-	@IsOptional()
-	@IsBoolean()
-	@ApiProperty({ required: false })
-	is_message_send?: boolean
 
 	@IsOptional()
 	@Type(() => Number)
