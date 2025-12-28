@@ -34,7 +34,7 @@ export class FolderService {
 			folderId: savedFolder.id,
 			spaceId: dto.spaceId
 		})
-		await this.taskListRepo.save(defaultList)
+		const savedDefaultList = await this.taskListRepo.save(defaultList)
 
 		await this.activityLogService.log(
 			ActivityType.FOLDER_CREATE,
@@ -43,7 +43,18 @@ export class FolderService {
 			`"${savedFolder.name}" qovluğu yaradıldı`
 		)
 
-		return savedFolder
+		// Return folder with default list as plain object
+		return {
+			id: savedFolder.id,
+			name: savedFolder.name,
+			description: savedFolder.description,
+			spaceId: savedFolder.spaceId,
+			ownerId: savedFolder.ownerId,
+			createdAt: savedFolder.createdAt,
+			updatedAt: savedFolder.updatedAt,
+			taskLists: [savedDefaultList],
+			defaultListId: savedDefaultList.id
+		}
 	}
 
 	async listAll() {
