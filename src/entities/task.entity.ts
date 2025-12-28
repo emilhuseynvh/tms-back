@@ -15,10 +15,10 @@ export class TaskEntity extends BaseEntity {
 	@Column({ nullable: true, type: 'text' })
 	description: string
 
-	@Column({ type: 'timestamp', nullable: true })
+	@Column({ type: 'timestamptz', nullable: true })
 	startAt: Date | null
 
-	@Column({ type: 'timestamp', nullable: true })
+	@Column({ type: 'timestamptz', nullable: true })
 	dueAt: Date | null
 
 	@Column({ nullable: true })
