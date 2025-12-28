@@ -29,6 +29,7 @@ export class UpdateTaskDto {
 	is_message_send?: boolean
 
 	@IsOptional()
+	@Type(() => Number)
 	@IsNumber()
 	@ApiProperty({ required: false })
 	statusId?: number
@@ -41,6 +42,7 @@ export class UpdateTaskDto {
 	assigneeIds?: number[]
 
 	@IsOptional()
+	@Type(() => Number)
 	@IsNumber()
 	@ApiProperty({ required: false })
 	taskListId?: number

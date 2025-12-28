@@ -45,7 +45,7 @@ export class SpaceService {
 		const user = this.cls.get('user')
 
 		// Admin bütün space-ləri görür
-		if (user.role === 'admin') {
+		if (user?.role === 'admin') {
 			return await this.spaceRepo.find({
 				order: { createdAt: 'DESC' },
 				relations: ['folders', 'folders.taskLists', 'taskLists']
@@ -98,7 +98,7 @@ export class SpaceService {
 		if (!space) throw new NotFoundException('Sahə tapılmadı!')
 
 		const user = this.cls.get('user')
-		if (user.role !== 'admin' && space.ownerId !== userId) {
+		if (user?.role !== 'admin' && space.ownerId !== userId) {
 			throw new UnauthorizedException('Sahəni yeniləmək üçün icazəniz yoxdur!')
 		}
 
@@ -123,7 +123,7 @@ export class SpaceService {
 		if (!space) throw new NotFoundException('Sahə tapılmadı!')
 
 		const user = this.cls.get('user')
-		if (user.role !== 'admin' && space.ownerId !== userId) {
+		if (user?.role !== 'admin' && space.ownerId !== userId) {
 			throw new UnauthorizedException('Sahəni silmək üçün icazəniz yoxdur!')
 		}
 

@@ -282,7 +282,7 @@ export class TaskService {
 		if (!task) throw new NotFoundException('Tapşırıq tapılmadı!')
 
 		const user = this.cls.get('user')
-		if (user.role !== 'admin' && task.taskList?.folder?.ownerId !== user.id) {
+		if (user?.role !== 'admin' && task.taskList?.folder?.ownerId !== user?.id) {
 			throw new UnauthorizedException('Tapşırığı silmək üçün icazəniz yoxdur!')
 		}
 
