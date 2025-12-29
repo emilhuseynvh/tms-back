@@ -27,6 +27,19 @@ export class SpaceEntity extends BaseEntity {
 	@OneToMany(() => TaskListEntity, (list) => list.space)
 	taskLists: TaskListEntity[]
 
+	@Column({ default: false })
+	isArchived: boolean
+
+	@Column({ type: 'timestamptz', nullable: true })
+	archivedAt: Date
+
+	@Column({ nullable: true })
+	archivedById: number
+
+	@ManyToOne(() => UserEntity, { nullable: true })
+	@JoinColumn({ name: 'archivedById' })
+	archivedBy: UserEntity
+
 	@CreateDateColumn()
 	createdAt: Date
 

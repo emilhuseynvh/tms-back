@@ -28,6 +28,19 @@ export class TaskListEntity extends BaseEntity {
 	@OneToMany(() => TaskEntity, (task) => task.taskList)
 	tasks: TaskEntity[]
 
+	@Column({ default: false })
+	isArchived: boolean
+
+	@Column({ type: 'timestamptz', nullable: true })
+	archivedAt: Date
+
+	@Column({ nullable: true })
+	archivedById: number
+
+	@ManyToOne(() => UserEntity, { nullable: true })
+	@JoinColumn({ name: 'archivedById' })
+	archivedBy: UserEntity
+
 	@Column({ nullable: true })
 	deletedById: number
 

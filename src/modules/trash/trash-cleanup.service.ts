@@ -29,31 +29,31 @@ export class TrashCleanupService {
 	async cleanupOldTrash() {
 		this.logger.log('Zibil qabı təmizləmə başladı...');
 
-		const thirtyDaysAgo = new Date();
-		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+		const ninetyDaysAgo = new Date();
+		ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
 		try {
-			// 30 gündən köhnə silinmiş elementləri tap
+			// 90 gündən köhnə silinmiş elementləri tap
 			const [oldSpaces, oldFolders, oldLists, oldTasks] = await Promise.all([
 				this.spaceRepo.createQueryBuilder('space')
 					.withDeleted()
 					.where('space.deletedAt IS NOT NULL')
-					.andWhere('space.deletedAt < :date', { date: thirtyDaysAgo })
+					.andWhere('space.deletedAt < :date', { date: ninetyDaysAgo })
 					.getMany(),
 				this.folderRepo.createQueryBuilder('folder')
 					.withDeleted()
 					.where('folder.deletedAt IS NOT NULL')
-					.andWhere('folder.deletedAt < :date', { date: thirtyDaysAgo })
+					.andWhere('folder.deletedAt < :date', { date: ninetyDaysAgo })
 					.getMany(),
 				this.taskListRepo.createQueryBuilder('list')
 					.withDeleted()
 					.where('list.deletedAt IS NOT NULL')
-					.andWhere('list.deletedAt < :date', { date: thirtyDaysAgo })
+					.andWhere('list.deletedAt < :date', { date: ninetyDaysAgo })
 					.getMany(),
 				this.taskRepo.createQueryBuilder('task')
 					.withDeleted()
 					.where('task.deletedAt IS NOT NULL')
-					.andWhere('task.deletedAt < :date', { date: thirtyDaysAgo })
+					.andWhere('task.deletedAt < :date', { date: ninetyDaysAgo })
 					.getMany()
 			]);
 

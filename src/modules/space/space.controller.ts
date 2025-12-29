@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/common";
 import { SpaceService } from "./space.service";
 import { CreateSpaceDto } from "./dto/create-space.dto";
 import { UpdateSpaceDto } from "./dto/update-space.dto";
@@ -29,6 +29,11 @@ export class SpaceController {
 	@Get(':id')
 	async getOne(@Param('id') id: number) {
 		return await this.spaceService.getOne(id)
+	}
+
+	@Get(':id/full')
+	async getFullDetails(@Param('id') id: number, @Query('search') search?: string) {
+		return await this.spaceService.getFullDetails(id, search)
 	}
 
 	@Post()

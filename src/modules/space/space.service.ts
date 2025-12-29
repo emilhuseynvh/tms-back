@@ -92,6 +92,64 @@ export class SpaceService {
 		return space
 	}
 
+	async getFullDetails(id: number, search?: string) {
+		const space = await this.spaceRepo.findOne({
+			where: { id, isArchived: false },
+			relations: ['folders', 'folders.taskLists', 'folders.taskLists.tasks', 'folders.taskLists.tasks.assignees', 'folders.taskLists.tasks.status', 'taskLists', 'taskLists.tasks', 'taskLists.tasks.assignees', 'taskLists.tasks.status']
+		})
+
+		if (!space) throw new NotFoundException('Sahə tapılmadı!')
+
+		const folders = space.folders
+			?.filter(f => !f.isArchived && !f.deletedAt)
+			?.map(folder => ({
+				...folder,
+				taskLists: folder.taskLists
+					?.filter(l => !l.isArchived && !l.deletedAt)
+					?.map(list => ({
+						...list,
+						tasks: list.tasks?.filter(t => !t.isArchived && !t.deletedAt) || []
+					})) || []
+			})) || []
+
+		const directLists = space.taskLists
+			?.filter(l => !l.folderId && !l.isArchived && !l.deletedAt)
+			?.map(list => ({
+				...list,
+				tasks: list.tasks?.filter(t => !t.isArchived && !t.deletedAt) || []
+			})) || []
+
+		const allTasks: any[] = []
+		folders.forEach(folder => {
+			folder.taskLists.forEach(list => {
+				allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: folder.name })))
+			})
+		})
+		directLists.forEach(list => {
+			allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: null })))
+		})
+
+		if (search) {
+			const searchLower = search.toLowerCase()
+			const filteredFolders = folders.filter(f => f.name.toLowerCase().includes(searchLower))
+			const filteredLists = directLists.filter(l => l.name.toLowerCase().includes(searchLower))
+			const filteredTasks = allTasks.filter(t => t.title?.toLowerCase().includes(searchLower) || t.description?.toLowerCase().includes(searchLower))
+			return {
+				...space,
+				folders: filteredFolders,
+				directLists: filteredLists,
+				allTasks: filteredTasks
+			}
+		}
+
+		return {
+			...space,
+			folders,
+			directLists,
+			allTasks
+		}
+	}
+
 	async updateSpace(id: number, userId: number, dto: UpdateSpaceDto) {
 		const space = await this.spaceRepo.findOne({ where: { id } })
 

@@ -73,6 +73,44 @@ export class FolderService {
 		})
 	}
 
+	async getFullDetails(id: number, search?: string) {
+		const folder = await this.folderRepo.findOne({
+			where: { id, isArchived: false },
+			relations: ['taskLists', 'taskLists.tasks', 'taskLists.tasks.assignees', 'taskLists.tasks.status', 'space']
+		})
+
+		if (!folder) throw new NotFoundException('Qovluq tapılmadı!')
+
+		const taskLists = folder.taskLists
+			?.filter(l => !l.isArchived && !l.deletedAt)
+			?.map(list => ({
+				...list,
+				tasks: list.tasks?.filter(t => !t.isArchived && !t.deletedAt) || []
+			})) || []
+
+		const allTasks: any[] = []
+		taskLists.forEach(list => {
+			allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name })))
+		})
+
+		if (search) {
+			const searchLower = search.toLowerCase()
+			const filteredLists = taskLists.filter(l => l.name.toLowerCase().includes(searchLower))
+			const filteredTasks = allTasks.filter(t => t.title?.toLowerCase().includes(searchLower) || t.description?.toLowerCase().includes(searchLower))
+			return {
+				...folder,
+				taskLists: filteredLists,
+				allTasks: filteredTasks
+			}
+		}
+
+		return {
+			...folder,
+			taskLists,
+			allTasks
+		}
+	}
+
 	async updateFolder(id: number, userId: number, dto: UpdateFolderDto) {
 		const folder = await this.folderRepo.findOne({ where: { id } })
 

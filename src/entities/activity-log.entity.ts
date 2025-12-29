@@ -47,6 +47,6 @@ export class ActivityLogEntity extends BaseEntity {
 	@Column({ type: 'text', nullable: true })
 	description: string
 
-	@CreateDateColumn()
+	@CreateDateColumn({ type: 'timestamptz' })
 	createdAt: Date
 }

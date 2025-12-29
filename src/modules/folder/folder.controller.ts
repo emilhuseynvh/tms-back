@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/common";
 import { FolderService } from "./folder.service";
 import { CreateFolderDto } from "./dto/create-folder.dto";
 import { UpdateFolderDto } from "./dto/update-folder.dto";
@@ -36,6 +36,11 @@ export class FolderController {
 	@Get('space/:spaceId')
 	async listBySpace(@Param('spaceId') spaceId: number) {
 		return await this.folderService.listBySpace(spaceId)
+	}
+
+	@Get(':id/full')
+	async getFullDetails(@Param('id') id: number, @Query('search') search?: string) {
+		return await this.folderService.getFullDetails(id, search)
 	}
 
 	@Post(':id')

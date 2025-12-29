@@ -21,6 +21,7 @@ import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { TrashModule } from './modules/trash/trash.module';
 import { SpaceModule } from './modules/space/space.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { ArchiveModule } from './modules/archive/archive.module';
 
 @Module({
   imports: [
@@ -52,7 +53,8 @@ import { NotificationModule } from './modules/notification/notification.module';
     ActivityLogModule,
     TrashModule,
     SpaceModule,
-    NotificationModule
+    NotificationModule,
+    ArchiveModule
   ],
   controllers: [AppController],
   providers: [AppService],
