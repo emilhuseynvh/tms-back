@@ -34,10 +34,10 @@ export class FolderEntity extends BaseEntity {
 	isArchived: boolean
 
 	@Column({ type: 'timestamptz', nullable: true })
-	archivedAt: Date
+	archivedAt: Date | null
 
 	@Column({ nullable: true })
-	archivedById: number
+	archivedById: number | null
 
 	@ManyToOne(() => UserEntity, { nullable: true })
 	@JoinColumn({ name: 'archivedById' })
