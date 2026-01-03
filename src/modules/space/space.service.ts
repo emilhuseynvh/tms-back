@@ -47,12 +47,22 @@ export class SpaceService {
 		// Admin bütün space-ləri görür
 		if (user?.role === 'admin') {
 			return await this.spaceRepo.find({
+				where: { isArchived: false },
 				order: { createdAt: 'DESC' },
 				relations: ['folders', 'folders.taskLists', 'taskLists']
 			})
 		}
 
-		// User yalnız assign edildiyi task-ların olduğu space-ləri görür
+		// User-in özünün yaratdığı space-ləri tap
+		const ownedSpaceIds = await this.spaceRepo
+			.createQueryBuilder('space')
+			.where('space.ownerId = :ownerId', { ownerId })
+			.andWhere('space.isArchived = false')
+			.andWhere('space.deletedAt IS NULL')
+			.select('space.id')
+			.getRawMany()
+
+		// User-in assign edildiyi task-ların space-lərini tap
 		const assignedSpaceIds = await this.taskRepo
 			.createQueryBuilder('task')
 			.innerJoin('task.assignees', 'assignee', 'assignee.id = :userId', { userId: ownerId })
@@ -60,23 +70,32 @@ export class SpaceService {
 			.leftJoin('taskList.folder', 'folder')
 			.leftJoin('taskList.space', 'directSpace')
 			.leftJoin('folder.space', 'folderSpace')
+			.where('task.deletedAt IS NULL')
+			.andWhere('task.isArchived = false')
 			.select('DISTINCT COALESCE(directSpace.id, folderSpace.id)', 'spaceId')
 			.getRawMany()
 
-		const spaceIds = assignedSpaceIds
-			.map(r => r.spaceId)
-			.filter(id => id !== null)
+		// Hər iki mənbədən space ID-lərini birləşdir
+		const allSpaceIds = [
+			...ownedSpaceIds.map(r => r.space_id),
+			...assignedSpaceIds.map(r => r.spaceId)
+		].filter(id => id !== null)
 
-		if (spaceIds.length === 0) {
+		// Unique ID-lər
+		const uniqueSpaceIds = [...new Set(allSpaceIds)]
+
+		if (uniqueSpaceIds.length === 0) {
 			return []
 		}
 
 		return await this.spaceRepo
 			.createQueryBuilder('space')
-			.leftJoinAndSelect('space.folders', 'folders')
-			.leftJoinAndSelect('folders.taskLists', 'folderTaskLists')
-			.leftJoinAndSelect('space.taskLists', 'taskLists')
-			.where('space.id IN (:...spaceIds)', { spaceIds })
+			.leftJoinAndSelect('space.folders', 'folders', 'folders.isArchived = false AND folders.deletedAt IS NULL')
+			.leftJoinAndSelect('folders.taskLists', 'folderTaskLists', 'folderTaskLists.isArchived = false AND folderTaskLists.deletedAt IS NULL')
+			.leftJoinAndSelect('space.taskLists', 'taskLists', 'taskLists.isArchived = false AND taskLists.deletedAt IS NULL AND taskLists.folderId IS NULL')
+			.where('space.id IN (:...spaceIds)', { spaceIds: uniqueSpaceIds })
+			.andWhere('space.isArchived = false')
+			.andWhere('space.deletedAt IS NULL')
 			.orderBy('space.createdAt', 'DESC')
 			.getMany()
 	}
