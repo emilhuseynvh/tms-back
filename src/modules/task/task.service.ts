@@ -379,4 +379,35 @@ export class TaskService {
 			take: limit
 		})
 	}
+
+	async getMyTasks() {
+		const user = this.cls.get('user')
+		if (!user?.id) return []
+
+		const isAdmin = user.role === 'admin'
+
+		const queryBuilder = this.taskRepo.createQueryBuilder('task')
+			.leftJoinAndSelect('task.status', 'status')
+			.leftJoinAndSelect('task.assignees', 'assignees')
+			.where('task.isArchived = false')
+			.andWhere('task.deletedAt IS NULL')
+			.andWhere('task.dueAt IS NOT NULL')
+
+		if (!isAdmin) {
+			queryBuilder.andWhere(qb => {
+				const subQuery = qb.subQuery()
+					.select('1')
+					.from('task_assignees', 'ta')
+					.where('ta.taskId = task.id')
+					.andWhere('ta.userId = :userId')
+					.getQuery()
+				return `EXISTS ${subQuery}`
+			})
+			queryBuilder.setParameter('userId', user.id)
+		}
+
+		return await queryBuilder
+			.orderBy('task.dueAt', 'ASC')
+			.getMany()
+	}
 }

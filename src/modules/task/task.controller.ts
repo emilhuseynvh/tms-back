@@ -10,6 +10,12 @@ import { FilterTaskDto } from "./dto/filter-task.dto";
 export class TaskController {
 	constructor(private taskService: TaskService) { }
 
+	@Get('my-tasks')
+	@Auth()
+	async getMyTasks() {
+		return await this.taskService.getMyTasks()
+	}
+
 	@Get('list/:taskListId')
 	async listByTaskList(
 		@Param('taskListId') taskListId: number,
