@@ -232,6 +232,10 @@ export class TaskService {
 			delete (task as any).status
 		}
 		if (dto.link !== undefined) task.link = dto.link
+		if (dto.parentId !== undefined) {
+			this.collectChanges(changes, 'parentId', task.parentId, dto.parentId)
+			task.parentId = dto.parentId as number
+		}
 		if (dto.taskListId !== undefined && dto.taskListId !== task.taskListId) {
 			await this.taskRepo
 				.createQueryBuilder()

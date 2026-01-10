@@ -46,4 +46,10 @@ export class UpdateTaskDto {
 	@IsString()
 	@ApiProperty({ required: false })
 	link?: string
+
+	@IsOptional()
+	@Type(() => Number)
+	@IsNumber()
+	@ApiProperty({ required: false, description: 'Parent task ID. Set to null to make it a root task.' })
+	parentId?: number | null
 }
