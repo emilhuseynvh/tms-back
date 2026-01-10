@@ -13,6 +13,7 @@ import { ClsService } from "nestjs-cls";
 import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
 import { NotificationService } from "../notification/notification.service";
+import { NotificationGateway } from "../notification/notification.gateway";
 
 @Injectable()
 export class TaskService {
@@ -26,7 +27,9 @@ export class TaskService {
 		private cls: ClsService,
 		private activityLogService: ActivityLogService,
 		@Inject(forwardRef(() => NotificationService))
-		private notificationService: NotificationService
+		private notificationService: NotificationService,
+		@Inject(forwardRef(() => NotificationGateway))
+		private notificationGateway: NotificationGateway
 	) { }
 
 	async create(dto: CreateTaskDto) {
@@ -48,10 +51,14 @@ export class TaskService {
 		} as Partial<TaskEntity>)
 		const savedTask = await this.taskRepo.save(task)
 
-		// Assign edilmiş userlər üçün notification record yarat
+		// Assign edilmiş userlər üçün notification record yarat və bildiriş göndər
 		if (dto.assigneeIds && dto.assigneeIds.length > 0) {
 			for (const userId of dto.assigneeIds) {
 				await this.notificationService.createNotificationRecord(savedTask.id, userId)
+				const notification = await this.notificationService.notifyTaskAssigned(savedTask.id, userId, savedTask.title)
+				this.notificationGateway.emitNewNotification(userId, notification)
+				const unreadCount = await this.notificationService.getUnreadCount(userId)
+				this.notificationGateway.emitUnreadCountUpdate(userId, unreadCount)
 			}
 		}
 
@@ -212,16 +219,22 @@ export class TaskService {
 			const prevIds = (task.assignees || []).map((a) => a.id)
 			const nextIds = dto.assigneeIds
 
-			// Yeni əlavə olunan userlər üçün notification record yarat
 			const addedUserIds = nextIds.filter(id => !prevIds.includes(id))
 			for (const userId of addedUserIds) {
 				await this.notificationService.createNotificationRecord(id, userId)
+				const notification = await this.notificationService.notifyTaskAssigned(id, userId, task.title)
+				this.notificationGateway.emitNewNotification(userId, notification)
+				const unreadCount = await this.notificationService.getUnreadCount(userId)
+				this.notificationGateway.emitUnreadCountUpdate(userId, unreadCount)
 			}
 
-			// Çıxarılan userlər üçün notification record-u sil
 			const removedUserIds = prevIds.filter(id => !nextIds.includes(id))
 			for (const userId of removedUserIds) {
 				await this.notificationService.removeNotificationRecord(id, userId)
+				const notification = await this.notificationService.notifyTaskUnassigned(id, userId, task.title)
+				this.notificationGateway.emitNewNotification(userId, notification)
+				const unreadCount = await this.notificationService.getUnreadCount(userId)
+				this.notificationGateway.emitUnreadCountUpdate(userId, unreadCount)
 			}
 
 			task.assignees = dto.assigneeIds.map((id) => ({ id } as UserEntity))

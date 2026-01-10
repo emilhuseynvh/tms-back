@@ -4,8 +4,10 @@ import { LessThanOrEqual, MoreThan, Repository, IsNull } from "typeorm";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { TaskNotificationEntity } from "../../entities/task-notification.entity";
 import { NotificationSettingsEntity } from "../../entities/notification-settings.entity";
+import { NotificationEntity, NotificationType } from "../../entities/notification.entity";
 import { TaskEntity } from "../../entities/task.entity";
 import { UpdateNotificationSettingsDto } from "./dto/update-settings.dto";
+import { ClsService } from "nestjs-cls";
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
@@ -14,8 +16,11 @@ export class NotificationService implements OnModuleInit {
 		private taskNotificationRepo: Repository<TaskNotificationEntity>,
 		@InjectRepository(NotificationSettingsEntity)
 		private settingsRepo: Repository<NotificationSettingsEntity>,
+		@InjectRepository(NotificationEntity)
+		private notificationRepo: Repository<NotificationEntity>,
 		@InjectRepository(TaskEntity)
 		private taskRepo: Repository<TaskEntity>,
+		private cls: ClsService
 	) { }
 
 	// Modul başlayanda default settings yarat
@@ -176,5 +181,128 @@ export class NotificationService implements OnModuleInit {
 		}
 
 		return tasks
+	}
+
+	async createNotification(
+		userId: number,
+		type: NotificationType,
+		title: string,
+		message: string,
+		taskId?: number
+	): Promise<NotificationEntity> {
+		const notification = this.notificationRepo.create({
+			userId,
+			type,
+			title,
+			message,
+			taskId: taskId || null,
+			isRead: false
+		})
+		return await this.notificationRepo.save(notification)
+	}
+
+	async getUserNotifications(
+		userId: number,
+		filter: 'all' | 'unread' | 'read' = 'all',
+		page: number = 1,
+		limit: number = 20
+	): Promise<{ data: NotificationEntity[], total: number, hasMore: boolean }> {
+		const where: any = { userId }
+
+		if (filter === 'unread') {
+			where.isRead = false
+		} else if (filter === 'read') {
+			where.isRead = true
+		}
+
+		const [data, total] = await this.notificationRepo.findAndCount({
+			where,
+			order: { createdAt: 'DESC' },
+			skip: (page - 1) * limit,
+			take: limit,
+			relations: ['task']
+		})
+
+		return {
+			data,
+			total,
+			hasMore: page * limit < total
+		}
+	}
+
+	async getUnreadCount(userId: number): Promise<number> {
+		return await this.notificationRepo.count({
+			where: { userId, isRead: false }
+		})
+	}
+
+	async markNotificationAsRead(notificationId: number, userId: number): Promise<NotificationEntity | null> {
+		const notification = await this.notificationRepo.findOne({
+			where: { id: notificationId, userId }
+		})
+
+		if (!notification) return null
+
+		notification.isRead = true
+		return await this.notificationRepo.save(notification)
+	}
+
+	async markAllAsRead(userId: number): Promise<void> {
+		await this.notificationRepo.update(
+			{ userId, isRead: false },
+			{ isRead: true }
+		)
+	}
+
+	async deleteNotification(notificationId: number, userId: number): Promise<boolean> {
+		const result = await this.notificationRepo.delete({
+			id: notificationId,
+			userId
+		})
+		return (result.affected || 0) > 0
+	}
+
+	async clearAllNotifications(userId: number): Promise<void> {
+		await this.notificationRepo.delete({ userId })
+	}
+
+	async notifyTaskAssigned(taskId: number, userId: number, taskTitle: string): Promise<NotificationEntity> {
+		return await this.createNotification(
+			userId,
+			NotificationType.TASK_ASSIGNED,
+			'Yeni tapşırıq təyin edildi',
+			`Sizə "${taskTitle}" tapşırığı təyin edildi`,
+			taskId
+		)
+	}
+
+	async notifyTaskUnassigned(taskId: number, userId: number, taskTitle: string): Promise<NotificationEntity> {
+		return await this.createNotification(
+			userId,
+			NotificationType.TASK_UNASSIGNED,
+			'Tapşırıqdan çıxarıldınız',
+			`"${taskTitle}" tapşırığından çıxarıldınız`,
+			taskId
+		)
+	}
+
+	async notifyTaskDeadline(taskId: number, userId: number, taskTitle: string, hoursLeft: number): Promise<NotificationEntity> {
+		return await this.createNotification(
+			userId,
+			NotificationType.TASK_DEADLINE,
+			'Deadline yaxınlaşır',
+			`"${taskTitle}" tapşırığının bitmə vaxtına ${hoursLeft} saat qalıb`,
+			taskId
+		)
+	}
+
+	async notifyTaskUpdated(taskId: number, userId: number, taskTitle: string, updatedBy: string): Promise<NotificationEntity> {
+		return await this.createNotification(
+			userId,
+			NotificationType.TASK_UPDATED,
+			'Tapşırıq yeniləndi',
+			`"${taskTitle}" tapşırığı ${updatedBy} tərəfindən yeniləndi`,
+			taskId
+		)
 	}
 }

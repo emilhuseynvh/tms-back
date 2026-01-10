@@ -108,6 +108,14 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 		}
 	}
 
+	emitNewNotification(userId: number, notification: any) {
+		this.emitToUser(userId, 'notification:new', notification);
+	}
+
+	emitUnreadCountUpdate(userId: number, count: number) {
+		this.emitToUser(userId, 'notification:count', { count });
+	}
+
 	// User-ə göndərilməmiş bildirişləri göndər
 	async sendPendingNotificationsToUser(userId: number) {
 		const tasks = await this.notificationService.getUserPendingNotifications(userId);
