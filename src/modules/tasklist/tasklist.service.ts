@@ -40,6 +40,16 @@ export class TaskListService {
 		return savedList
 	}
 
+	async getOne(id: number) {
+		const taskList = await this.taskListRepo.findOne({
+			where: { id }
+		})
+
+		if (!taskList) throw new NotFoundException('Siyahı tapılmadı')
+
+		return taskList
+	}
+
 	async listBySpace(spaceId: number) {
 		return await this.taskListRepo.find({
 			where: { spaceId, folderId: IsNull() },
