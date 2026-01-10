@@ -187,7 +187,7 @@ export class TaskService {
 			await this.ensureStatusExists(dto.statusId)
 		}
 
-		const changes: Record<string, { from: unknown, to: unknown }> = {}
+		const changes: Record<string, { from: unknown, to: unknown, fromId?: unknown, toId?: unknown }> = {}
 		this.collectChanges(changes, 'title', task.title, dto.title)
 		this.collectChanges(changes, 'description', task.description, dto.description)
 		this.collectChanges(changes, 'startAt', task.startAt, dto.startAt ? new Date(dto.startAt) : dto.startAt === null ? null : undefined)
@@ -234,7 +234,16 @@ export class TaskService {
 		}
 		if (dto.link !== undefined) task.link = dto.link
 		if (dto.parentId !== undefined) {
-			this.collectChanges(changes, 'parentId', task.parentId, dto.parentId)
+			const oldParentName = task.parentId ? (await this.taskRepo.findOne({ where: { id: task.parentId } }))?.title : null
+			const newParentName = dto.parentId ? (await this.taskRepo.findOne({ where: { id: dto.parentId } }))?.title : null
+			if (task.parentId !== dto.parentId) {
+				changes['parentId'] = {
+					from: oldParentName,
+					to: newParentName,
+					fromId: task.parentId,
+					toId: dto.parentId
+				}
+			}
 			task.parentId = dto.parentId as number
 		}
 		if (dto.taskListId !== undefined && dto.taskListId !== task.taskListId) {
