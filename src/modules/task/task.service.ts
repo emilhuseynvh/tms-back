@@ -225,6 +225,7 @@ export class TaskService {
 			}
 
 			task.assignees = dto.assigneeIds.map((id) => ({ id } as UserEntity))
+			task.updatedAt = new Date()
 		}
 		if (dto.statusId !== undefined) {
 			task.statusId = dto.statusId
