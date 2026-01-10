@@ -11,11 +11,6 @@ import { Auth } from "../../shared/decorators/auth.decorator";
 export class TaskListController {
 	constructor(private taskListService: TaskListService) { }
 
-	@Get(':id')
-	async getOne(@Param('id') id: number) {
-		return await this.taskListService.getOne(Number(id))
-	}
-
 	@Get('folder/:folderId')
 	async listByFolder(
 		@Param('folderId') folderId: number,
@@ -27,6 +22,11 @@ export class TaskListController {
 	@Get('space/:spaceId')
 	async listBySpace(@Param('spaceId') spaceId: number) {
 		return await this.taskListService.listBySpace(Number(spaceId))
+	}
+
+	@Get(':id')
+	async getOne(@Param('id') id: number) {
+		return await this.taskListService.getOne(Number(id))
 	}
 
 	@Post()
