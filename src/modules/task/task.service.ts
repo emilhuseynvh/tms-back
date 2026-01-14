@@ -202,6 +202,8 @@ export class TaskService {
 		this.collectChanges(changes, 'statusId', task.statusId, dto.statusId)
 		this.collectChanges(changes, 'taskListId', task.taskListId, dto.taskListId)
 		this.collectChanges(changes, 'link', task.link, dto.link)
+		this.collectChanges(changes, 'doc', task.doc, dto.doc)
+		this.collectChanges(changes, 'meetingNotes', task.meetingNotes, dto.meetingNotes)
 
 		if (dto.assigneeIds !== undefined) {
 			const prev = (task.assignees || []).map((a) => a.id).sort()
@@ -246,6 +248,8 @@ export class TaskService {
 			delete (task as any).status
 		}
 		if (dto.link !== undefined) task.link = dto.link
+		if (dto.doc !== undefined) task.doc = dto.doc
+		if (dto.meetingNotes !== undefined) task.meetingNotes = dto.meetingNotes
 		if (dto.parentId !== undefined) {
 			const oldParentName = task.parentId ? (await this.taskRepo.findOne({ where: { id: task.parentId } }))?.title : null
 			const newParentName = dto.parentId ? (await this.taskRepo.findOne({ where: { id: dto.parentId } }))?.title : null
