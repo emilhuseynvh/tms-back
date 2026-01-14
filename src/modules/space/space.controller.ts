@@ -56,4 +56,10 @@ export class SpaceController {
 		const user = this.cls.get('user')
 		return await this.spaceService.deleteSpace(id, user.id)
 	}
+
+	@Post('reorder')
+	@Auth()
+	async reorderSpaces(@Body() body: { spaceIds: number[] }) {
+		return await this.spaceService.reorderSpaces(body.spaceIds)
+	}
 }

@@ -141,4 +141,33 @@ export class TaskListService {
 
 		return { message: "Siyahı uğurla silindi" }
 	}
+
+	async reorderTaskLists(listIds: number[]) {
+		for (let i = 0; i < listIds.length; i++) {
+			await this.taskListRepo.update(listIds[i], { order: i })
+		}
+		return { message: "Sıralama yeniləndi" }
+	}
+
+	async moveTaskList(id: number, targetFolderId: number | null, targetSpaceId: number | null) {
+		const taskList = await this.taskListRepo.findOne({ where: { id } })
+		if (!taskList) throw new NotFoundException('Siyahı tapılmadı!')
+
+		const oldFolderId = taskList.folderId
+		const oldSpaceId = taskList.spaceId
+
+		taskList.folderId = targetFolderId
+		taskList.spaceId = targetSpaceId
+		await this.taskListRepo.save(taskList)
+
+		await this.activityLogService.log(
+			ActivityType.LIST_UPDATE,
+			id,
+			taskList.name,
+			`"${taskList.name}" siyahısı köçürüldü`,
+			{ oldFolderId, oldSpaceId, newFolderId: targetFolderId, newSpaceId: targetSpaceId }
+		)
+
+		return { message: "Siyahı köçürüldü" }
+	}
 }

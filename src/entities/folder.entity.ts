@@ -14,6 +14,9 @@ export class FolderEntity extends BaseEntity {
 	@Column({ nullable: true })
 	description: string
 
+	@Column({ type: 'int', default: 0 })
+	order: number
+
 	@Column()
 	ownerId: number
 

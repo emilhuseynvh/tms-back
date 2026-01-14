@@ -57,5 +57,16 @@ export class FolderController {
 		return await this.folderService.deleteFolder(id, user.id)
 	}
 
+	@Post('reorder/:spaceId')
+	@Auth()
+	async reorderFolders(@Param('spaceId') spaceId: number, @Body() body: { folderIds: number[] }) {
+		return await this.folderService.reorderFolders(spaceId, body.folderIds)
+	}
+
+	@Post(':id/move')
+	@Auth()
+	async moveFolder(@Param('id') id: number, @Body() body: { targetSpaceId: number }) {
+		return await this.folderService.moveFolder(id, body.targetSpaceId)
+	}
 }
 

@@ -215,4 +215,11 @@ export class SpaceService {
 
 		return { message: "Sahə uğurla silindi" }
 	}
+
+	async reorderSpaces(spaceIds: number[]) {
+		for (let i = 0; i < spaceIds.length; i++) {
+			await this.spaceRepo.update(spaceIds[i], { order: i })
+		}
+		return { message: "Sıralama yeniləndi" }
+	}
 }

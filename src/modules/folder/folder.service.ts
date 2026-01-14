@@ -160,5 +160,33 @@ export class FolderService {
 
 		return { message: "Qovluq uğurla silindi" }
 	}
+
+	async reorderFolders(spaceId: number, folderIds: number[]) {
+		for (let i = 0; i < folderIds.length; i++) {
+			await this.folderRepo.update(folderIds[i], { order: i })
+		}
+		return { message: "Sıralama yeniləndi" }
+	}
+
+	async moveFolder(id: number, targetSpaceId: number) {
+		const folder = await this.folderRepo.findOne({ where: { id } })
+		if (!folder) throw new NotFoundException('Qovluq tapılmadı!')
+
+		const oldSpaceId = folder.spaceId
+		folder.spaceId = targetSpaceId
+		await this.folderRepo.save(folder)
+
+		await this.taskListRepo.update({ folderId: id }, { spaceId: targetSpaceId })
+
+		await this.activityLogService.log(
+			ActivityType.FOLDER_UPDATE,
+			id,
+			folder.name,
+			`"${folder.name}" qovluğu başqa sahəyə köçürüldü`,
+			{ oldSpaceId, newSpaceId: targetSpaceId }
+		)
+
+		return { message: "Qovluq köçürüldü" }
+	}
 }
 

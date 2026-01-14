@@ -46,5 +46,17 @@ export class TaskListController {
 	async deleteTaskList(@Param("id") id: number) {
 		return await this.taskListService.deleteTaskList(id)
 	}
+
+	@Post('reorder')
+	@Auth()
+	async reorderTaskLists(@Body() body: { listIds: number[] }) {
+		return await this.taskListService.reorderTaskLists(body.listIds)
+	}
+
+	@Post(':id/move')
+	@Auth()
+	async moveTaskList(@Param('id') id: number, @Body() body: { targetFolderId?: number, targetSpaceId?: number }) {
+		return await this.taskListService.moveTaskList(id, body.targetFolderId || null, body.targetSpaceId || null)
+	}
 }
 
