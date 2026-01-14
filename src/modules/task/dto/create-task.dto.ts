@@ -55,4 +55,16 @@ export class CreateTaskDto {
 	@IsString()
 	@ApiProperty({ required: false })
 	link?: string
+
+	@Type()
+	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false })
+	doc?: string
+
+	@Type()
+	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false })
+	meetingNotes?: string
 }

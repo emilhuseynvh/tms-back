@@ -37,6 +37,12 @@ export class TaskEntity extends BaseEntity {
 	@Column({ nullable: true, type: 'text' })
 	link: string
 
+	@Column({ nullable: true, type: 'text' })
+	doc: string
+
+	@Column({ nullable: true, type: 'text' })
+	meetingNotes: string
+
 	@ManyToOne(() => TaskListEntity, (list) => list.tasks, { onDelete: 'CASCADE' })
 	taskList: TaskListEntity
 
