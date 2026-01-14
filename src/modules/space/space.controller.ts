@@ -28,12 +28,12 @@ export class SpaceController {
 
 	@Get(':id')
 	async getOne(@Param('id') id: number) {
-		return await this.spaceService.getOne(id)
+		return await this.spaceService.getOne(Number(id))
 	}
 
 	@Get(':id/full')
 	async getFullDetails(@Param('id') id: number, @Query('search') search?: string) {
-		return await this.spaceService.getFullDetails(id, search)
+		return await this.spaceService.getFullDetails(Number(id), search)
 	}
 
 	@Post()
@@ -47,14 +47,14 @@ export class SpaceController {
 	@Auth()
 	async updateSpace(@Param("id") id: number, @Body() body: UpdateSpaceDto) {
 		const user = this.cls.get('user')
-		return await this.spaceService.updateSpace(id, user.id, body)
+		return await this.spaceService.updateSpace(Number(id), user.id, body)
 	}
 
 	@Delete(':id')
 	@Auth()
 	async deleteSpace(@Param("id") id: number) {
 		const user = this.cls.get('user')
-		return await this.spaceService.deleteSpace(id, user.id)
+		return await this.spaceService.deleteSpace(Number(id), user.id)
 	}
 
 	@Post('reorder')

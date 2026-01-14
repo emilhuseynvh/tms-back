@@ -58,17 +58,17 @@ export class FolderService {
 	}
 
 	async listAll() {
-		return await this.folderRepo.find({ order: { createdAt: 'DESC' } })
+		return await this.folderRepo.find({ order: { order: 'ASC' } })
 	}
 
 	async listByOwner(ownerId: number) {
-		return await this.folderRepo.find({ where: { ownerId }, order: { createdAt: 'DESC' } })
+		return await this.folderRepo.find({ where: { ownerId }, order: { order: 'ASC' } })
 	}
 
 	async listBySpace(spaceId: number) {
 		return await this.folderRepo.find({
 			where: { spaceId },
-			order: { createdAt: 'DESC' },
+			order: { order: 'ASC' },
 			relations: ['taskLists']
 		})
 	}

@@ -38,13 +38,13 @@ export class TaskListController {
 	@Post(':id')
 	@Auth()
 	async updateTaskList(@Param("id") id: number, @Body() body: UpdateTaskListDto) {
-		return await this.taskListService.updateTaskList(id, body)
+		return await this.taskListService.updateTaskList(Number(id), body)
 	}
 
 	@Delete(':id')
 	@Auth()
 	async deleteTaskList(@Param("id") id: number) {
-		return await this.taskListService.deleteTaskList(id)
+		return await this.taskListService.deleteTaskList(Number(id))
 	}
 
 	@Post('reorder')
@@ -56,7 +56,7 @@ export class TaskListController {
 	@Post(':id/move')
 	@Auth()
 	async moveTaskList(@Param('id') id: number, @Body() body: { targetFolderId?: number, targetSpaceId?: number }) {
-		return await this.taskListService.moveTaskList(id, body.targetFolderId || null, body.targetSpaceId || null)
+		return await this.taskListService.moveTaskList(Number(id), body.targetFolderId || null, body.targetSpaceId || null)
 	}
 }
 

@@ -96,7 +96,10 @@ export class SpaceService {
 			.where('space.id IN (:...spaceIds)', { spaceIds: uniqueSpaceIds })
 			.andWhere('space.isArchived = false')
 			.andWhere('space.deletedAt IS NULL')
-			.orderBy('space.createdAt', 'DESC')
+			.orderBy('space.order', 'ASC')
+			.addOrderBy('folders.order', 'ASC')
+			.addOrderBy('folderTaskLists.order', 'ASC')
+			.addOrderBy('taskLists.order', 'ASC')
 			.getMany()
 	}
 

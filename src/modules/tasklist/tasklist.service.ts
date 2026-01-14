@@ -43,7 +43,7 @@ export class TaskListService {
 	async listBySpace(spaceId: number) {
 		return await this.taskListRepo.find({
 			where: { spaceId, folderId: IsNull() },
-			order: { createdAt: 'DESC' },
+			order: { order: 'ASC' },
 			relations: ['tasks']
 		})
 	}
@@ -79,7 +79,7 @@ export class TaskListService {
 		}
 
 		return await queryBuilder
-			.orderBy('taskList.createdAt', 'DESC')
+			.orderBy('taskList.order', 'ASC')
 			.addOrderBy('task.order', 'ASC')
 			.getMany()
 	}

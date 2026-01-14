@@ -35,38 +35,38 @@ export class FolderController {
 
 	@Get('space/:spaceId')
 	async listBySpace(@Param('spaceId') spaceId: number) {
-		return await this.folderService.listBySpace(spaceId)
+		return await this.folderService.listBySpace(Number(spaceId))
 	}
 
 	@Get(':id/full')
 	async getFullDetails(@Param('id') id: number, @Query('search') search?: string) {
-		return await this.folderService.getFullDetails(id, search)
+		return await this.folderService.getFullDetails(Number(id), search)
 	}
 
 	@Post(':id')
 	@Auth()
 	async updateFolder(@Param("id") id: number, @Body() body: UpdateFolderDto) {
 		const user = this.cls.get('user')
-		return await this.folderService.updateFolder(id, user.id, body)
+		return await this.folderService.updateFolder(Number(id), user.id, body)
 	}
 
 	@Delete(':id')
 	@Auth()
 	async deleteFolder(@Param("id") id: number) {
 		const user = this.cls.get('user')
-		return await this.folderService.deleteFolder(id, user.id)
+		return await this.folderService.deleteFolder(Number(id), user.id)
 	}
 
 	@Post('reorder/:spaceId')
 	@Auth()
 	async reorderFolders(@Param('spaceId') spaceId: number, @Body() body: { folderIds: number[] }) {
-		return await this.folderService.reorderFolders(spaceId, body.folderIds)
+		return await this.folderService.reorderFolders(Number(spaceId), body.folderIds)
 	}
 
 	@Post(':id/move')
 	@Auth()
 	async moveFolder(@Param('id') id: number, @Body() body: { targetSpaceId: number }) {
-		return await this.folderService.moveFolder(id, body.targetSpaceId)
+		return await this.folderService.moveFolder(Number(id), body.targetSpaceId)
 	}
 }
 
