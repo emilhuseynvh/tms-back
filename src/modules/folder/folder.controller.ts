@@ -43,6 +43,18 @@ export class FolderController {
 		return await this.folderService.getFullDetails(Number(id), search)
 	}
 
+	@Post('reorder/:spaceId')
+	@Auth()
+	async reorderFolders(@Param('spaceId') spaceId: number, @Body() body: { folderIds: number[] }) {
+		return await this.folderService.reorderFolders(Number(spaceId), body.folderIds)
+	}
+
+	@Post(':id/move')
+	@Auth()
+	async moveFolder(@Param('id') id: number, @Body() body: { targetSpaceId: number }) {
+		return await this.folderService.moveFolder(Number(id), body.targetSpaceId)
+	}
+
 	@Post(':id')
 	@Auth()
 	async updateFolder(@Param("id") id: number, @Body() body: UpdateFolderDto) {
@@ -55,18 +67,6 @@ export class FolderController {
 	async deleteFolder(@Param("id") id: number) {
 		const user = this.cls.get('user')
 		return await this.folderService.deleteFolder(Number(id), user.id)
-	}
-
-	@Post('reorder/:spaceId')
-	@Auth()
-	async reorderFolders(@Param('spaceId') spaceId: number, @Body() body: { folderIds: number[] }) {
-		return await this.folderService.reorderFolders(Number(spaceId), body.folderIds)
-	}
-
-	@Post(':id/move')
-	@Auth()
-	async moveFolder(@Param('id') id: number, @Body() body: { targetSpaceId: number }) {
-		return await this.folderService.moveFolder(Number(id), body.targetSpaceId)
 	}
 }
 

@@ -35,18 +35,6 @@ export class TaskListController {
 		return await this.taskListService.create(body)
 	}
 
-	@Post(':id')
-	@Auth()
-	async updateTaskList(@Param("id") id: number, @Body() body: UpdateTaskListDto) {
-		return await this.taskListService.updateTaskList(Number(id), body)
-	}
-
-	@Delete(':id')
-	@Auth()
-	async deleteTaskList(@Param("id") id: number) {
-		return await this.taskListService.deleteTaskList(Number(id))
-	}
-
 	@Post('reorder')
 	@Auth()
 	async reorderTaskLists(@Body() body: { listIds: number[] }) {
@@ -57,6 +45,18 @@ export class TaskListController {
 	@Auth()
 	async moveTaskList(@Param('id') id: number, @Body() body: { targetFolderId?: number, targetSpaceId?: number }) {
 		return await this.taskListService.moveTaskList(Number(id), body.targetFolderId || null, body.targetSpaceId || null)
+	}
+
+	@Post(':id')
+	@Auth()
+	async updateTaskList(@Param("id") id: number, @Body() body: UpdateTaskListDto) {
+		return await this.taskListService.updateTaskList(Number(id), body)
+	}
+
+	@Delete(':id')
+	@Auth()
+	async deleteTaskList(@Param("id") id: number) {
+		return await this.taskListService.deleteTaskList(Number(id))
 	}
 }
 
