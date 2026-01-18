@@ -62,6 +62,10 @@ let ChatController = class ChatController {
         await this.chatService.markAsRead(roomId, user.id);
         return { message: 'Mesajlar oxundu olaraq işarələndi!' };
     }
+    async search(query) {
+        const user = this.cls.get('user');
+        return await this.chatService.search(user.id, query);
+    }
 };
 exports.ChatController = ChatController;
 __decorate([
@@ -144,6 +148,16 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "markAsRead", null);
+__decorate([
+    (0, common_1.Get)('search'),
+    (0, auth_decorator_1.Auth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'İstifadəçilər və mesajlar arasında axtarış' }),
+    (0, swagger_1.ApiQuery)({ name: 'q', required: true, type: String, description: 'Axtarış sorğusu' }),
+    __param(0, (0, common_1.Query)('q')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "search", null);
 exports.ChatController = ChatController = __decorate([
     (0, swagger_1.ApiTags)('chat'),
     (0, common_1.Controller)('chat'),

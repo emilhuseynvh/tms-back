@@ -25,6 +25,9 @@ let TaskController = class TaskController {
     constructor(taskService) {
         this.taskService = taskService;
     }
+    async getMyTasks() {
+        return await this.taskService.getMyTasks();
+    }
     async listByTaskList(taskListId, filters) {
         return await this.taskService.listByTaskList(Number(taskListId), filters);
     }
@@ -45,6 +48,13 @@ let TaskController = class TaskController {
     }
 };
 exports.TaskController = TaskController;
+__decorate([
+    (0, common_1.Get)('my-tasks'),
+    (0, auth_decorator_1.Auth)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], TaskController.prototype, "getMyTasks", null);
 __decorate([
     (0, common_1.Get)('list/:taskListId'),
     __param(0, (0, common_1.Param)('taskListId')),

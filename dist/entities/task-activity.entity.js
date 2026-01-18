@@ -48,7 +48,7 @@ __decorate([
     __metadata("design:type", Object)
 ], TaskActivityEntity.prototype, "changes", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
     __metadata("design:type", Date)
 ], TaskActivityEntity.prototype, "createdAt", void 0);
 exports.TaskActivityEntity = TaskActivityEntity = __decorate([

@@ -45,22 +45,65 @@ let FolderService = class FolderService {
             folderId: savedFolder.id,
             spaceId: dto.spaceId
         });
-        await this.taskListRepo.save(defaultList);
+        const savedDefaultList = await this.taskListRepo.save(defaultList);
         await this.activityLogService.log(activity_log_entity_1.ActivityType.FOLDER_CREATE, savedFolder.id, savedFolder.name, `"${savedFolder.name}" qovluğu yaradıldı`);
-        return savedFolder;
+        return {
+            id: savedFolder.id,
+            name: savedFolder.name,
+            description: savedFolder.description,
+            spaceId: savedFolder.spaceId,
+            ownerId: savedFolder.ownerId,
+            createdAt: savedFolder.createdAt,
+            updatedAt: savedFolder.updatedAt,
+            taskLists: [savedDefaultList],
+            defaultListId: savedDefaultList.id
+        };
     }
     async listAll() {
-        return await this.folderRepo.find({ order: { createdAt: 'DESC' } });
+        return await this.folderRepo.find({ order: { order: 'ASC' } });
     }
     async listByOwner(ownerId) {
-        return await this.folderRepo.find({ where: { ownerId }, order: { createdAt: 'DESC' } });
+        return await this.folderRepo.find({ where: { ownerId }, order: { order: 'ASC' } });
     }
     async listBySpace(spaceId) {
         return await this.folderRepo.find({
             where: { spaceId },
-            order: { createdAt: 'DESC' },
+            order: { order: 'ASC' },
             relations: ['taskLists']
         });
+    }
+    async getFullDetails(id, search) {
+        const folder = await this.folderRepo.findOne({
+            where: { id, isArchived: false },
+            relations: ['taskLists', 'taskLists.tasks', 'taskLists.tasks.assignees', 'taskLists.tasks.status', 'space']
+        });
+        if (!folder)
+            throw new common_1.NotFoundException('Qovluq tapılmadı!');
+        const taskLists = folder.taskLists
+            ?.filter(l => !l.isArchived && !l.deletedAt)
+            ?.map(list => ({
+            ...list,
+            tasks: list.tasks?.filter(t => !t.isArchived && !t.deletedAt) || []
+        })) || [];
+        const allTasks = [];
+        taskLists.forEach(list => {
+            allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name })));
+        });
+        if (search) {
+            const searchLower = search.toLowerCase();
+            const filteredLists = taskLists.filter(l => l.name.toLowerCase().includes(searchLower));
+            const filteredTasks = allTasks.filter(t => t.title?.toLowerCase().includes(searchLower) || t.description?.toLowerCase().includes(searchLower));
+            return {
+                ...folder,
+                taskLists: filteredLists,
+                allTasks: filteredTasks
+            };
+        }
+        return {
+            ...folder,
+            taskLists,
+            allTasks
+        };
     }
     async updateFolder(id, userId, dto) {
         const folder = await this.folderRepo.findOne({ where: { id } });
@@ -84,9 +127,28 @@ let FolderService = class FolderService {
         if (user.role !== 'admin' && folder.ownerId !== userId) {
             throw new common_1.UnauthorizedException('Qovluğu silmək üçün icazəniz yoxdur!');
         }
+        folder.deletedById = user.id;
+        await this.folderRepo.save(folder);
         await this.folderRepo.softDelete({ id });
         await this.activityLogService.log(activity_log_entity_1.ActivityType.FOLDER_DELETE, id, folder.name, `"${folder.name}" qovluğu silindi`);
         return { message: "Qovluq uğurla silindi" };
+    }
+    async reorderFolders(spaceId, folderIds) {
+        for (let i = 0; i < folderIds.length; i++) {
+            await this.folderRepo.update(folderIds[i], { order: i });
+        }
+        return { message: "Sıralama yeniləndi" };
+    }
+    async moveFolder(id, targetSpaceId) {
+        const folder = await this.folderRepo.findOne({ where: { id } });
+        if (!folder)
+            throw new common_1.NotFoundException('Qovluq tapılmadı!');
+        const oldSpaceId = folder.spaceId;
+        folder.spaceId = targetSpaceId;
+        await this.folderRepo.save(folder);
+        await this.taskListRepo.update({ folderId: id }, { spaceId: targetSpaceId });
+        await this.activityLogService.log(activity_log_entity_1.ActivityType.FOLDER_UPDATE, id, folder.name, `"${folder.name}" qovluğu başqa sahəyə köçürüldü`, { oldSpaceId, newSpaceId: targetSpaceId });
+        return { message: "Qovluq köçürüldü" };
     }
 };
 exports.FolderService = FolderService;

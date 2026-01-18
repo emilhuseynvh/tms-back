@@ -12,11 +12,18 @@ export declare class TaskListService {
     constructor(taskListRepo: Repository<TaskListEntity>, cls: ClsService, activityLogService: ActivityLogService);
     create(dto: CreateTaskListDto): Promise<TaskListEntity>;
     listBySpace(spaceId: number): Promise<TaskListEntity[]>;
+    getOne(id: number): Promise<TaskListEntity>;
     listByFolder(folderId: number, filters?: FilterTaskListDto): Promise<TaskListEntity[]>;
     updateTaskList(id: number, dto: UpdateTaskListDto): Promise<{
         message: string;
     }>;
     deleteTaskList(id: number): Promise<{
+        message: string;
+    }>;
+    reorderTaskLists(listIds: number[]): Promise<{
+        message: string;
+    }>;
+    moveTaskList(id: number, targetFolderId: number | null, targetSpaceId: number | null): Promise<{
         message: string;
     }>;
 }

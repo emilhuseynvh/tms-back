@@ -15,6 +15,7 @@ const task_activity_entity_1 = require("../../entities/task-activity.entity");
 const task_service_1 = require("./task.service");
 const task_controller_1 = require("./task.controller");
 const activity_log_module_1 = require("../activity-log/activity-log.module");
+const notification_module_1 = require("../notification/notification.module");
 let TaskModule = class TaskModule {
 };
 exports.TaskModule = TaskModule;
@@ -22,7 +23,8 @@ exports.TaskModule = TaskModule = __decorate([
     (0, common_1.Module)({
         imports: [
             typeorm_1.TypeOrmModule.forFeature([task_entity_1.TaskEntity, task_status_entity_1.TaskStatusEntity, task_activity_entity_1.TaskActivityEntity]),
-            activity_log_module_1.ActivityLogModule
+            activity_log_module_1.ActivityLogModule,
+            (0, common_1.forwardRef)(() => notification_module_1.NotificationModule)
         ],
         controllers: [task_controller_1.TaskController],
         providers: [task_service_1.TaskService],

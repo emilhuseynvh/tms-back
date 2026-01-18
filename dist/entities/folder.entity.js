@@ -18,11 +18,18 @@ let FolderEntity = class FolderEntity extends typeorm_1.BaseEntity {
     id;
     name;
     description;
+    order;
     ownerId;
     owner;
     spaceId;
     space;
     taskLists;
+    isArchived;
+    archivedAt;
+    archivedById;
+    archivedBy;
+    deletedById;
+    deletedBy;
     createdAt;
     updatedAt;
     deletedAt;
@@ -40,6 +47,10 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], FolderEntity.prototype, "description", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int', default: 0 }),
+    __metadata("design:type", Number)
+], FolderEntity.prototype, "order", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Number)
@@ -61,6 +72,32 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => tasklist_entity_1.TaskListEntity, (list) => list.folder),
     __metadata("design:type", Array)
 ], FolderEntity.prototype, "taskLists", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], FolderEntity.prototype, "isArchived", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    __metadata("design:type", Object)
+], FolderEntity.prototype, "archivedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], FolderEntity.prototype, "archivedById", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'archivedById' }),
+    __metadata("design:type", user_entity_1.UserEntity)
+], FolderEntity.prototype, "archivedBy", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Number)
+], FolderEntity.prototype, "deletedById", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'deletedById' }),
+    __metadata("design:type", user_entity_1.UserEntity)
+], FolderEntity.prototype, "deletedBy", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

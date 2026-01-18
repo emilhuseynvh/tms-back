@@ -44,9 +44,17 @@ let TaskListService = class TaskListService {
     async listBySpace(spaceId) {
         return await this.taskListRepo.find({
             where: { spaceId, folderId: (0, typeorm_2.IsNull)() },
-            order: { createdAt: 'DESC' },
+            order: { order: 'ASC' },
             relations: ['tasks']
         });
+    }
+    async getOne(id) {
+        const taskList = await this.taskListRepo.findOne({
+            where: { id }
+        });
+        if (!taskList)
+            throw new common_1.NotFoundException('Siyahı tapılmadı');
+        return taskList;
     }
     async listByFolder(folderId, filters) {
         const queryBuilder = this.taskListRepo.createQueryBuilder('taskList')
@@ -62,7 +70,7 @@ let TaskListService = class TaskListService {
             queryBuilder.andWhere('task.startAt <= :endDate', { endDate: filters.endDate });
         }
         return await queryBuilder
-            .orderBy('taskList.createdAt', 'DESC')
+            .orderBy('taskList.order', 'ASC')
             .addOrderBy('task.order', 'ASC')
             .getMany();
     }
@@ -96,9 +104,29 @@ let TaskListService = class TaskListService {
         if (user.role !== 'admin' && ownerId !== user.id) {
             throw new common_1.UnauthorizedException('Siyahını silmək üçün icazəniz yoxdur');
         }
+        taskList.deletedById = user.id;
+        await this.taskListRepo.save(taskList);
         await this.taskListRepo.softDelete({ id });
         await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_DELETE, id, taskList.name, `"${taskList.name}" siyahısı silindi`);
         return { message: "Siyahı uğurla silindi" };
+    }
+    async reorderTaskLists(listIds) {
+        for (let i = 0; i < listIds.length; i++) {
+            await this.taskListRepo.update(listIds[i], { order: i });
+        }
+        return { message: "Sıralama yeniləndi" };
+    }
+    async moveTaskList(id, targetFolderId, targetSpaceId) {
+        const taskList = await this.taskListRepo.findOne({ where: { id } });
+        if (!taskList)
+            throw new common_1.NotFoundException('Siyahı tapılmadı!');
+        const oldFolderId = taskList.folderId;
+        const oldSpaceId = taskList.spaceId;
+        taskList.folderId = targetFolderId;
+        taskList.spaceId = targetSpaceId;
+        await this.taskListRepo.save(taskList);
+        await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_UPDATE, id, taskList.name, `"${taskList.name}" siyahısı köçürüldü`, { oldFolderId, oldSpaceId, newFolderId: targetFolderId, newSpaceId: targetSpaceId });
+        return { message: "Siyahı köçürüldü" };
     }
 };
 exports.TaskListService = TaskListService;

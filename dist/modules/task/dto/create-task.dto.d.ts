@@ -8,4 +8,6 @@ export declare class CreateTaskDto {
     statusId?: number;
     parentId?: number;
     link?: string;
+    doc?: string;
+    meetingNotes?: string;
 }

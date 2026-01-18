@@ -24,13 +24,20 @@ let TaskEntity = class TaskEntity extends typeorm_1.BaseEntity {
     status;
     order;
     taskListId;
-    is_message_send;
     link;
+    doc;
+    meetingNotes;
     taskList;
     parentId;
     parent;
     children;
     assignees;
+    isArchived;
+    archivedAt;
+    archivedById;
+    archivedBy;
+    deletedById;
+    deletedBy;
     createdAt;
     updatedAt;
     deletedAt;
@@ -49,11 +56,11 @@ __decorate([
     __metadata("design:type", String)
 ], TaskEntity.prototype, "description", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
     __metadata("design:type", Object)
 ], TaskEntity.prototype, "startAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
     __metadata("design:type", Object)
 ], TaskEntity.prototype, "dueAt", void 0);
 __decorate([
@@ -74,13 +81,17 @@ __decorate([
     __metadata("design:type", Number)
 ], TaskEntity.prototype, "taskListId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: false }),
-    __metadata("design:type", Boolean)
-], TaskEntity.prototype, "is_message_send", void 0);
-__decorate([
     (0, typeorm_1.Column)({ nullable: true, type: 'text' }),
     __metadata("design:type", String)
 ], TaskEntity.prototype, "link", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true, type: 'text' }),
+    __metadata("design:type", String)
+], TaskEntity.prototype, "doc", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true, type: 'text' }),
+    __metadata("design:type", String)
+], TaskEntity.prototype, "meetingNotes", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => tasklist_entity_1.TaskListEntity, (list) => list.tasks, { onDelete: 'CASCADE' }),
     __metadata("design:type", tasklist_entity_1.TaskListEntity)
@@ -107,15 +118,41 @@ __decorate([
     __metadata("design:type", Array)
 ], TaskEntity.prototype, "assignees", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], TaskEntity.prototype, "isArchived", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    __metadata("design:type", Object)
+], TaskEntity.prototype, "archivedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], TaskEntity.prototype, "archivedById", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'archivedById' }),
+    __metadata("design:type", user_entity_1.UserEntity)
+], TaskEntity.prototype, "archivedBy", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Number)
+], TaskEntity.prototype, "deletedById", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'deletedById' }),
+    __metadata("design:type", user_entity_1.UserEntity)
+], TaskEntity.prototype, "deletedBy", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
     __metadata("design:type", Date)
 ], TaskEntity.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
+    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamptz' }),
     __metadata("design:type", Date)
 ], TaskEntity.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.DeleteDateColumn)(),
+    (0, typeorm_1.DeleteDateColumn)({ type: 'timestamptz' }),
     __metadata("design:type", Date)
 ], TaskEntity.prototype, "deletedAt", void 0);
 exports.TaskEntity = TaskEntity = __decorate([

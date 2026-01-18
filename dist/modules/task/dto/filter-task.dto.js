@@ -15,6 +15,8 @@ class FilterTaskDto {
     search;
     startDate;
     endDate;
+    statusId;
+    assigneeId;
 }
 exports.FilterTaskDto = FilterTaskDto;
 __decorate([
@@ -32,4 +34,14 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], FilterTaskDto.prototype, "endDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumberString)(),
+    __metadata("design:type", String)
+], FilterTaskDto.prototype, "statusId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumberString)(),
+    __metadata("design:type", String)
+], FilterTaskDto.prototype, "assigneeId", void 0);
 //# sourceMappingURL=filter-task.dto.js.map

@@ -77,7 +77,7 @@ __decorate([
     __metadata("design:type", String)
 ], ActivityLogEntity.prototype, "description", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
     __metadata("design:type", Date)
 ], ActivityLogEntity.prototype, "createdAt", void 0);
 exports.ActivityLogEntity = ActivityLogEntity = __decorate([

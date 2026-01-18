@@ -20,4 +20,8 @@ export declare class ChatService {
     getMessages(roomId: number, userId: number, page?: number, limit?: number): Promise<MessageEntity[]>;
     sendMessage(roomId: number, senderId: number, content: string): Promise<MessageEntity | null>;
     markAsRead(roomId: number, userId: number): Promise<void>;
+    search(userId: number, query: string): Promise<{
+        users: UserEntity[];
+        messages: any[];
+    }>;
 }

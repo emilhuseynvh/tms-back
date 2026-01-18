@@ -18,4 +18,8 @@ export declare class ChatController {
     markAsRead(roomId: number): Promise<{
         message: string;
     }>;
+    search(query: string): Promise<{
+        users: import("../../entities/user.entity").UserEntity[];
+        messages: any[];
+    }>;
 }

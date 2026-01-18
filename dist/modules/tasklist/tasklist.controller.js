@@ -31,14 +31,23 @@ let TaskListController = class TaskListController {
     async listBySpace(spaceId) {
         return await this.taskListService.listBySpace(Number(spaceId));
     }
+    async getOne(id) {
+        return await this.taskListService.getOne(Number(id));
+    }
     async create(body) {
         return await this.taskListService.create(body);
     }
+    async reorderTaskLists(body) {
+        return await this.taskListService.reorderTaskLists(body.listIds);
+    }
+    async moveTaskList(id, body) {
+        return await this.taskListService.moveTaskList(Number(id), body.targetFolderId || null, body.targetSpaceId || null);
+    }
     async updateTaskList(id, body) {
-        return await this.taskListService.updateTaskList(id, body);
+        return await this.taskListService.updateTaskList(Number(id), body);
     }
     async deleteTaskList(id) {
-        return await this.taskListService.deleteTaskList(id);
+        return await this.taskListService.deleteTaskList(Number(id));
     }
 };
 exports.TaskListController = TaskListController;
@@ -58,6 +67,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TaskListController.prototype, "listBySpace", null);
 __decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], TaskListController.prototype, "getOne", null);
+__decorate([
     (0, common_1.Post)(),
     (0, auth_decorator_1.Auth)(),
     __param(0, (0, common_1.Body)()),
@@ -65,6 +81,23 @@ __decorate([
     __metadata("design:paramtypes", [create_tasklist_dto_1.CreateTaskListDto]),
     __metadata("design:returntype", Promise)
 ], TaskListController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('reorder'),
+    (0, auth_decorator_1.Auth)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], TaskListController.prototype, "reorderTaskLists", null);
+__decorate([
+    (0, common_1.Post)(':id/move'),
+    (0, auth_decorator_1.Auth)(),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", Promise)
+], TaskListController.prototype, "moveTaskList", null);
 __decorate([
     (0, common_1.Post)(':id'),
     (0, auth_decorator_1.Auth)(),

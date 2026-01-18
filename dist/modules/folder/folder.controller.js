@@ -39,15 +39,24 @@ let FolderController = class FolderController {
         return await this.folderService.listByOwner(user.id);
     }
     async listBySpace(spaceId) {
-        return await this.folderService.listBySpace(spaceId);
+        return await this.folderService.listBySpace(Number(spaceId));
+    }
+    async getFullDetails(id, search) {
+        return await this.folderService.getFullDetails(Number(id), search);
+    }
+    async reorderFolders(spaceId, body) {
+        return await this.folderService.reorderFolders(Number(spaceId), body.folderIds);
+    }
+    async moveFolder(id, body) {
+        return await this.folderService.moveFolder(Number(id), body.targetSpaceId);
     }
     async updateFolder(id, body) {
         const user = this.cls.get('user');
-        return await this.folderService.updateFolder(id, user.id, body);
+        return await this.folderService.updateFolder(Number(id), user.id, body);
     }
     async deleteFolder(id) {
         const user = this.cls.get('user');
-        return await this.folderService.deleteFolder(id, user.id);
+        return await this.folderService.deleteFolder(Number(id), user.id);
     }
 };
 exports.FolderController = FolderController;
@@ -79,6 +88,32 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], FolderController.prototype, "listBySpace", null);
+__decorate([
+    (0, common_1.Get)(':id/full'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, String]),
+    __metadata("design:returntype", Promise)
+], FolderController.prototype, "getFullDetails", null);
+__decorate([
+    (0, common_1.Post)('reorder/:spaceId'),
+    (0, auth_decorator_1.Auth)(),
+    __param(0, (0, common_1.Param)('spaceId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", Promise)
+], FolderController.prototype, "reorderFolders", null);
+__decorate([
+    (0, common_1.Post)(':id/move'),
+    (0, auth_decorator_1.Auth)(),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", Promise)
+], FolderController.prototype, "moveFolder", null);
 __decorate([
     (0, common_1.Post)(':id'),
     (0, auth_decorator_1.Auth)(),

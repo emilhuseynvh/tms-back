@@ -18,11 +18,13 @@ class UpdateTaskDto {
     description;
     startAt;
     dueAt;
-    is_message_send;
     statusId;
     assigneeIds;
     taskListId;
     link;
+    doc;
+    meetingNotes;
+    parentId;
 }
 exports.UpdateTaskDto = UpdateTaskDto;
 __decorate([
@@ -51,12 +53,7 @@ __decorate([
 ], UpdateTaskDto.prototype, "dueAt", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsBoolean)(),
-    (0, swagger_1.ApiProperty)({ required: false }),
-    __metadata("design:type", Boolean)
-], UpdateTaskDto.prototype, "is_message_send", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsNumber)(),
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", Number)
@@ -71,6 +68,7 @@ __decorate([
 ], UpdateTaskDto.prototype, "assigneeIds", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsNumber)(),
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", Number)
@@ -81,4 +79,23 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", String)
 ], UpdateTaskDto.prototype, "link", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], UpdateTaskDto.prototype, "doc", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], UpdateTaskDto.prototype, "meetingNotes", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsNumber)(),
+    (0, swagger_1.ApiProperty)({ required: false, description: 'Parent task ID. Set to null to make it a root task.' }),
+    __metadata("design:type", Object)
+], UpdateTaskDto.prototype, "parentId", void 0);
 //# sourceMappingURL=update-task.dto.js.map

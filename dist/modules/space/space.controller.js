@@ -35,19 +35,25 @@ let SpaceController = class SpaceController {
         return await this.spaceService.listByOwner(user.id);
     }
     async getOne(id) {
-        return await this.spaceService.getOne(id);
+        return await this.spaceService.getOne(Number(id));
+    }
+    async getFullDetails(id, search) {
+        return await this.spaceService.getFullDetails(Number(id), search);
     }
     async create(body) {
         const user = this.cls.get('user');
         return await this.spaceService.create(user.id, body);
     }
+    async reorderSpaces(body) {
+        return await this.spaceService.reorderSpaces(body.spaceIds);
+    }
     async updateSpace(id, body) {
         const user = this.cls.get('user');
-        return await this.spaceService.updateSpace(id, user.id, body);
+        return await this.spaceService.updateSpace(Number(id), user.id, body);
     }
     async deleteSpace(id) {
         const user = this.cls.get('user');
-        return await this.spaceService.deleteSpace(id, user.id);
+        return await this.spaceService.deleteSpace(Number(id), user.id);
     }
 };
 exports.SpaceController = SpaceController;
@@ -72,6 +78,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SpaceController.prototype, "getOne", null);
 __decorate([
+    (0, common_1.Get)(':id/full'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, String]),
+    __metadata("design:returntype", Promise)
+], SpaceController.prototype, "getFullDetails", null);
+__decorate([
     (0, common_1.Post)(),
     (0, auth_decorator_1.Auth)(),
     __param(0, (0, common_1.Body)()),
@@ -79,6 +93,14 @@ __decorate([
     __metadata("design:paramtypes", [create_space_dto_1.CreateSpaceDto]),
     __metadata("design:returntype", Promise)
 ], SpaceController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('reorder'),
+    (0, auth_decorator_1.Auth)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SpaceController.prototype, "reorderSpaces", null);
 __decorate([
     (0, common_1.Post)(':id'),
     (0, auth_decorator_1.Auth)(),

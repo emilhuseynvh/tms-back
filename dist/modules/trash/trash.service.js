@@ -48,6 +48,7 @@ let TrashService = class TrashService {
         const foldersQuery = this.folderRepo.createQueryBuilder('folder')
             .withDeleted()
             .leftJoinAndSelect('folder.owner', 'owner')
+            .leftJoinAndSelect('folder.deletedBy', 'deletedBy')
             .where('folder.deletedAt IS NOT NULL');
         const listsQuery = this.taskListRepo.createQueryBuilder('list')
             .withDeleted()
@@ -55,6 +56,7 @@ let TrashService = class TrashService {
             .leftJoinAndSelect('list.space', 'space')
             .leftJoinAndSelect('folder.owner', 'folderOwner')
             .leftJoinAndSelect('space.owner', 'spaceOwner')
+            .leftJoinAndSelect('list.deletedBy', 'deletedBy')
             .where('list.deletedAt IS NOT NULL');
         const tasksQuery = this.taskRepo.createQueryBuilder('task')
             .withDeleted()
@@ -63,6 +65,7 @@ let TrashService = class TrashService {
             .leftJoinAndSelect('taskList.space', 'space')
             .leftJoinAndSelect('folder.owner', 'folderOwner')
             .leftJoinAndSelect('space.owner', 'spaceOwner')
+            .leftJoinAndSelect('task.deletedBy', 'deletedBy')
             .where('task.deletedAt IS NOT NULL');
         if (!isAdmin) {
             spacesQuery.andWhere('space.ownerId = :userId', { userId: user.id });

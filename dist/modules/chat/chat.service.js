@@ -241,6 +241,51 @@ let ChatService = class ChatService {
             .andWhere('senderId != :userId', { userId })
             .execute();
     }
+    async search(userId, query) {
+        if (!query || query.trim().length < 2) {
+            return { users: [], messages: [] };
+        }
+        const searchTerm = query.trim().toLowerCase();
+        const users = await this.userRepo
+            .createQueryBuilder('user')
+            .leftJoinAndSelect('user.avatar', 'avatar')
+            .where('user.id != :userId', { userId })
+            .andWhere('(LOWER(user.username) LIKE :search OR LOWER(user.email) LIKE :search)', { search: `%${searchTerm}%` })
+            .take(10)
+            .getMany();
+        const userRoomIds = await this.memberRepo
+            .createQueryBuilder('member')
+            .select('member.roomId')
+            .where('member.userId = :userId', { userId })
+            .getMany();
+        const roomIds = userRoomIds.map(m => m.roomId);
+        let messages = [];
+        if (roomIds.length > 0) {
+            messages = await this.messageRepo
+                .createQueryBuilder('message')
+                .leftJoinAndSelect('message.sender', 'sender')
+                .leftJoinAndSelect('sender.avatar', 'senderAvatar')
+                .leftJoinAndSelect('message.room', 'room')
+                .leftJoinAndSelect('room.members', 'members')
+                .leftJoinAndSelect('members.user', 'memberUser')
+                .leftJoinAndSelect('memberUser.avatar', 'memberAvatar')
+                .where('message.roomId IN (:...roomIds)', { roomIds })
+                .andWhere('LOWER(message.content) LIKE :search', { search: `%${searchTerm}%` })
+                .orderBy('message.createdAt', 'DESC')
+                .take(20)
+                .getMany();
+            for (const message of messages) {
+                if (message.room && message.room.type === chat_room_type_enum_1.ChatRoomType.DIRECT) {
+                    const otherMember = message.room.members.find((m) => m.userId !== userId);
+                    if (otherMember) {
+                        message.room.name = otherMember.user.username;
+                        message.room.otherUser = otherMember.user;
+                    }
+                }
+            }
+        }
+        return { users, messages };
+    }
 };
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = __decorate([

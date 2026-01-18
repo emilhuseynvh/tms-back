@@ -81,6 +81,7 @@ export class TaskService {
 			.leftJoinAndSelect('task.assignees', 'assignees')
 			.where('task.taskListId = :taskListId', { taskListId })
 			.andWhere('task.parentId IS NULL')
+			.andWhere('(task.isArchived = :isArchived OR task.isArchived IS NULL)', { isArchived: false })
 
 		// User yalnız özünə assign edilmiş task-ları görür
 		if (!isAdmin && user?.id) {
@@ -142,6 +143,7 @@ export class TaskService {
 				.leftJoinAndSelect('task.assignees', 'assignees')
 				.leftJoinAndSelect('task.status', 'status')
 				.where('task.parentId = :parentId', { parentId: task.id })
+				.andWhere('(task.isArchived = :isArchived OR task.isArchived IS NULL)', { isArchived: false })
 
 			// User yalnız özünə assign edilmiş child task-ları görür
 			if (!isAdmin && userId) {

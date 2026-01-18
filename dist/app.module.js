@@ -32,6 +32,8 @@ const task_status_module_1 = require("./modules/task-status/task-status.module")
 const activity_log_module_1 = require("./modules/activity-log/activity-log.module");
 const trash_module_1 = require("./modules/trash/trash.module");
 const space_module_1 = require("./modules/space/space.module");
+const notification_module_1 = require("./modules/notification/notification.module");
+const archive_module_1 = require("./modules/archive/archive.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -65,7 +67,9 @@ exports.AppModule = AppModule = __decorate([
             chat_module_1.ChatModule,
             activity_log_module_1.ActivityLogModule,
             trash_module_1.TrashModule,
-            space_module_1.SpaceModule
+            space_module_1.SpaceModule,
+            notification_module_1.NotificationModule,
+            archive_module_1.ArchiveModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -23,6 +23,8 @@ class CreateTaskDto {
     statusId;
     parentId;
     link;
+    doc;
+    meetingNotes;
 }
 exports.CreateTaskDto = CreateTaskDto;
 __decorate([
@@ -87,4 +89,18 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", String)
 ], CreateTaskDto.prototype, "link", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], CreateTaskDto.prototype, "doc", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], CreateTaskDto.prototype, "meetingNotes", void 0);
 //# sourceMappingURL=create-task.dto.js.map

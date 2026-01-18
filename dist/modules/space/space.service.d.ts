@@ -15,10 +15,87 @@ export declare class SpaceService {
     listAll(): Promise<SpaceEntity[]>;
     listByOwner(ownerId: number): Promise<SpaceEntity[]>;
     getOne(id: number): Promise<SpaceEntity>;
+    getFullDetails(id: number, search?: string): Promise<{
+        folders: {
+            taskLists: {
+                tasks: TaskEntity[];
+                id: number;
+                name: string;
+                order: number;
+                folderId: number | null;
+                folder: import("../../entities/folder.entity").FolderEntity;
+                spaceId: number | null;
+                space: SpaceEntity;
+                isArchived: boolean;
+                archivedAt: Date | null;
+                archivedById: number | null;
+                archivedBy: import("../../entities/user.entity").UserEntity;
+                deletedById: number;
+                deletedBy: import("../../entities/user.entity").UserEntity;
+                createdAt: Date;
+                updatedAt: Date;
+                deletedAt: Date;
+            }[];
+            id: number;
+            name: string;
+            description: string;
+            order: number;
+            ownerId: number;
+            owner: import("../../entities/user.entity").UserEntity;
+            spaceId: number;
+            space: SpaceEntity;
+            isArchived: boolean;
+            archivedAt: Date | null;
+            archivedById: number | null;
+            archivedBy: import("../../entities/user.entity").UserEntity;
+            deletedById: number;
+            deletedBy: import("../../entities/user.entity").UserEntity;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date;
+        }[];
+        directLists: {
+            tasks: TaskEntity[];
+            id: number;
+            name: string;
+            order: number;
+            folderId: number | null;
+            folder: import("../../entities/folder.entity").FolderEntity;
+            spaceId: number | null;
+            space: SpaceEntity;
+            isArchived: boolean;
+            archivedAt: Date | null;
+            archivedById: number | null;
+            archivedBy: import("../../entities/user.entity").UserEntity;
+            deletedById: number;
+            deletedBy: import("../../entities/user.entity").UserEntity;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date;
+        }[];
+        allTasks: any[];
+        id: number;
+        name: string;
+        description: string;
+        order: number;
+        ownerId: number;
+        owner: import("../../entities/user.entity").UserEntity;
+        taskLists: import("../../entities/tasklist.entity").TaskListEntity[];
+        isArchived: boolean;
+        archivedAt: Date | null;
+        archivedById: number | null;
+        archivedBy: import("../../entities/user.entity").UserEntity;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date;
+    }>;
     updateSpace(id: number, userId: number, dto: UpdateSpaceDto): Promise<{
         message: string;
     }>;
     deleteSpace(id: number, userId: number): Promise<{
+        message: string;
+    }>;
+    reorderSpaces(spaceIds: number[]): Promise<{
         message: string;
     }>;
 }
