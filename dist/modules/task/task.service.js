@@ -79,7 +79,7 @@ let TaskService = class TaskService {
             .leftJoinAndSelect('task.assignees', 'assignees')
             .where('task.taskListId = :taskListId', { taskListId })
             .andWhere('task.parentId IS NULL')
-            .andWhere('(task.isArchived = :isArchived OR task.isArchived IS NULL)', { isArchived: false });
+            .andWhere('(task.isArchived IS NULL OR task.isArchived = false)');
         if (!isAdmin && user?.id) {
             queryBuilder.andWhere(qb => {
                 const subQuery = qb.subQuery()
@@ -128,7 +128,7 @@ let TaskService = class TaskService {
                 .leftJoinAndSelect('task.assignees', 'assignees')
                 .leftJoinAndSelect('task.status', 'status')
                 .where('task.parentId = :parentId', { parentId: task.id })
-                .andWhere('(task.isArchived = :isArchived OR task.isArchived IS NULL)', { isArchived: false });
+                .andWhere('(task.isArchived IS NULL OR task.isArchived = false)');
             if (!isAdmin && userId) {
                 childQuery.andWhere(qb => {
                     const subQuery = qb.subQuery()

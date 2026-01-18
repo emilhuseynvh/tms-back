@@ -175,10 +175,11 @@ let ArchiveService = class ArchiveService {
         if (user.role !== 'admin' && ownerId !== user.id) {
             throw new common_1.ForbiddenException('Bu tapşırığı arxivləmək üçün icazəniz yoxdur!');
         }
-        task.isArchived = true;
-        task.archivedAt = new Date();
-        task.archivedById = user.id;
-        await this.taskRepo.save(task);
+        await this.taskRepo.update({ id }, {
+            isArchived: true,
+            archivedAt: new Date(),
+            archivedById: user.id
+        });
         return { message: 'Tapşırıq arxivləndi!' };
     }
     async unarchiveTask(id) {

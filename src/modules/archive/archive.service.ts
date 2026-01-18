@@ -196,10 +196,14 @@ export class ArchiveService {
 			throw new ForbiddenException('Bu tapşırığı arxivləmək üçün icazəniz yoxdur!')
 		}
 
-		task.isArchived = true
-		task.archivedAt = new Date()
-		task.archivedById = user.id
-		await this.taskRepo.save(task)
+		await this.taskRepo.update(
+			{ id },
+			{
+				isArchived: true,
+				archivedAt: new Date(),
+				archivedById: user.id
+			}
+		)
 
 		return { message: 'Tapşırıq arxivləndi!' }
 	}
