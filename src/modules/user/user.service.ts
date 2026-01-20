@@ -143,6 +143,12 @@ export class UserService {
         if (params.username !== undefined) checkedUser.username = params.username
         if (params.email !== undefined) checkedUser.email = params.email
         if (params.phone !== undefined) checkedUser.phone = params.phone
+        if (params.role !== undefined) checkedUser.role = params.role
+
+        // Password varsa və boş deyilsə hash-lə
+        if (params.password && params.password.trim() !== '') {
+            checkedUser.password = await hash(params.password, 10)
+        }
 
         await checkedUser.save()
         return { message: 'Əməkdaş uğurla yeniləndi!' }
