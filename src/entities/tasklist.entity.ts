@@ -1,4 +1,4 @@
-import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { FolderEntity } from "./folder.entity";
 import { TaskEntity } from "./task.entity";
 import { SpaceEntity } from "./space.entity";
@@ -30,6 +30,14 @@ export class TaskListEntity extends BaseEntity {
 
 	@OneToMany(() => TaskEntity, (task) => task.taskList)
 	tasks: TaskEntity[]
+
+	@ManyToMany(() => UserEntity, { eager: true })
+	@JoinTable({
+		name: 'tasklist_assignees',
+		joinColumn: { name: 'taskListId' },
+		inverseJoinColumn: { name: 'userId' }
+	})
+	assignees: UserEntity[]
 
 	@Column({ default: false })
 	isArchived: boolean

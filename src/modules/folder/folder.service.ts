@@ -3,11 +3,14 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { FolderEntity } from "../../entities/folder.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
+import { UserEntity } from "../../entities/user.entity";
 import { CreateFolderDto } from "./dto/create-folder.dto";
 import { UpdateFolderDto } from "./dto/update-folder.dto";
 import { ClsService } from "nestjs-cls";
 import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
+import { NotificationService } from "../notification/notification.service";
+import { NotificationType } from "../../entities/notification.entity";
 
 @Injectable()
 export class FolderService {
@@ -17,7 +20,8 @@ export class FolderService {
 		@InjectRepository(TaskListEntity)
 		private taskListRepo: Repository<TaskListEntity>,
 		private cls: ClsService,
-		private activityLogService: ActivityLogService
+		private activityLogService: ActivityLogService,
+		private notificationService: NotificationService
 	) { }
 
 	async create(ownerId: number, dto: CreateFolderDto) {
@@ -27,7 +31,28 @@ export class FolderService {
 			spaceId: dto.spaceId,
 			ownerId
 		})
+
+		// Assignee-ləri əlavə et
+		if (dto.assigneeIds?.length) {
+			folder.assignees = dto.assigneeIds.map(id => ({ id } as UserEntity))
+		}
+
 		const savedFolder = await this.folderRepo.save(folder)
+
+		// Assignee-lərə notification göndər
+		if (dto.assigneeIds?.length) {
+			for (const userId of dto.assigneeIds) {
+				if (userId !== ownerId) {
+					await this.notificationService.createNotification({
+						userId,
+						type: NotificationType.FOLDER_ASSIGNED,
+						title: 'Qovluğa əlavə edildiniz',
+						message: `"${savedFolder.name}" qovluğuna əlavə edildiniz`,
+						folderId: savedFolder.id
+					})
+				}
+			}
+		}
 
 		const defaultList = this.taskListRepo.create({
 			name: 'Siyahı',
@@ -40,7 +65,8 @@ export class FolderService {
 			ActivityType.FOLDER_CREATE,
 			savedFolder.id,
 			savedFolder.name,
-			`"${savedFolder.name}" qovluğu yaradıldı`
+			`"${savedFolder.name}" qovluğu yaradıldı`,
+			dto.assigneeIds?.length ? { assignees: dto.assigneeIds } : undefined
 		)
 
 		// Return folder with default list as plain object
@@ -53,7 +79,8 @@ export class FolderService {
 			createdAt: savedFolder.createdAt,
 			updatedAt: savedFolder.updatedAt,
 			taskLists: [savedDefaultList],
-			defaultListId: savedDefaultList.id
+			defaultListId: savedDefaultList.id,
+			assignees: savedFolder.assignees || []
 		}
 	}
 
@@ -112,7 +139,10 @@ export class FolderService {
 	}
 
 	async updateFolder(id: number, userId: number, dto: UpdateFolderDto) {
-		const folder = await this.folderRepo.findOne({ where: { id } })
+		const folder = await this.folderRepo.findOne({
+			where: { id },
+			relations: ['assignees']
+		})
 
 		if (!folder) throw new NotFoundException('Qovluq tapılmadı!')
 
@@ -122,7 +152,49 @@ export class FolderService {
 		}
 
 		const oldName = folder.name
-		Object.assign(folder, dto)
+		const changes: Record<string, any> = {}
+
+		// Assignee dəyişikliklərini izlə
+		if (dto.assigneeIds !== undefined) {
+			const oldAssigneeIds = folder.assignees?.map(u => u.id) || []
+			const newAssigneeIds = dto.assigneeIds || []
+
+			const addedUserIds = newAssigneeIds.filter(id => !oldAssigneeIds.includes(id))
+			const removedUserIds = oldAssigneeIds.filter(id => !newAssigneeIds.includes(id))
+
+			// Yeni əlavə edilənlərə notification
+			for (const assigneeId of addedUserIds) {
+				await this.notificationService.createNotification({
+					userId: assigneeId,
+					type: NotificationType.FOLDER_ASSIGNED,
+					title: 'Qovluğa əlavə edildiniz',
+					message: `"${folder.name}" qovluğuna əlavə edildiniz`,
+					folderId: folder.id
+				})
+			}
+
+			// Çıxarılanlara notification
+			for (const assigneeId of removedUserIds) {
+				await this.notificationService.createNotification({
+					userId: assigneeId,
+					type: NotificationType.FOLDER_UNASSIGNED,
+					title: 'Qovluqdan çıxarıldınız',
+					message: `"${folder.name}" qovluğundan çıxarıldınız`,
+					folderId: folder.id
+				})
+			}
+
+			if (addedUserIds.length || removedUserIds.length) {
+				changes.assignees = { added: addedUserIds, removed: removedUserIds }
+			}
+
+			folder.assignees = newAssigneeIds.map(id => ({ id } as UserEntity))
+		}
+
+		if (dto.name) changes.name = { old: oldName, new: dto.name }
+		if (dto.description !== undefined) changes.description = dto.description
+
+		Object.assign(folder, { name: dto.name, description: dto.description })
 		await this.folderRepo.save(folder)
 
 		await this.activityLogService.log(
@@ -130,7 +202,7 @@ export class FolderService {
 			id,
 			folder.name,
 			`"${oldName}" qovluğu yeniləndi`,
-			{ ...dto }
+			changes
 		)
 
 		return { message: "Qovluq uğurla yeniləndi" }

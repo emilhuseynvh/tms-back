@@ -2,12 +2,15 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, Repository } from "typeorm";
 import { TaskListEntity } from "../../entities/tasklist.entity";
+import { UserEntity } from "../../entities/user.entity";
 import { CreateTaskListDto } from "./dto/create-tasklist.dto";
 import { UpdateTaskListDto } from "./dto/update-tasklist.dto";
 import { FilterTaskListDto } from "./dto/filter-tasklist.dto";
 import { ClsService } from "nestjs-cls";
 import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
+import { NotificationService } from "../notification/notification.service";
+import { NotificationType } from "../../entities/notification.entity";
 
 @Injectable()
 export class TaskListService {
@@ -15,7 +18,8 @@ export class TaskListService {
 		@InjectRepository(TaskListEntity)
 		private taskListRepo: Repository<TaskListEntity>,
 		private cls: ClsService,
-		private activityLogService: ActivityLogService
+		private activityLogService: ActivityLogService,
+		private notificationService: NotificationService
 	) { }
 
 	async create(dto: CreateTaskListDto): Promise<TaskListEntity> {
@@ -23,18 +27,40 @@ export class TaskListService {
 			throw new BadRequestException('folderId və ya spaceId lazımdır')
 		}
 
+		const user = this.cls.get('user')
 		const list = new TaskListEntity()
 		list.name = dto.name
 		list.folderId = dto.folderId || null
 		list.spaceId = dto.spaceId || null
 
+		// Assignee-ləri əlavə et
+		if (dto.assigneeIds?.length) {
+			list.assignees = dto.assigneeIds.map(id => ({ id } as UserEntity))
+		}
+
 		const savedList = await this.taskListRepo.save(list)
+
+		// Assignee-lərə notification göndər
+		if (dto.assigneeIds?.length) {
+			for (const userId of dto.assigneeIds) {
+				if (userId !== user?.id) {
+					await this.notificationService.createNotification({
+						userId,
+						type: NotificationType.LIST_ASSIGNED,
+						title: 'Siyahıya əlavə edildiniz',
+						message: `"${savedList.name}" siyahısına əlavə edildiniz`,
+						listId: savedList.id
+					})
+				}
+			}
+		}
 
 		await this.activityLogService.log(
 			ActivityType.LIST_CREATE,
 			savedList.id,
 			savedList.name,
-			`"${savedList.name}" siyahısı yaradıldı`
+			`"${savedList.name}" siyahısı yaradıldı`,
+			dto.assigneeIds?.length ? { assignees: dto.assigneeIds } : undefined
 		)
 
 		return savedList
@@ -87,7 +113,7 @@ export class TaskListService {
 	async updateTaskList(id: number, dto: UpdateTaskListDto) {
 		const taskList = await this.taskListRepo.findOne({
 			where: { id },
-			relations: ['folder', 'space']
+			relations: ['folder', 'space', 'assignees']
 		})
 
 		if (!taskList) throw new NotFoundException('Siyahı tapılmadı')
@@ -99,7 +125,48 @@ export class TaskListService {
 		}
 
 		const oldName = taskList.name
-		Object.assign(taskList, dto)
+		const changes: Record<string, any> = {}
+
+		// Assignee dəyişikliklərini izlə
+		if (dto.assigneeIds !== undefined) {
+			const oldAssigneeIds = taskList.assignees?.map(u => u.id) || []
+			const newAssigneeIds = dto.assigneeIds || []
+
+			const addedUserIds = newAssigneeIds.filter(id => !oldAssigneeIds.includes(id))
+			const removedUserIds = oldAssigneeIds.filter(id => !newAssigneeIds.includes(id))
+
+			// Yeni əlavə edilənlərə notification
+			for (const assigneeId of addedUserIds) {
+				await this.notificationService.createNotification({
+					userId: assigneeId,
+					type: NotificationType.LIST_ASSIGNED,
+					title: 'Siyahıya əlavə edildiniz',
+					message: `"${taskList.name}" siyahısına əlavə edildiniz`,
+					listId: taskList.id
+				})
+			}
+
+			// Çıxarılanlara notification
+			for (const assigneeId of removedUserIds) {
+				await this.notificationService.createNotification({
+					userId: assigneeId,
+					type: NotificationType.LIST_UNASSIGNED,
+					title: 'Siyahıdan çıxarıldınız',
+					message: `"${taskList.name}" siyahısından çıxarıldınız`,
+					listId: taskList.id
+				})
+			}
+
+			if (addedUserIds.length || removedUserIds.length) {
+				changes.assignees = { added: addedUserIds, removed: removedUserIds }
+			}
+
+			taskList.assignees = newAssigneeIds.map(id => ({ id } as UserEntity))
+		}
+
+		if (dto.name) changes.name = { old: oldName, new: dto.name }
+
+		Object.assign(taskList, { name: dto.name })
 		await this.taskListRepo.save(taskList)
 
 		await this.activityLogService.log(
@@ -107,7 +174,7 @@ export class TaskListService {
 			id,
 			taskList.name,
 			`"${oldName}" siyahısı yeniləndi`,
-			{ ...dto }
+			changes
 		)
 
 		return { message: "Siyahı uğurla yeniləndi" }

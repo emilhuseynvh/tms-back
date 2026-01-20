@@ -3,11 +3,14 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { SpaceEntity } from "../../entities/space.entity";
 import { TaskEntity } from "../../entities/task.entity";
+import { UserEntity } from "../../entities/user.entity";
 import { CreateSpaceDto } from "./dto/create-space.dto";
 import { UpdateSpaceDto } from "./dto/update-space.dto";
 import { ClsService } from "nestjs-cls";
 import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
+import { NotificationService } from "../notification/notification.service";
+import { NotificationType } from "../../entities/notification.entity";
 
 @Injectable()
 export class SpaceService {
@@ -17,18 +20,41 @@ export class SpaceService {
 		@InjectRepository(TaskEntity)
 		private taskRepo: Repository<TaskEntity>,
 		private cls: ClsService,
-		private activityLogService: ActivityLogService
+		private activityLogService: ActivityLogService,
+		private notificationService: NotificationService
 	) { }
 
 	async create(ownerId: number, dto: CreateSpaceDto) {
 		const space = this.spaceRepo.create({ ...dto, ownerId })
+
+		// Assignee-ləri əlavə et
+		if (dto.assigneeIds?.length) {
+			space.assignees = dto.assigneeIds.map(id => ({ id } as UserEntity))
+		}
+
 		const savedSpace = await this.spaceRepo.save(space)
+
+		// Assignee-lərə notification göndər
+		if (dto.assigneeIds?.length) {
+			for (const userId of dto.assigneeIds) {
+				if (userId !== ownerId) {
+					await this.notificationService.createNotification({
+						userId,
+						type: NotificationType.SPACE_ASSIGNED,
+						title: 'Space-ə əlavə edildiniz',
+						message: `"${savedSpace.name}" space-inə əlavə edildiniz`,
+						spaceId: savedSpace.id
+					})
+				}
+			}
+		}
 
 		await this.activityLogService.log(
 			ActivityType.SPACE_CREATE,
 			savedSpace.id,
 			savedSpace.name,
-			`"${savedSpace.name}" sahəsi yaradıldı`
+			`"${savedSpace.name}" sahəsi yaradıldı`,
+			dto.assigneeIds?.length ? { assignees: dto.assigneeIds } : undefined
 		)
 
 		return savedSpace
@@ -49,7 +75,7 @@ export class SpaceService {
 			return await this.spaceRepo.find({
 				where: { isArchived: false },
 				order: { createdAt: 'DESC' },
-				relations: ['folders', 'folders.taskLists', 'taskLists']
+				relations: ['folders', 'folders.taskLists', 'taskLists', 'assignees', 'folders.assignees', 'folders.taskLists.assignees', 'taskLists.assignees']
 			})
 		}
 
@@ -57,6 +83,15 @@ export class SpaceService {
 		const ownedSpaceIds = await this.spaceRepo
 			.createQueryBuilder('space')
 			.where('space.ownerId = :ownerId', { ownerId })
+			.andWhere('space.isArchived = false')
+			.andWhere('space.deletedAt IS NULL')
+			.select('space.id')
+			.getRawMany()
+
+		// User-in assign edildiği space-ləri tap
+		const spaceAssignedIds = await this.spaceRepo
+			.createQueryBuilder('space')
+			.innerJoin('space.assignees', 'assignee', 'assignee.id = :userId', { userId: ownerId })
 			.andWhere('space.isArchived = false')
 			.andWhere('space.deletedAt IS NULL')
 			.select('space.id')
@@ -78,6 +113,7 @@ export class SpaceService {
 		// Hər iki mənbədən space ID-lərini birləşdir
 		const allSpaceIds = [
 			...ownedSpaceIds.map(r => r.space_id),
+			...spaceAssignedIds.map(r => r.space_id),
 			...assignedSpaceIds.map(r => r.spaceId)
 		].filter(id => id !== null)
 
@@ -90,9 +126,13 @@ export class SpaceService {
 
 		return await this.spaceRepo
 			.createQueryBuilder('space')
+			.leftJoinAndSelect('space.assignees', 'spaceAssignees')
 			.leftJoinAndSelect('space.folders', 'folders', 'folders.isArchived = false AND folders.deletedAt IS NULL')
+			.leftJoinAndSelect('folders.assignees', 'folderAssignees')
 			.leftJoinAndSelect('folders.taskLists', 'folderTaskLists', 'folderTaskLists.isArchived = false AND folderTaskLists.deletedAt IS NULL')
+			.leftJoinAndSelect('folderTaskLists.assignees', 'folderTaskListAssignees')
 			.leftJoinAndSelect('space.taskLists', 'taskLists', 'taskLists.isArchived = false AND taskLists.deletedAt IS NULL AND taskLists.folderId IS NULL')
+			.leftJoinAndSelect('taskLists.assignees', 'taskListAssignees')
 			.where('space.id IN (:...spaceIds)', { spaceIds: uniqueSpaceIds })
 			.andWhere('space.isArchived = false')
 			.andWhere('space.deletedAt IS NULL')
@@ -173,7 +213,10 @@ export class SpaceService {
 	}
 
 	async updateSpace(id: number, userId: number, dto: UpdateSpaceDto) {
-		const space = await this.spaceRepo.findOne({ where: { id } })
+		const space = await this.spaceRepo.findOne({
+			where: { id },
+			relations: ['assignees']
+		})
 
 		if (!space) throw new NotFoundException('Sahə tapılmadı!')
 
@@ -183,7 +226,49 @@ export class SpaceService {
 		}
 
 		const oldName = space.name
-		Object.assign(space, dto)
+		const changes: Record<string, any> = {}
+
+		// Assignee dəyişikliklərini izlə
+		if (dto.assigneeIds !== undefined) {
+			const oldAssigneeIds = space.assignees?.map(u => u.id) || []
+			const newAssigneeIds = dto.assigneeIds || []
+
+			const addedUserIds = newAssigneeIds.filter(id => !oldAssigneeIds.includes(id))
+			const removedUserIds = oldAssigneeIds.filter(id => !newAssigneeIds.includes(id))
+
+			// Yeni əlavə edilənlərə notification
+			for (const assigneeId of addedUserIds) {
+				await this.notificationService.createNotification({
+					userId: assigneeId,
+					type: NotificationType.SPACE_ASSIGNED,
+					title: 'Space-ə əlavə edildiniz',
+					message: `"${space.name}" space-inə əlavə edildiniz`,
+					spaceId: space.id
+				})
+			}
+
+			// Çıxarılanlara notification
+			for (const assigneeId of removedUserIds) {
+				await this.notificationService.createNotification({
+					userId: assigneeId,
+					type: NotificationType.SPACE_UNASSIGNED,
+					title: 'Space-dən çıxarıldınız',
+					message: `"${space.name}" space-indən çıxarıldınız`,
+					spaceId: space.id
+				})
+			}
+
+			if (addedUserIds.length || removedUserIds.length) {
+				changes.assignees = { added: addedUserIds, removed: removedUserIds }
+			}
+
+			space.assignees = newAssigneeIds.map(id => ({ id } as UserEntity))
+		}
+
+		if (dto.name) changes.name = { old: oldName, new: dto.name }
+		if (dto.description !== undefined) changes.description = dto.description
+
+		Object.assign(space, { name: dto.name, description: dto.description })
 		await this.spaceRepo.save(space)
 
 		await this.activityLogService.log(
@@ -191,7 +276,7 @@ export class SpaceService {
 			id,
 			space.name,
 			`"${oldName}" sahəsi yeniləndi`,
-			{ ...dto }
+			changes
 		)
 
 		return { message: "Sahə uğurla yeniləndi" }

@@ -183,19 +183,25 @@ export class NotificationService implements OnModuleInit {
 		return tasks
 	}
 
-	async createNotification(
+	async createNotification(data: {
 		userId: number,
 		type: NotificationType,
 		title: string,
 		message: string,
-		taskId?: number
-	): Promise<NotificationEntity> {
+		taskId?: number,
+		spaceId?: number,
+		folderId?: number,
+		listId?: number
+	}): Promise<NotificationEntity> {
 		const notification = this.notificationRepo.create({
-			userId,
-			type,
-			title,
-			message,
-			taskId: taskId || null,
+			userId: data.userId,
+			type: data.type,
+			title: data.title,
+			message: data.message,
+			taskId: data.taskId || null,
+			spaceId: data.spaceId || null,
+			folderId: data.folderId || null,
+			listId: data.listId || null,
 			isRead: false
 		})
 		return await this.notificationRepo.save(notification)
@@ -267,42 +273,42 @@ export class NotificationService implements OnModuleInit {
 	}
 
 	async notifyTaskAssigned(taskId: number, userId: number, taskTitle: string): Promise<NotificationEntity> {
-		return await this.createNotification(
+		return await this.createNotification({
 			userId,
-			NotificationType.TASK_ASSIGNED,
-			'Yeni tapşırıq təyin edildi',
-			`Sizə "${taskTitle}" tapşırığı təyin edildi`,
+			type: NotificationType.TASK_ASSIGNED,
+			title: 'Yeni tapşırıq təyin edildi',
+			message: `Sizə "${taskTitle}" tapşırığı təyin edildi`,
 			taskId
-		)
+		})
 	}
 
 	async notifyTaskUnassigned(taskId: number, userId: number, taskTitle: string): Promise<NotificationEntity> {
-		return await this.createNotification(
+		return await this.createNotification({
 			userId,
-			NotificationType.TASK_UNASSIGNED,
-			'Tapşırıqdan çıxarıldınız',
-			`"${taskTitle}" tapşırığından çıxarıldınız`,
+			type: NotificationType.TASK_UNASSIGNED,
+			title: 'Tapşırıqdan çıxarıldınız',
+			message: `"${taskTitle}" tapşırığından çıxarıldınız`,
 			taskId
-		)
+		})
 	}
 
 	async notifyTaskDeadline(taskId: number, userId: number, taskTitle: string, hoursLeft: number): Promise<NotificationEntity> {
-		return await this.createNotification(
+		return await this.createNotification({
 			userId,
-			NotificationType.TASK_DEADLINE,
-			'Deadline yaxınlaşır',
-			`"${taskTitle}" tapşırığının bitmə vaxtına ${hoursLeft} saat qalıb`,
+			type: NotificationType.TASK_DEADLINE,
+			title: 'Deadline yaxınlaşır',
+			message: `"${taskTitle}" tapşırığının bitmə vaxtına ${hoursLeft} saat qalıb`,
 			taskId
-		)
+		})
 	}
 
 	async notifyTaskUpdated(taskId: number, userId: number, taskTitle: string, updatedBy: string): Promise<NotificationEntity> {
-		return await this.createNotification(
+		return await this.createNotification({
 			userId,
-			NotificationType.TASK_UPDATED,
-			'Tapşırıq yeniləndi',
-			`"${taskTitle}" tapşırığı ${updatedBy} tərəfindən yeniləndi`,
+			type: NotificationType.TASK_UPDATED,
+			title: 'Tapşırıq yeniləndi',
+			message: `"${taskTitle}" tapşırığı ${updatedBy} tərəfindən yeniləndi`,
 			taskId
-		)
+		})
 	}
 }
