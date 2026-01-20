@@ -69,6 +69,9 @@ export class TaskService {
 			`"${savedTask.title}" tapşırığı yaradıldı`
 		)
 
+		// Task yaratma logu - task-ın öz log hissəsinə düşsün
+		await this.logTaskCreation(savedTask.id)
+
 		return savedTask
 	}
 
@@ -341,6 +344,17 @@ export class TaskService {
 			userId: user.id ?? null,
 			username: user.username ?? null,
 			changes
+		})
+		await this.taskActivityRepo.save(log)
+	}
+
+	private async logTaskCreation(taskId: number) {
+		const user = this.cls.get('user') || {}
+		const log = this.taskActivityRepo.create({
+			taskId,
+			userId: user.id ?? null,
+			username: user.username ?? null,
+			changes: { created: { from: null, to: 'Tapşırıq yaradıldı' } }
 		})
 		await this.taskActivityRepo.save(log)
 	}
