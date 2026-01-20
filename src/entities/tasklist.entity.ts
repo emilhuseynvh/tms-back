@@ -19,6 +19,7 @@ export class TaskListEntity extends BaseEntity {
 	folderId: number | null
 
 	@ManyToOne(() => FolderEntity, (folder) => folder.taskLists, { onDelete: 'CASCADE', nullable: true })
+	@JoinColumn({ name: 'folderId' })
 	folder: FolderEntity
 
 	@Column({ nullable: true })

@@ -76,7 +76,8 @@ export class TaskListService {
 
 	async getOne(id: number) {
 		const taskList = await this.taskListRepo.findOne({
-			where: { id }
+			where: { id },
+			relations: ['folder', 'folder.space', 'space']
 		})
 
 		if (!taskList) throw new NotFoundException('Siyahı tapılmadı')
