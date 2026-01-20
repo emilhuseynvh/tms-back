@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { SpaceEntity } from "../../entities/space.entity";
 import { TaskEntity } from "../../entities/task.entity";
+import { TaskListEntity } from "../../entities/tasklist.entity";
 import { UserEntity } from "../../entities/user.entity";
 import { CreateSpaceDto } from "./dto/create-space.dto";
 import { UpdateSpaceDto } from "./dto/update-space.dto";
@@ -19,6 +20,8 @@ export class SpaceService {
 		private spaceRepo: Repository<SpaceEntity>,
 		@InjectRepository(TaskEntity)
 		private taskRepo: Repository<TaskEntity>,
+		@InjectRepository(TaskListEntity)
+		private taskListRepo: Repository<TaskListEntity>,
 		private cls: ClsService,
 		private activityLogService: ActivityLogService,
 		private notificationService: NotificationService
@@ -33,6 +36,14 @@ export class SpaceService {
 		}
 
 		const savedSpace = await this.spaceRepo.save(space)
+
+		// Default list yarat (folder yox)
+		const defaultList = this.taskListRepo.create({
+			name: 'Siyahı',
+			spaceId: savedSpace.id,
+			folderId: null
+		})
+		const savedDefaultList = await this.taskListRepo.save(defaultList)
 
 		// Assignee-lərə notification göndər
 		if (dto.assigneeIds?.length) {
@@ -57,7 +68,12 @@ export class SpaceService {
 			dto.assigneeIds?.length ? { assignees: dto.assigneeIds } : undefined
 		)
 
-		return savedSpace
+		// Space-i taskLists ilə birlikdə qaytar
+		return {
+			...savedSpace,
+			taskLists: [savedDefaultList],
+			folders: []
+		}
 	}
 
 	async listAll() {
