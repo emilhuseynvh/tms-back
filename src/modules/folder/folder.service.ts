@@ -32,7 +32,7 @@ export class FolderService {
 		const defaultList = this.taskListRepo.create({
 			name: 'Siyahı',
 			folderId: savedFolder.id,
-			spaceId: dto.spaceId
+			spaceId: null
 		})
 		const savedDefaultList = await this.taskListRepo.save(defaultList)
 
