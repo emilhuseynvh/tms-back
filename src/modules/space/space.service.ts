@@ -126,11 +126,37 @@ export class SpaceService {
 			.select('DISTINCT COALESCE(directSpace.id, folderSpace.id)', 'spaceId')
 			.getRawMany()
 
-		// Hər iki mənbədən space ID-lərini birləşdir
+		// User-in assign edildiyi list-lərin space-lərini tap
+		const listAssignedSpaceIds = await this.taskListRepo
+			.createQueryBuilder('taskList')
+			.innerJoin('taskList.assignees', 'assignee', 'assignee.id = :userId', { userId: ownerId })
+			.leftJoin('taskList.folder', 'folder')
+			.leftJoin('taskList.space', 'directSpace')
+			.leftJoin('folder.space', 'folderSpace')
+			.where('taskList.deletedAt IS NULL')
+			.andWhere('taskList.isArchived = false')
+			.select('DISTINCT COALESCE(directSpace.id, folderSpace.id)', 'spaceId')
+			.getRawMany()
+
+		// User-in assign edildiyi folder-lərin space-lərini tap
+		const folderAssignedSpaceIds = await this.spaceRepo
+			.createQueryBuilder('space')
+			.innerJoin('space.folders', 'folder')
+			.innerJoin('folder.assignees', 'assignee', 'assignee.id = :userId', { userId: ownerId })
+			.where('folder.deletedAt IS NULL')
+			.andWhere('folder.isArchived = false')
+			.andWhere('space.deletedAt IS NULL')
+			.andWhere('space.isArchived = false')
+			.select('DISTINCT space.id', 'spaceId')
+			.getRawMany()
+
+		// Bütün mənbələrdən space ID-lərini birləşdir
 		const allSpaceIds = [
 			...ownedSpaceIds.map(r => r.space_id),
 			...spaceAssignedIds.map(r => r.space_id),
-			...assignedSpaceIds.map(r => r.spaceId)
+			...assignedSpaceIds.map(r => r.spaceId),
+			...listAssignedSpaceIds.map(r => r.spaceId),
+			...folderAssignedSpaceIds.map(r => r.spaceId)
 		].filter(id => id !== null)
 
 		// Unique ID-lər
