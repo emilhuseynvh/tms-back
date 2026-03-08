@@ -22,7 +22,7 @@ export class UserEntity extends BaseEntity {
     @Column()
     password: string
 
-    @Column({ enum: RoleEnum })
+    @Column({ type: 'enum', enum: RoleEnum })
     role: RoleEnum
 
     @OneToOne(() => UploadsEntity, (image) => image.user)
