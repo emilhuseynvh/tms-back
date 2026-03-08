@@ -51,7 +51,7 @@ export class ActivityLogService {
 
 		if (filters.search) {
 			queryBuilder.andWhere(
-				'(log.entityName ILIKE :search OR log.description ILIKE :search OR user.username ILIKE :search)',
+				'(log.entityName LIKE :search OR log.description LIKE :search OR user.username LIKE :search)',
 				{ search: `%${filters.search}%` }
 			)
 		}

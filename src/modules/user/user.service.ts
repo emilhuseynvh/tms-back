@@ -47,11 +47,11 @@ export class UserService {
 
         if (search) {
             if (role) {
-                queryBuilder.andWhere('(user.username ILIKE :search OR user.email ILIKE :search)', {
+                queryBuilder.andWhere('(user.username LIKE :search OR user.email LIKE :search)', {
                     search: `%${search}%`,
                 });
             } else {
-                queryBuilder.where('(user.username ILIKE :search OR user.email ILIKE :search)', {
+                queryBuilder.where('(user.username LIKE :search OR user.email LIKE :search)', {
                     search: `%${search}%`,
                 });
             }

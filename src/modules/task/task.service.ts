@@ -102,7 +102,7 @@ export class TaskService {
 
 		if (filters?.search) {
 			queryBuilder.andWhere(
-				'(task.title ILIKE :search OR task.description ILIKE :search)',
+				'(task.title LIKE :search OR task.description LIKE :search)',
 				{ search: `%${filters.search}%` }
 			)
 		}
