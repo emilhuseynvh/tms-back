@@ -3,8 +3,12 @@ import config from ".";
 import { join } from "path";
 
 export default new DataSource({
-    type: 'postgres',
-    url: config.databaseUrl,
+    type: 'mysql',
+    host: config.dbHost,
+    port: config.dbPort,
+    username: config.dbUsername,
+    password: config.dbPassword,
+    database: config.dbName,
     entities: [join(__dirname, '../entities/*.entity.{ts,js}')],
     migrations: [join(__dirname, '../migrations/*.entity.{ts,js}')],
     synchronize: true,
