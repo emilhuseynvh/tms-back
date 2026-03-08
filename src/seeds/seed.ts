@@ -9,15 +9,15 @@ async function bootstrap() {
     const userService = app.get(UserService);
 
 
-    const adminUser = await userService.findByEmail('admin@example.com');
+    const adminUser = await userService.findByEmail('admin@admin.com');
     if (!adminUser) {
         await userService.createAdmin({
             username: 'Admin',
-            email: 'admin@example.com',
-            password: 'admin123',
-            role: RoleEnum.ADMIN, 
-            avatarId: 1,
-            phone: 'alksndlaksnd'
+            email: 'admin@admin.com',
+            password: 'secret',
+            role: RoleEnum.ADMIN,
+            avatarId: undefined,
+            phone: ''
         });
 
         console.log('Admin user yaradıldı');
