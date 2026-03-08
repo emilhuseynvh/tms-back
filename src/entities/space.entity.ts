@@ -41,7 +41,7 @@ export class SpaceEntity extends BaseEntity {
 	@Column({ default: false })
 	isArchived: boolean
 
-	@Column({ type: 'timestamptz', nullable: true })
+	@Column({ type: 'timestamp', nullable: true })
 	archivedAt: Date | null
 
 	@Column({ nullable: true })

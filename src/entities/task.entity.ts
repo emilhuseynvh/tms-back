@@ -15,10 +15,10 @@ export class TaskEntity extends BaseEntity {
 	@Column({ nullable: true, type: 'text' })
 	description: string
 
-	@Column({ type: 'timestamptz', nullable: true })
+	@Column({ type: 'timestamp', nullable: true })
 	startAt: Date | null
 
-	@Column({ type: 'timestamptz', nullable: true })
+	@Column({ type: 'timestamp', nullable: true })
 	dueAt: Date | null
 
 	@Column({ nullable: true })
@@ -66,7 +66,7 @@ export class TaskEntity extends BaseEntity {
 	@Column({ default: false })
 	isArchived: boolean
 
-	@Column({ type: 'timestamptz', nullable: true })
+	@Column({ type: 'timestamp', nullable: true })
 	archivedAt: Date | null
 
 	@Column({ nullable: true })
@@ -83,12 +83,12 @@ export class TaskEntity extends BaseEntity {
 	@JoinColumn({ name: 'deletedById' })
 	deletedBy: UserEntity
 
-	@CreateDateColumn({ type: 'timestamptz' })
+	@CreateDateColumn({ type: 'timestamp' })
 	createdAt: Date
 
-	@UpdateDateColumn({ type: 'timestamptz' })
+	@UpdateDateColumn({ type: 'timestamp' })
 	updatedAt: Date
 
-	@DeleteDateColumn({ type: 'timestamptz' })
+	@DeleteDateColumn({ type: 'timestamp' })
 	deletedAt: Date
 }

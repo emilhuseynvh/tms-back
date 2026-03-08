@@ -41,12 +41,12 @@ export class ActivityLogEntity extends BaseEntity {
 	@Column({ nullable: true })
 	entityName: string
 
-	@Column({ type: 'jsonb', nullable: true })
+	@Column({ type: 'json', nullable: true })
 	changes: Record<string, unknown>
 
 	@Column({ type: 'text', nullable: true })
 	description: string
 
-	@CreateDateColumn({ type: 'timestamptz' })
+	@CreateDateColumn({ type: 'timestamp' })
 	createdAt: Date
 }

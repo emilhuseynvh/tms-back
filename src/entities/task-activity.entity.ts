@@ -19,9 +19,9 @@ export class TaskActivityEntity extends BaseEntity {
 	@Column({ type: 'varchar', nullable: true })
 	username: string
 
-	@Column({ type: 'jsonb' })
+	@Column({ type: 'json' })
 	changes: Record<string, unknown>
 
-	@CreateDateColumn({ type: 'timestamptz' })
+	@CreateDateColumn({ type: 'timestamp' })
 	createdAt: Date
 }
