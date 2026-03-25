@@ -15,6 +15,9 @@ export class TaskStatusEntity extends BaseEntity {
 	@Column({ default: 'circle' })
 	icon: string
 
+	@Column({ type: 'int', default: 0 })
+	order: number
+
 	@OneToMany(() => TaskEntity, (task) => task.status)
 	tasks: TaskEntity[]
 

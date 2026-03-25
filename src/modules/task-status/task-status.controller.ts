@@ -18,6 +18,12 @@ export class TaskStatusController {
 		return await this.taskStatusService.getById(id)
 	}
 
+	@Post('reorder')
+	@Auth('admin')
+	async reorder(@Body() body: { statusIds: number[] }) {
+		return await this.taskStatusService.reorder(body.statusIds)
+	}
+
 	@Post()
 	@Auth('admin')
 	async create(@Body() body: CreateTaskStatusDto) {

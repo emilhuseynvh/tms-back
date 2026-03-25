@@ -13,7 +13,7 @@ export class TaskStatusService {
 	) { }
 
 	async list() {
-		return await this.taskStatusRepo.find({ order: { createdAt: 'DESC' } })
+		return await this.taskStatusRepo.find({ order: { order: 'ASC', createdAt: 'DESC' } })
 	}
 
 	async getById(id: number) {
@@ -31,6 +31,14 @@ export class TaskStatusService {
 		const status = await this.getById(id)
 		Object.assign(status, dto)
 		return await this.taskStatusRepo.save(status)
+	}
+
+	async reorder(statusIds: number[]) {
+		const updates = statusIds.map((id, index) =>
+			this.taskStatusRepo.update(id, { order: index })
+		)
+		await Promise.all(updates)
+		return { message: 'Statuslar yenidən sıralandı!' }
 	}
 
 	async delete(id: number) {
