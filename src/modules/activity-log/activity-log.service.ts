@@ -46,7 +46,10 @@ export class ActivityLogService {
 		}
 
 		if (filters.type) {
-			queryBuilder.andWhere('log.type LIKE :type', { type: `%${filters.type}%` })
+			const matchingTypes = Object.values(ActivityType).filter(t => t.includes(filters.type as string))
+			if (matchingTypes.length > 0) {
+				queryBuilder.andWhere('log.type IN (:...types)', { types: matchingTypes })
+			}
 		}
 
 		if (filters.search) {
