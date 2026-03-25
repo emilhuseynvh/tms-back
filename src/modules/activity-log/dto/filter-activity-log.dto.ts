@@ -22,10 +22,10 @@ export class FilterActivityLogDto {
 	@ApiProperty({ required: false })
 	userId?: number
 
-	@IsEnum(ActivityType)
+	@IsString()
 	@IsOptional()
-	@ApiProperty({ required: false, enum: ActivityType })
-	type?: ActivityType
+	@ApiProperty({ required: false })
+	type?: string
 
 	@IsString()
 	@IsOptional()
