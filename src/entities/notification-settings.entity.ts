@@ -13,6 +13,14 @@ export class NotificationSettingsEntity extends BaseEntity {
 	@Column({ default: true })
 	isEnabled: boolean
 
+	// Bildiriş səsi tipi
+	@Column({ default: 'default' })
+	soundType: string
+
+	// Custom səs URL
+	@Column({ type: 'text', nullable: true })
+	customSoundUrl: string | null
+
 	@UpdateDateColumn()
 	updatedAt: Date
 }

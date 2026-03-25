@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsNumber, IsOptional, Max, Min } from "class-validator";
+import { IsBoolean, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class UpdateNotificationSettingsDto {
 	@IsOptional()
@@ -13,4 +13,14 @@ export class UpdateNotificationSettingsDto {
 	@IsBoolean()
 	@ApiProperty({ required: false, description: 'Bildiriş aktiv/deaktiv' })
 	isEnabled?: boolean
+
+	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false, description: 'Bildiriş səsi tipi' })
+	soundType?: string
+
+	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false, description: 'Custom səs URL' })
+	customSoundUrl?: string | null
 }
