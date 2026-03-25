@@ -226,7 +226,7 @@ export class NotificationService implements OnModuleInit {
 			order: { createdAt: 'DESC' },
 			skip: (page - 1) * limit,
 			take: limit,
-			relations: ['task']
+			relations: ['task', 'task.taskList']
 		})
 
 		return {
