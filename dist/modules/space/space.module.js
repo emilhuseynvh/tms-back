@@ -11,17 +11,20 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const space_entity_1 = require("../../entities/space.entity");
 const task_entity_1 = require("../../entities/task.entity");
+const tasklist_entity_1 = require("../../entities/tasklist.entity");
 const space_service_1 = require("./space.service");
 const space_controller_1 = require("./space.controller");
 const activity_log_module_1 = require("../activity-log/activity-log.module");
+const notification_module_1 = require("../notification/notification.module");
 let SpaceModule = class SpaceModule {
 };
 exports.SpaceModule = SpaceModule;
 exports.SpaceModule = SpaceModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([space_entity_1.SpaceEntity, task_entity_1.TaskEntity]),
-            activity_log_module_1.ActivityLogModule
+            typeorm_1.TypeOrmModule.forFeature([space_entity_1.SpaceEntity, task_entity_1.TaskEntity, tasklist_entity_1.TaskListEntity]),
+            activity_log_module_1.ActivityLogModule,
+            (0, common_1.forwardRef)(() => notification_module_1.NotificationModule)
         ],
         controllers: [space_controller_1.SpaceController],
         providers: [space_service_1.SpaceService],

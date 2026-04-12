@@ -29,6 +29,9 @@ let TaskStatusController = class TaskStatusController {
     async getById(id) {
         return await this.taskStatusService.getById(id);
     }
+    async reorder(body) {
+        return await this.taskStatusService.reorder(body.statusIds);
+    }
     async create(body) {
         return await this.taskStatusService.create(body);
     }
@@ -53,6 +56,14 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], TaskStatusController.prototype, "getById", null);
+__decorate([
+    (0, common_1.Post)('reorder'),
+    (0, auth_decorator_1.Auth)('admin'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], TaskStatusController.prototype, "reorder", null);
 __decorate([
     (0, common_1.Post)(),
     (0, auth_decorator_1.Auth)('admin'),

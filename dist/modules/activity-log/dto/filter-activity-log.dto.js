@@ -13,7 +13,6 @@ exports.FilterActivityLogDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
-const activity_log_entity_1 = require("../../../entities/activity-log.entity");
 class FilterActivityLogDto {
     page = 1;
     limit = 20;
@@ -22,6 +21,7 @@ class FilterActivityLogDto {
     search;
     startDate;
     endDate;
+    statusId;
 }
 exports.FilterActivityLogDto = FilterActivityLogDto;
 __decorate([
@@ -46,9 +46,9 @@ __decorate([
     __metadata("design:type", Number)
 ], FilterActivityLogDto.prototype, "userId", void 0);
 __decorate([
-    (0, class_validator_1.IsEnum)(activity_log_entity_1.ActivityType),
+    (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
-    (0, swagger_1.ApiProperty)({ required: false, enum: activity_log_entity_1.ActivityType }),
+    (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", String)
 ], FilterActivityLogDto.prototype, "type", void 0);
 __decorate([
@@ -69,4 +69,11 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", String)
 ], FilterActivityLogDto.prototype, "endDate", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, swagger_1.ApiProperty)({ required: false, description: 'Tapşırıq status dəyişikliyi ilə bağlı loglar (changes.statusId)' }),
+    __metadata("design:type", Number)
+], FilterActivityLogDto.prototype, "statusId", void 0);
 //# sourceMappingURL=filter-activity-log.dto.js.map

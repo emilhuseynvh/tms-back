@@ -38,6 +38,7 @@
     "dotenv": "^17.2.3",
     "mysql2": "^3.19.0",
     "nestjs-cls": "^6.0.1",
+    "pg": "^8.20.0",
     "postgres": "^3.4.7",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

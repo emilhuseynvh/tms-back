@@ -41,4 +41,10 @@ export class FilterActivityLogDto {
 	@IsOptional()
 	@ApiProperty({ required: false })
 	endDate?: string
+
+	@Type(() => Number)
+	@IsNumber()
+	@IsOptional()
+	@ApiProperty({ required: false, description: 'Tapşırıq status dəyişikliyi ilə bağlı loglar (changes.statusId)' })
+	statusId?: number
 }

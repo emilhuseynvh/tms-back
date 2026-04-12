@@ -23,6 +23,7 @@ let SpaceEntity = class SpaceEntity extends typeorm_1.BaseEntity {
     owner;
     folders;
     taskLists;
+    assignees;
     isArchived;
     archivedAt;
     archivedById;
@@ -66,11 +67,20 @@ __decorate([
     __metadata("design:type", Array)
 ], SpaceEntity.prototype, "taskLists", void 0);
 __decorate([
+    (0, typeorm_1.ManyToMany)(() => user_entity_1.UserEntity, { eager: true }),
+    (0, typeorm_1.JoinTable)({
+        name: 'space_assignees',
+        joinColumn: { name: 'spaceId' },
+        inverseJoinColumn: { name: 'userId' }
+    }),
+    __metadata("design:type", Array)
+], SpaceEntity.prototype, "assignees", void 0);
+__decorate([
     (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)
 ], SpaceEntity.prototype, "isArchived", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Object)
 ], SpaceEntity.prototype, "archivedAt", void 0);
 __decorate([

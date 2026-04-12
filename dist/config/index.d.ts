@@ -1,5 +1,9 @@
 declare const _default: {
-    databaseUrl: string | undefined;
+    dbHost: string | undefined;
+    dbPort: number;
+    dbUsername: string | undefined;
+    dbPassword: string | undefined;
+    dbName: string | undefined;
     superSecret: string | undefined;
     url: string | undefined;
 };

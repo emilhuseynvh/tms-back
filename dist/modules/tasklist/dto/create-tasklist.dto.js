@@ -16,6 +16,7 @@ class CreateTaskListDto {
     name;
     folderId;
     spaceId;
+    assigneeIds;
 }
 exports.CreateTaskListDto = CreateTaskListDto;
 __decorate([
@@ -35,4 +36,11 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", Number)
 ], CreateTaskListDto.prototype, "spaceId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsInt)({ each: true }),
+    (0, swagger_1.ApiProperty)({ required: false, type: [Number] }),
+    __metadata("design:type", Array)
+], CreateTaskListDto.prototype, "assigneeIds", void 0);
 //# sourceMappingURL=create-tasklist.dto.js.map

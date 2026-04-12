@@ -14,17 +14,24 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploadsController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const swagger_1 = require("@nestjs/swagger");
+const multer_1 = require("multer");
+const path_1 = require("path");
 const upload_constants_1 = require("../../shared/constants/upload.constants");
 const auth_decorator_1 = require("../../shared/decorators/auth.decorator");
 const uploads_service_1 = require("./uploads.service");
 const upload_interceptor_1 = require("../../shared/interceptors/upload.interceptor");
+const common_2 = require("@nestjs/common");
 let UploadsController = class UploadsController {
     uploadsService;
     constructor(uploadsService) {
         this.uploadsService = uploadsService;
     }
     async uploadSingleFile(file) {
+        return this.uploadsService.saveFile(file);
+    }
+    async uploadAudio(file) {
         return this.uploadsService.saveFile(file);
     }
 };
@@ -52,6 +59,32 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UploadsController.prototype, "uploadSingleFile", null);
+__decorate([
+    (0, common_1.Post)('audio'),
+    (0, auth_decorator_1.Auth)(),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: (0, multer_1.diskStorage)({
+            destination: './uploads',
+            filename: (req, file, callback) => {
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                callback(null, 'audio-' + uniqueSuffix + (0, path_1.extname)(file.originalname));
+            },
+        }),
+        fileFilter: (req, file, callback) => {
+            if (!upload_constants_1.UPLOAD_AUDIO_ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+                return callback(new common_2.BadRequestException('Yalnız MP3, WAV və OGG faylları yüklənə bilər!'), false);
+            }
+            callback(null, true);
+        },
+    })),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    __param(0, (0, common_1.UploadedFile)(new common_1.ParseFilePipe({
+        validators: [new common_1.MaxFileSizeValidator({ maxSize: upload_constants_1.UPLOAD_AUDIO_MAX_SIZE })],
+    }))),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UploadsController.prototype, "uploadAudio", null);
 exports.UploadsController = UploadsController = __decorate([
     (0, common_1.Controller)('uploads'),
     __metadata("design:paramtypes", [uploads_service_1.UplaodsService])

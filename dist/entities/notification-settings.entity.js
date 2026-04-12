@@ -15,6 +15,8 @@ let NotificationSettingsEntity = class NotificationSettingsEntity extends typeor
     id;
     hoursBeforeDue;
     isEnabled;
+    soundType;
+    customSoundUrl;
     updatedAt;
 };
 exports.NotificationSettingsEntity = NotificationSettingsEntity;
@@ -30,6 +32,14 @@ __decorate([
     (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Boolean)
 ], NotificationSettingsEntity.prototype, "isEnabled", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 'default' }),
+    __metadata("design:type", String)
+], NotificationSettingsEntity.prototype, "soundType", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", Object)
+], NotificationSettingsEntity.prototype, "customSoundUrl", void 0);
 __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)

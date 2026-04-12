@@ -1,10 +1,10 @@
-import { ActivityType } from "../../../entities/activity-log.entity";
 export declare class FilterActivityLogDto {
     page?: number;
     limit?: number;
     userId?: number;
-    type?: ActivityType;
+    type?: string;
     search?: string;
     startDate?: string;
     endDate?: string;
+    statusId?: number;
 }

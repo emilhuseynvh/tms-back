@@ -56,11 +56,11 @@ __decorate([
     __metadata("design:type", String)
 ], TaskEntity.prototype, "description", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Object)
 ], TaskEntity.prototype, "startAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Object)
 ], TaskEntity.prototype, "dueAt", void 0);
 __decorate([
@@ -122,7 +122,7 @@ __decorate([
     __metadata("design:type", Boolean)
 ], TaskEntity.prototype, "isArchived", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Object)
 ], TaskEntity.prototype, "archivedAt", void 0);
 __decorate([
@@ -144,15 +144,15 @@ __decorate([
     __metadata("design:type", user_entity_1.UserEntity)
 ], TaskEntity.prototype, "deletedBy", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamp' }),
     __metadata("design:type", Date)
 ], TaskEntity.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamp' }),
     __metadata("design:type", Date)
 ], TaskEntity.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.DeleteDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.DeleteDateColumn)({ type: 'timestamp' }),
     __metadata("design:type", Date)
 ], TaskEntity.prototype, "deletedAt", void 0);
 exports.TaskEntity = TaskEntity = __decorate([

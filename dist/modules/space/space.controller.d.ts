@@ -20,6 +20,7 @@ export declare class SpaceController {
                 folder: import("../../entities/folder.entity").FolderEntity;
                 spaceId: number | null;
                 space: import("../../entities/space.entity").SpaceEntity;
+                assignees: import("../../entities/user.entity").UserEntity[];
                 isArchived: boolean;
                 archivedAt: Date | null;
                 archivedById: number | null;
@@ -38,6 +39,7 @@ export declare class SpaceController {
             owner: import("../../entities/user.entity").UserEntity;
             spaceId: number;
             space: import("../../entities/space.entity").SpaceEntity;
+            assignees: import("../../entities/user.entity").UserEntity[];
             isArchived: boolean;
             archivedAt: Date | null;
             archivedById: number | null;
@@ -57,6 +59,7 @@ export declare class SpaceController {
             folder: import("../../entities/folder.entity").FolderEntity;
             spaceId: number | null;
             space: import("../../entities/space.entity").SpaceEntity;
+            assignees: import("../../entities/user.entity").UserEntity[];
             isArchived: boolean;
             archivedAt: Date | null;
             archivedById: number | null;
@@ -75,6 +78,7 @@ export declare class SpaceController {
         ownerId: number;
         owner: import("../../entities/user.entity").UserEntity;
         taskLists: import("../../entities/tasklist.entity").TaskListEntity[];
+        assignees: import("../../entities/user.entity").UserEntity[];
         isArchived: boolean;
         archivedAt: Date | null;
         archivedById: number | null;
@@ -83,7 +87,24 @@ export declare class SpaceController {
         updatedAt: Date;
         deletedAt: Date;
     }>;
-    create(body: CreateSpaceDto): Promise<import("../../entities/space.entity").SpaceEntity>;
+    create(body: CreateSpaceDto): Promise<{
+        taskLists: import("../../entities/tasklist.entity").TaskListEntity[];
+        folders: never[];
+        id: number;
+        name: string;
+        description: string;
+        order: number;
+        ownerId: number;
+        owner: import("../../entities/user.entity").UserEntity;
+        assignees: import("../../entities/user.entity").UserEntity[];
+        isArchived: boolean;
+        archivedAt: Date | null;
+        archivedById: number | null;
+        archivedBy: import("../../entities/user.entity").UserEntity;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date;
+    }>;
     reorderSpaces(body: {
         spaceIds: number[];
     }): Promise<{

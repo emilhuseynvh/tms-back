@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { AssigneeDefaultsService } from '../../shared/services/assignee-defaults.service';
 import { UserEntity } from '../../entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UploadsEntity } from '../../entities/uploads.entity';
@@ -9,7 +10,7 @@ import { UploadsEntity } from '../../entities/uploads.entity';
 @Module({
     imports: [TypeOrmModule.forFeature([UserEntity, UploadsEntity])],
     controllers: [UserController],
-    providers: [UserService],
-    exports: [UserService]
+    providers: [UserService, AssigneeDefaultsService],
+    exports: [UserService, AssigneeDefaultsService]
 })
 export class UserModule { };

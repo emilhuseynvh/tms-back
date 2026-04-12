@@ -9,6 +9,9 @@ export declare class TaskStatusService {
     getById(id: number): Promise<TaskStatusEntity>;
     create(dto: CreateTaskStatusDto): Promise<TaskStatusEntity>;
     update(id: number, dto: UpdateTaskStatusDto): Promise<TaskStatusEntity>;
+    reorder(statusIds: number[]): Promise<{
+        message: string;
+    }>;
     delete(id: number): Promise<{
         message: string;
     }>;

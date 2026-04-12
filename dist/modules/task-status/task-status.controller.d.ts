@@ -6,6 +6,11 @@ export declare class TaskStatusController {
     constructor(taskStatusService: TaskStatusService);
     list(): Promise<import("../../entities/task-status.entity").TaskStatusEntity[]>;
     getById(id: number): Promise<import("../../entities/task-status.entity").TaskStatusEntity>;
+    reorder(body: {
+        statusIds: number[];
+    }): Promise<{
+        message: string;
+    }>;
     create(body: CreateTaskStatusDto): Promise<import("../../entities/task-status.entity").TaskStatusEntity>;
     update(id: number, body: UpdateTaskStatusDto): Promise<import("../../entities/task-status.entity").TaskStatusEntity>;
     delete(id: number): Promise<{

@@ -69,7 +69,7 @@ __decorate([
     __metadata("design:type", String)
 ], ActivityLogEntity.prototype, "entityName", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
     __metadata("design:type", Object)
 ], ActivityLogEntity.prototype, "changes", void 0);
 __decorate([
@@ -77,7 +77,7 @@ __decorate([
     __metadata("design:type", String)
 ], ActivityLogEntity.prototype, "description", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamp' }),
     __metadata("design:type", Date)
 ], ActivityLogEntity.prototype, "createdAt", void 0);
 exports.ActivityLogEntity = ActivityLogEntity = __decorate([

@@ -11,12 +11,14 @@ import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationType } from "../../entities/notification.entity";
+import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
 
 @Injectable()
 export class TaskListService {
 	constructor(
 		@InjectRepository(TaskListEntity)
 		private taskListRepo: Repository<TaskListEntity>,
+		private assigneeDefaults: AssigneeDefaultsService,
 		private cls: ClsService,
 		private activityLogService: ActivityLogService,
 		private notificationService: NotificationService
@@ -28,30 +30,24 @@ export class TaskListService {
 		}
 
 		const user = this.cls.get('user')
+		const assigneeIds = await this.assigneeDefaults.mergeResourceAssignees(dto.assigneeIds, user?.id)
 		const list = new TaskListEntity()
 		list.name = dto.name
 		list.folderId = dto.folderId || null
 		list.spaceId = dto.spaceId || null
-
-		// Assignee-ləri əlavə et
-		if (dto.assigneeIds?.length) {
-			list.assignees = dto.assigneeIds.map(id => ({ id } as UserEntity))
-		}
+		list.assignees = assigneeIds.map((id) => ({ id } as UserEntity))
 
 		const savedList = await this.taskListRepo.save(list)
 
-		// Assignee-lərə notification göndər
-		if (dto.assigneeIds?.length) {
-			for (const userId of dto.assigneeIds) {
-				if (userId !== user?.id) {
-					await this.notificationService.createNotification({
-						userId,
-						type: NotificationType.LIST_ASSIGNED,
-						title: 'Siyahıya əlavə edildiniz',
-						message: `"${savedList.name}" siyahısına əlavə edildiniz`,
-						listId: savedList.id
-					})
-				}
+		for (const userId of assigneeIds) {
+			if (userId !== user?.id) {
+				await this.notificationService.createNotification({
+					userId,
+					type: NotificationType.LIST_ASSIGNED,
+					title: 'Siyahıya əlavə edildiniz',
+					message: `"${savedList.name}" siyahısına əlavə edildiniz`,
+					listId: savedList.id
+				})
 			}
 		}
 
@@ -60,7 +56,7 @@ export class TaskListService {
 			savedList.id,
 			savedList.name,
 			`"${savedList.name}" siyahısı yaradıldı`,
-			dto.assigneeIds?.length ? { assignees: dto.assigneeIds } : undefined
+			assigneeIds.length ? { assignees: assigneeIds } : undefined
 		)
 
 		return savedList

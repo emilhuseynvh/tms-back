@@ -20,25 +20,46 @@ const tasklist_entity_1 = require("../../entities/tasklist.entity");
 const nestjs_cls_1 = require("nestjs-cls");
 const activity_log_service_1 = require("../activity-log/activity-log.service");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
+const notification_service_1 = require("../notification/notification.service");
+const notification_entity_1 = require("../../entities/notification.entity");
+const assignee_defaults_service_1 = require("../../shared/services/assignee-defaults.service");
 let TaskListService = class TaskListService {
     taskListRepo;
+    assigneeDefaults;
     cls;
     activityLogService;
-    constructor(taskListRepo, cls, activityLogService) {
+    notificationService;
+    constructor(taskListRepo, assigneeDefaults, cls, activityLogService, notificationService) {
         this.taskListRepo = taskListRepo;
+        this.assigneeDefaults = assigneeDefaults;
         this.cls = cls;
         this.activityLogService = activityLogService;
+        this.notificationService = notificationService;
     }
     async create(dto) {
         if (!dto.folderId && !dto.spaceId) {
             throw new common_1.BadRequestException('folderId və ya spaceId lazımdır');
         }
+        const user = this.cls.get('user');
+        const assigneeIds = await this.assigneeDefaults.mergeResourceAssignees(dto.assigneeIds, user?.id);
         const list = new tasklist_entity_1.TaskListEntity();
         list.name = dto.name;
         list.folderId = dto.folderId || null;
         list.spaceId = dto.spaceId || null;
+        list.assignees = assigneeIds.map((id) => ({ id }));
         const savedList = await this.taskListRepo.save(list);
-        await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_CREATE, savedList.id, savedList.name, `"${savedList.name}" siyahısı yaradıldı`);
+        for (const userId of assigneeIds) {
+            if (userId !== user?.id) {
+                await this.notificationService.createNotification({
+                    userId,
+                    type: notification_entity_1.NotificationType.LIST_ASSIGNED,
+                    title: 'Siyahıya əlavə edildiniz',
+                    message: `"${savedList.name}" siyahısına əlavə edildiniz`,
+                    listId: savedList.id
+                });
+            }
+        }
+        await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_CREATE, savedList.id, savedList.name, `"${savedList.name}" siyahısı yaradıldı`, assigneeIds.length ? { assignees: assigneeIds } : undefined);
         return savedList;
     }
     async listBySpace(spaceId) {
@@ -50,7 +71,8 @@ let TaskListService = class TaskListService {
     }
     async getOne(id) {
         const taskList = await this.taskListRepo.findOne({
-            where: { id }
+            where: { id },
+            relations: ['folder', 'folder.space', 'space']
         });
         if (!taskList)
             throw new common_1.NotFoundException('Siyahı tapılmadı');
@@ -61,7 +83,7 @@ let TaskListService = class TaskListService {
             .leftJoinAndSelect('taskList.tasks', 'task')
             .where('taskList.folderId = :folderId', { folderId });
         if (filters?.search) {
-            queryBuilder.andWhere('(taskList.name ILIKE :search OR task.title ILIKE :search OR task.description ILIKE :search)', { search: `%${filters.search}%` });
+            queryBuilder.andWhere('(taskList.name LIKE :search OR task.title LIKE :search OR task.description LIKE :search)', { search: `%${filters.search}%` });
         }
         if (filters?.startDate) {
             queryBuilder.andWhere('task.startAt >= :startDate', { startDate: filters.startDate });
@@ -77,7 +99,7 @@ let TaskListService = class TaskListService {
     async updateTaskList(id, dto) {
         const taskList = await this.taskListRepo.findOne({
             where: { id },
-            relations: ['folder', 'space']
+            relations: ['folder', 'space', 'assignees']
         });
         if (!taskList)
             throw new common_1.NotFoundException('Siyahı tapılmadı');
@@ -87,9 +109,40 @@ let TaskListService = class TaskListService {
             throw new common_1.UnauthorizedException('Siyahını yeniləmək üçün icazəniz yoxdur');
         }
         const oldName = taskList.name;
-        Object.assign(taskList, dto);
+        const changes = {};
+        if (dto.assigneeIds !== undefined) {
+            const oldAssigneeIds = taskList.assignees?.map(u => u.id) || [];
+            const newAssigneeIds = dto.assigneeIds || [];
+            const addedUserIds = newAssigneeIds.filter(id => !oldAssigneeIds.includes(id));
+            const removedUserIds = oldAssigneeIds.filter(id => !newAssigneeIds.includes(id));
+            for (const assigneeId of addedUserIds) {
+                await this.notificationService.createNotification({
+                    userId: assigneeId,
+                    type: notification_entity_1.NotificationType.LIST_ASSIGNED,
+                    title: 'Siyahıya əlavə edildiniz',
+                    message: `"${taskList.name}" siyahısına əlavə edildiniz`,
+                    listId: taskList.id
+                });
+            }
+            for (const assigneeId of removedUserIds) {
+                await this.notificationService.createNotification({
+                    userId: assigneeId,
+                    type: notification_entity_1.NotificationType.LIST_UNASSIGNED,
+                    title: 'Siyahıdan çıxarıldınız',
+                    message: `"${taskList.name}" siyahısından çıxarıldınız`,
+                    listId: taskList.id
+                });
+            }
+            if (addedUserIds.length || removedUserIds.length) {
+                changes.assignees = { added: addedUserIds, removed: removedUserIds };
+            }
+            taskList.assignees = newAssigneeIds.map(id => ({ id }));
+        }
+        if (dto.name)
+            changes.name = { old: oldName, new: dto.name };
+        Object.assign(taskList, { name: dto.name });
         await this.taskListRepo.save(taskList);
-        await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_UPDATE, id, taskList.name, `"${oldName}" siyahısı yeniləndi`, { ...dto });
+        await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_UPDATE, id, taskList.name, `"${oldName}" siyahısı yeniləndi`, changes);
         return { message: "Siyahı uğurla yeniləndi" };
     }
     async deleteTaskList(id) {
@@ -134,7 +187,9 @@ exports.TaskListService = TaskListService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(tasklist_entity_1.TaskListEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        assignee_defaults_service_1.AssigneeDefaultsService,
         nestjs_cls_1.ClsService,
-        activity_log_service_1.ActivityLogService])
+        activity_log_service_1.ActivityLogService,
+        notification_service_1.NotificationService])
 ], TaskListService);
 //# sourceMappingURL=tasklist.service.js.map

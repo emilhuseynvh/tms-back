@@ -11,6 +11,7 @@ import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationType } from "../../entities/notification.entity";
+import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
 
 @Injectable()
 export class FolderService {
@@ -19,45 +20,41 @@ export class FolderService {
 		private folderRepo: Repository<FolderEntity>,
 		@InjectRepository(TaskListEntity)
 		private taskListRepo: Repository<TaskListEntity>,
+		private assigneeDefaults: AssigneeDefaultsService,
 		private cls: ClsService,
 		private activityLogService: ActivityLogService,
 		private notificationService: NotificationService
 	) { }
 
 	async create(ownerId: number, dto: CreateFolderDto) {
+		const assigneeIds = await this.assigneeDefaults.mergeResourceAssignees(dto.assigneeIds, ownerId)
 		const folder = this.folderRepo.create({
 			name: dto.name,
 			description: dto.description,
 			spaceId: dto.spaceId,
 			ownerId
 		})
-
-		// Assignee-ləri əlavə et
-		if (dto.assigneeIds?.length) {
-			folder.assignees = dto.assigneeIds.map(id => ({ id } as UserEntity))
-		}
+		folder.assignees = assigneeIds.map((id) => ({ id } as UserEntity))
 
 		const savedFolder = await this.folderRepo.save(folder)
 
-		// Assignee-lərə notification göndər
-		if (dto.assigneeIds?.length) {
-			for (const userId of dto.assigneeIds) {
-				if (userId !== ownerId) {
-					await this.notificationService.createNotification({
-						userId,
-						type: NotificationType.FOLDER_ASSIGNED,
-						title: 'Qovluğa əlavə edildiniz',
-						message: `"${savedFolder.name}" qovluğuna əlavə edildiniz`,
-						folderId: savedFolder.id
-					})
-				}
+		for (const userId of assigneeIds) {
+			if (userId !== ownerId) {
+				await this.notificationService.createNotification({
+					userId,
+					type: NotificationType.FOLDER_ASSIGNED,
+					title: 'Qovluğa əlavə edildiniz',
+					message: `"${savedFolder.name}" qovluğuna əlavə edildiniz`,
+					folderId: savedFolder.id
+				})
 			}
 		}
 
 		const defaultList = this.taskListRepo.create({
 			name: 'Siyahı',
 			folderId: savedFolder.id,
-			spaceId: null
+			spaceId: null,
+			assignees: assigneeIds.map((id) => ({ id } as UserEntity)),
 		})
 		const savedDefaultList = await this.taskListRepo.save(defaultList)
 
@@ -66,7 +63,7 @@ export class FolderService {
 			savedFolder.id,
 			savedFolder.name,
 			`"${savedFolder.name}" qovluğu yaradıldı`,
-			dto.assigneeIds?.length ? { assignees: dto.assigneeIds } : undefined
+			assigneeIds.length ? { assignees: assigneeIds } : undefined
 		)
 
 		// Return folder with default list as plain object

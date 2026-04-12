@@ -7,15 +7,15 @@ const role_enum_1 = require("../shared/enums/role.enum");
 async function bootstrap() {
     const app = await core_1.NestFactory.createApplicationContext(app_module_1.AppModule);
     const userService = app.get(user_service_1.UserService);
-    const adminUser = await userService.findByEmail('admin@example.com');
+    const adminUser = await userService.findByEmail('admin@admin.com');
     if (!adminUser) {
         await userService.createAdmin({
             username: 'Admin',
-            email: 'admin@example.com',
-            password: 'admin123',
+            email: 'admin@admin.com',
+            password: 'secret',
             role: role_enum_1.RoleEnum.ADMIN,
-            avatarId: 1,
-            phone: 'alksndlaksnd'
+            avatarId: undefined,
+            phone: ''
         });
         console.log('Admin user yaradıldı');
     }

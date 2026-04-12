@@ -14,6 +14,7 @@ const tasklist_entity_1 = require("../../entities/tasklist.entity");
 const folder_service_1 = require("./folder.service");
 const folder_controller_1 = require("./folder.controller");
 const activity_log_module_1 = require("../activity-log/activity-log.module");
+const notification_module_1 = require("../notification/notification.module");
 let FolderModule = class FolderModule {
 };
 exports.FolderModule = FolderModule;
@@ -21,7 +22,8 @@ exports.FolderModule = FolderModule = __decorate([
     (0, common_1.Module)({
         imports: [
             typeorm_1.TypeOrmModule.forFeature([folder_entity_1.FolderEntity, tasklist_entity_1.TaskListEntity]),
-            activity_log_module_1.ActivityLogModule
+            activity_log_module_1.ActivityLogModule,
+            (0, common_1.forwardRef)(() => notification_module_1.NotificationModule)
         ],
         controllers: [folder_controller_1.FolderController],
         providers: [folder_service_1.FolderService],

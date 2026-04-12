@@ -17,6 +17,7 @@ class CreateFolderDto {
     name;
     description;
     spaceId;
+    assigneeIds;
 }
 exports.CreateFolderDto = CreateFolderDto;
 __decorate([
@@ -38,4 +39,11 @@ __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", Number)
 ], CreateFolderDto.prototype, "spaceId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsInt)({ each: true }),
+    (0, swagger_1.ApiProperty)({ required: false, type: [Number] }),
+    __metadata("design:type", Array)
+], CreateFolderDto.prototype, "assigneeIds", void 0);
 //# sourceMappingURL=create-folder.dto.js.map

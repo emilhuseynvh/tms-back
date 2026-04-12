@@ -5,7 +5,11 @@ const dotenv_1 = require("dotenv");
 const envPath = (0, path_1.join)(__dirname, '../../.env');
 (0, dotenv_1.config)({ path: envPath });
 exports.default = {
-    databaseUrl: process.env.DATABASE_URL,
+    dbHost: process.env.DB_HOST,
+    dbPort: parseInt(process.env.DB_PORT || '3306'),
+    dbUsername: process.env.DB_USERNAME,
+    dbPassword: process.env.DB_PASSWORD,
+    dbName: process.env.DB_NAME,
     superSecret: process.env.JWT_SECRET,
     url: process.env.URL,
 };

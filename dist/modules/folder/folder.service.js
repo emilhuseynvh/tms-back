@@ -21,32 +21,53 @@ const tasklist_entity_1 = require("../../entities/tasklist.entity");
 const nestjs_cls_1 = require("nestjs-cls");
 const activity_log_service_1 = require("../activity-log/activity-log.service");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
+const notification_service_1 = require("../notification/notification.service");
+const notification_entity_1 = require("../../entities/notification.entity");
+const assignee_defaults_service_1 = require("../../shared/services/assignee-defaults.service");
 let FolderService = class FolderService {
     folderRepo;
     taskListRepo;
+    assigneeDefaults;
     cls;
     activityLogService;
-    constructor(folderRepo, taskListRepo, cls, activityLogService) {
+    notificationService;
+    constructor(folderRepo, taskListRepo, assigneeDefaults, cls, activityLogService, notificationService) {
         this.folderRepo = folderRepo;
         this.taskListRepo = taskListRepo;
+        this.assigneeDefaults = assigneeDefaults;
         this.cls = cls;
         this.activityLogService = activityLogService;
+        this.notificationService = notificationService;
     }
     async create(ownerId, dto) {
+        const assigneeIds = await this.assigneeDefaults.mergeResourceAssignees(dto.assigneeIds, ownerId);
         const folder = this.folderRepo.create({
             name: dto.name,
             description: dto.description,
             spaceId: dto.spaceId,
             ownerId
         });
+        folder.assignees = assigneeIds.map((id) => ({ id }));
         const savedFolder = await this.folderRepo.save(folder);
+        for (const userId of assigneeIds) {
+            if (userId !== ownerId) {
+                await this.notificationService.createNotification({
+                    userId,
+                    type: notification_entity_1.NotificationType.FOLDER_ASSIGNED,
+                    title: 'Qovluğa əlavə edildiniz',
+                    message: `"${savedFolder.name}" qovluğuna əlavə edildiniz`,
+                    folderId: savedFolder.id
+                });
+            }
+        }
         const defaultList = this.taskListRepo.create({
             name: 'Siyahı',
             folderId: savedFolder.id,
-            spaceId: dto.spaceId
+            spaceId: null,
+            assignees: assigneeIds.map((id) => ({ id })),
         });
         const savedDefaultList = await this.taskListRepo.save(defaultList);
-        await this.activityLogService.log(activity_log_entity_1.ActivityType.FOLDER_CREATE, savedFolder.id, savedFolder.name, `"${savedFolder.name}" qovluğu yaradıldı`);
+        await this.activityLogService.log(activity_log_entity_1.ActivityType.FOLDER_CREATE, savedFolder.id, savedFolder.name, `"${savedFolder.name}" qovluğu yaradıldı`, assigneeIds.length ? { assignees: assigneeIds } : undefined);
         return {
             id: savedFolder.id,
             name: savedFolder.name,
@@ -56,7 +77,8 @@ let FolderService = class FolderService {
             createdAt: savedFolder.createdAt,
             updatedAt: savedFolder.updatedAt,
             taskLists: [savedDefaultList],
-            defaultListId: savedDefaultList.id
+            defaultListId: savedDefaultList.id,
+            assignees: savedFolder.assignees || []
         };
     }
     async listAll() {
@@ -106,7 +128,10 @@ let FolderService = class FolderService {
         };
     }
     async updateFolder(id, userId, dto) {
-        const folder = await this.folderRepo.findOne({ where: { id } });
+        const folder = await this.folderRepo.findOne({
+            where: { id },
+            relations: ['assignees']
+        });
         if (!folder)
             throw new common_1.NotFoundException('Qovluq tapılmadı!');
         const user = this.cls.get('user');
@@ -114,9 +139,42 @@ let FolderService = class FolderService {
             throw new common_1.UnauthorizedException('Qovluğu yeniləmək üçün icazəniz yoxdur!');
         }
         const oldName = folder.name;
-        Object.assign(folder, dto);
+        const changes = {};
+        if (dto.assigneeIds !== undefined) {
+            const oldAssigneeIds = folder.assignees?.map(u => u.id) || [];
+            const newAssigneeIds = dto.assigneeIds || [];
+            const addedUserIds = newAssigneeIds.filter(id => !oldAssigneeIds.includes(id));
+            const removedUserIds = oldAssigneeIds.filter(id => !newAssigneeIds.includes(id));
+            for (const assigneeId of addedUserIds) {
+                await this.notificationService.createNotification({
+                    userId: assigneeId,
+                    type: notification_entity_1.NotificationType.FOLDER_ASSIGNED,
+                    title: 'Qovluğa əlavə edildiniz',
+                    message: `"${folder.name}" qovluğuna əlavə edildiniz`,
+                    folderId: folder.id
+                });
+            }
+            for (const assigneeId of removedUserIds) {
+                await this.notificationService.createNotification({
+                    userId: assigneeId,
+                    type: notification_entity_1.NotificationType.FOLDER_UNASSIGNED,
+                    title: 'Qovluqdan çıxarıldınız',
+                    message: `"${folder.name}" qovluğundan çıxarıldınız`,
+                    folderId: folder.id
+                });
+            }
+            if (addedUserIds.length || removedUserIds.length) {
+                changes.assignees = { added: addedUserIds, removed: removedUserIds };
+            }
+            folder.assignees = newAssigneeIds.map(id => ({ id }));
+        }
+        if (dto.name)
+            changes.name = { old: oldName, new: dto.name };
+        if (dto.description !== undefined)
+            changes.description = dto.description;
+        Object.assign(folder, { name: dto.name, description: dto.description });
         await this.folderRepo.save(folder);
-        await this.activityLogService.log(activity_log_entity_1.ActivityType.FOLDER_UPDATE, id, folder.name, `"${oldName}" qovluğu yeniləndi`, { ...dto });
+        await this.activityLogService.log(activity_log_entity_1.ActivityType.FOLDER_UPDATE, id, folder.name, `"${oldName}" qovluğu yeniləndi`, changes);
         return { message: "Qovluq uğurla yeniləndi" };
     }
     async deleteFolder(id, userId) {
@@ -158,7 +216,9 @@ exports.FolderService = FolderService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(tasklist_entity_1.TaskListEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
+        assignee_defaults_service_1.AssigneeDefaultsService,
         nestjs_cls_1.ClsService,
-        activity_log_service_1.ActivityLogService])
+        activity_log_service_1.ActivityLogService,
+        notification_service_1.NotificationService])
 ], FolderService);
 //# sourceMappingURL=folder.service.js.map

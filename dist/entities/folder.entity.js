@@ -24,6 +24,7 @@ let FolderEntity = class FolderEntity extends typeorm_1.BaseEntity {
     spaceId;
     space;
     taskLists;
+    assignees;
     isArchived;
     archivedAt;
     archivedById;
@@ -73,11 +74,20 @@ __decorate([
     __metadata("design:type", Array)
 ], FolderEntity.prototype, "taskLists", void 0);
 __decorate([
+    (0, typeorm_1.ManyToMany)(() => user_entity_1.UserEntity, { eager: true }),
+    (0, typeorm_1.JoinTable)({
+        name: 'folder_assignees',
+        joinColumn: { name: 'folderId' },
+        inverseJoinColumn: { name: 'userId' }
+    }),
+    __metadata("design:type", Array)
+], FolderEntity.prototype, "assignees", void 0);
+__decorate([
     (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)
 ], FolderEntity.prototype, "isArchived", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Object)
 ], FolderEntity.prototype, "archivedAt", void 0);
 __decorate([

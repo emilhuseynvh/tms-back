@@ -12,6 +12,7 @@ export declare class FolderEntity extends BaseEntity {
     spaceId: number;
     space: SpaceEntity;
     taskLists: TaskListEntity[];
+    assignees: UserEntity[];
     isArchived: boolean;
     archivedAt: Date | null;
     archivedById: number | null;

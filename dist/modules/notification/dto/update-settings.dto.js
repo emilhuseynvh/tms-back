@@ -15,6 +15,8 @@ const class_validator_1 = require("class-validator");
 class UpdateNotificationSettingsDto {
     hoursBeforeDue;
     isEnabled;
+    soundType;
+    customSoundUrl;
 }
 exports.UpdateNotificationSettingsDto = UpdateNotificationSettingsDto;
 __decorate([
@@ -31,4 +33,16 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false, description: 'Bildiriş aktiv/deaktiv' }),
     __metadata("design:type", Boolean)
 ], UpdateNotificationSettingsDto.prototype, "isEnabled", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ required: false, description: 'Bildiriş səsi tipi' }),
+    __metadata("design:type", String)
+], UpdateNotificationSettingsDto.prototype, "soundType", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ required: false, description: 'Custom səs URL' }),
+    __metadata("design:type", Object)
+], UpdateNotificationSettingsDto.prototype, "customSoundUrl", void 0);
 //# sourceMappingURL=update-settings.dto.js.map

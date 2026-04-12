@@ -13,12 +13,21 @@ exports.NotificationEntity = exports.NotificationType = void 0;
 const typeorm_1 = require("typeorm");
 const task_entity_1 = require("./task.entity");
 const user_entity_1 = require("./user.entity");
+const space_entity_1 = require("./space.entity");
+const folder_entity_1 = require("./folder.entity");
+const tasklist_entity_1 = require("./tasklist.entity");
 var NotificationType;
 (function (NotificationType) {
     NotificationType["TASK_ASSIGNED"] = "task_assigned";
     NotificationType["TASK_DEADLINE"] = "task_deadline";
     NotificationType["TASK_UPDATED"] = "task_updated";
     NotificationType["TASK_UNASSIGNED"] = "task_unassigned";
+    NotificationType["SPACE_ASSIGNED"] = "space_assigned";
+    NotificationType["SPACE_UNASSIGNED"] = "space_unassigned";
+    NotificationType["FOLDER_ASSIGNED"] = "folder_assigned";
+    NotificationType["FOLDER_UNASSIGNED"] = "folder_unassigned";
+    NotificationType["LIST_ASSIGNED"] = "list_assigned";
+    NotificationType["LIST_UNASSIGNED"] = "list_unassigned";
 })(NotificationType || (exports.NotificationType = NotificationType = {}));
 let NotificationEntity = class NotificationEntity extends typeorm_1.BaseEntity {
     id;
@@ -30,6 +39,12 @@ let NotificationEntity = class NotificationEntity extends typeorm_1.BaseEntity {
     isRead;
     user;
     task;
+    spaceId;
+    space;
+    folderId;
+    folder;
+    listId;
+    list;
     createdAt;
 };
 exports.NotificationEntity = NotificationEntity;
@@ -71,6 +86,33 @@ __decorate([
     (0, typeorm_1.JoinColumn)({ name: 'taskId' }),
     __metadata("design:type", Object)
 ], NotificationEntity.prototype, "task", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], NotificationEntity.prototype, "spaceId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => space_entity_1.SpaceEntity, { onDelete: 'CASCADE', nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'spaceId' }),
+    __metadata("design:type", Object)
+], NotificationEntity.prototype, "space", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], NotificationEntity.prototype, "folderId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => folder_entity_1.FolderEntity, { onDelete: 'CASCADE', nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'folderId' }),
+    __metadata("design:type", Object)
+], NotificationEntity.prototype, "folder", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], NotificationEntity.prototype, "listId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => tasklist_entity_1.TaskListEntity, { onDelete: 'CASCADE', nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'listId' }),
+    __metadata("design:type", Object)
+], NotificationEntity.prototype, "list", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

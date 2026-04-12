@@ -11,6 +11,7 @@ export declare class SpaceEntity extends BaseEntity {
     owner: UserEntity;
     folders: FolderEntity[];
     taskLists: TaskListEntity[];
+    assignees: UserEntity[];
     isArchived: boolean;
     archivedAt: Date | null;
     archivedById: number | null;

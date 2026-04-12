@@ -1,16 +1,21 @@
 import { Repository } from "typeorm";
 import { FolderEntity } from "../../entities/folder.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
+import { UserEntity } from "../../entities/user.entity";
 import { CreateFolderDto } from "./dto/create-folder.dto";
 import { UpdateFolderDto } from "./dto/update-folder.dto";
 import { ClsService } from "nestjs-cls";
 import { ActivityLogService } from "../activity-log/activity-log.service";
+import { NotificationService } from "../notification/notification.service";
+import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
 export declare class FolderService {
     private folderRepo;
     private taskListRepo;
+    private assigneeDefaults;
     private cls;
     private activityLogService;
-    constructor(folderRepo: Repository<FolderEntity>, taskListRepo: Repository<TaskListEntity>, cls: ClsService, activityLogService: ActivityLogService);
+    private notificationService;
+    constructor(folderRepo: Repository<FolderEntity>, taskListRepo: Repository<TaskListEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService);
     create(ownerId: number, dto: CreateFolderDto): Promise<{
         id: number;
         name: string;
@@ -21,6 +26,7 @@ export declare class FolderService {
         updatedAt: Date;
         taskLists: TaskListEntity[];
         defaultListId: number;
+        assignees: UserEntity[];
     }>;
     listAll(): Promise<FolderEntity[]>;
     listByOwner(ownerId: number): Promise<FolderEntity[]>;
@@ -35,12 +41,13 @@ export declare class FolderService {
             folder: FolderEntity;
             spaceId: number | null;
             space: import("../../entities/space.entity").SpaceEntity;
+            assignees: UserEntity[];
             isArchived: boolean;
             archivedAt: Date | null;
             archivedById: number | null;
-            archivedBy: import("../../entities/user.entity").UserEntity;
+            archivedBy: UserEntity;
             deletedById: number;
-            deletedBy: import("../../entities/user.entity").UserEntity;
+            deletedBy: UserEntity;
             createdAt: Date;
             updatedAt: Date;
             deletedAt: Date;
@@ -51,15 +58,16 @@ export declare class FolderService {
         description: string;
         order: number;
         ownerId: number;
-        owner: import("../../entities/user.entity").UserEntity;
+        owner: UserEntity;
         spaceId: number;
         space: import("../../entities/space.entity").SpaceEntity;
+        assignees: UserEntity[];
         isArchived: boolean;
         archivedAt: Date | null;
         archivedById: number | null;
-        archivedBy: import("../../entities/user.entity").UserEntity;
+        archivedBy: UserEntity;
         deletedById: number;
-        deletedBy: import("../../entities/user.entity").UserEntity;
+        deletedBy: UserEntity;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date;

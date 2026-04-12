@@ -18,6 +18,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
 const nestjs_cls_1 = require("nestjs-cls");
+const role_enum_1 = require("../../shared/enums/role.enum");
 let ActivityLogService = class ActivityLogService {
     activityLogRepo;
     cls;
@@ -41,23 +42,43 @@ let ActivityLogService = class ActivityLogService {
         const page = filters.page || 1;
         const limit = filters.limit || 20;
         const skip = (page - 1) * limit;
+        const currentUser = this.cls.get('user');
+        const isAdmin = currentUser?.role === role_enum_1.RoleEnum.ADMIN;
         const queryBuilder = this.activityLogRepo.createQueryBuilder('log')
             .leftJoinAndSelect('log.user', 'user')
             .orderBy('log.createdAt', 'DESC');
-        if (filters.userId) {
-            queryBuilder.andWhere('log.userId = :userId', { userId: filters.userId });
+        if (isAdmin) {
+            if (filters.userId) {
+                queryBuilder.andWhere('log.userId = :userId', { userId: filters.userId });
+            }
+        }
+        else if (currentUser?.id) {
+            queryBuilder.andWhere('log.userId = :currentUserId', { currentUserId: currentUser.id });
+        }
+        else {
+            queryBuilder.andWhere('1 = 0');
         }
         if (filters.type) {
-            queryBuilder.andWhere('log.type = :type', { type: filters.type });
+            const matchingTypes = Object.values(activity_log_entity_1.ActivityType).filter(t => t.includes(filters.type));
+            if (matchingTypes.length > 0) {
+                queryBuilder.andWhere('log.type IN (:...types)', { types: matchingTypes });
+            }
         }
         if (filters.search) {
-            queryBuilder.andWhere('(log.entityName ILIKE :search OR log.description ILIKE :search OR user.username ILIKE :search)', { search: `%${filters.search}%` });
+            queryBuilder.andWhere('(log.entityName LIKE :search OR log.description LIKE :search OR user.username LIKE :search)', { search: `%${filters.search}%` });
         }
         if (filters.startDate) {
             queryBuilder.andWhere('log.createdAt >= :startDate', { startDate: filters.startDate });
         }
         if (filters.endDate) {
             queryBuilder.andWhere('log.createdAt <= :endDate', { endDate: filters.endDate });
+        }
+        if (filters.statusId != null && filters.statusId !== undefined) {
+            queryBuilder.andWhere(`(
+					(log.changes->'statusId'->>'to') IS NOT NULL AND (log.changes->'statusId'->>'to')::int = :filterStatusId
+				) OR (
+					(log.changes->'statusId'->>'from') IS NOT NULL AND (log.changes->'statusId'->>'from')::int = :filterStatusId
+				)`, { filterStatusId: filters.statusId });
         }
         const [data, total] = await queryBuilder
             .skip(skip)

@@ -29,7 +29,16 @@ export declare class NotificationService implements OnModuleInit {
         userIds: number[];
     }[]>;
     getUserPendingNotifications(userId: number): Promise<TaskEntity[]>;
-    createNotification(userId: number, type: NotificationType, title: string, message: string, taskId?: number): Promise<NotificationEntity>;
+    createNotification(data: {
+        userId: number;
+        type: NotificationType;
+        title: string;
+        message: string;
+        taskId?: number;
+        spaceId?: number;
+        folderId?: number;
+        listId?: number;
+    }): Promise<NotificationEntity>;
     getUserNotifications(userId: number, filter?: 'all' | 'unread' | 'read', page?: number, limit?: number): Promise<{
         data: NotificationEntity[];
         total: number;

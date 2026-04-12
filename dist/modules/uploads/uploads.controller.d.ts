@@ -5,4 +5,7 @@ export declare class UploadsController {
     uploadSingleFile(file: Express.Multer.File): Promise<{
         url: string;
     } & import("../../entities/uploads.entity").UploadsEntity>;
+    uploadAudio(file: Express.Multer.File): Promise<{
+        url: string;
+    } & import("../../entities/uploads.entity").UploadsEntity>;
 }

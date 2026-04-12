@@ -3,7 +3,7 @@ import config from ".";
 import { join } from "path";
 
 export default new DataSource({
-    type: 'mysql',
+    type: 'postgres',
     host: config.dbHost,
     port: config.dbPort,
     username: config.dbUsername,

@@ -7,6 +7,7 @@ import { UpdateTaskDto } from "./dto/update-task.dto";
 import { ReorderTaskDto } from "./dto/reorder-task.dto";
 import { FilterTaskDto } from "./dto/filter-task.dto";
 import { ClsService } from "nestjs-cls";
+import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
 import { ActivityLogService } from "../activity-log/activity-log.service";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationGateway } from "../notification/notification.gateway";
@@ -14,11 +15,12 @@ export declare class TaskService {
     private taskRepo;
     private taskStatusRepo;
     private taskActivityRepo;
+    private assigneeDefaults;
     private cls;
     private activityLogService;
     private notificationService;
     private notificationGateway;
-    constructor(taskRepo: Repository<TaskEntity>, taskStatusRepo: Repository<TaskStatusEntity>, taskActivityRepo: Repository<TaskActivityEntity>, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService, notificationGateway: NotificationGateway);
+    constructor(taskRepo: Repository<TaskEntity>, taskStatusRepo: Repository<TaskStatusEntity>, taskActivityRepo: Repository<TaskActivityEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService, notificationGateway: NotificationGateway);
     create(dto: CreateTaskDto): Promise<TaskEntity>;
     listByTaskList(taskListId: number, filters?: FilterTaskDto): Promise<TaskEntity[]>;
     private loadChildren;
@@ -26,6 +28,7 @@ export declare class TaskService {
     private ensureStatusExists;
     private collectChanges;
     private logTaskActivity;
+    private logTaskCreation;
     reorder(params: ReorderTaskDto): Promise<TaskEntity>;
     deleteTask(id: number): Promise<{
         message: string;

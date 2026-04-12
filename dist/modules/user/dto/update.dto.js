@@ -13,11 +13,14 @@ exports.UpdateUserDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
+const role_enum_1 = require("../../../shared/enums/role.enum");
 class UpdateUserDto {
     username;
     avatarId;
     phone;
     email;
+    password;
+    role;
 }
 exports.UpdateUserDto = UpdateUserDto;
 __decorate([
@@ -48,4 +51,18 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "email", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "password", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(),
+    (0, class_validator_1.IsEnum)(role_enum_1.RoleEnum),
+    (0, class_validator_1.IsOptional)(),
+    (0, swagger_1.ApiProperty)({ required: false, enum: role_enum_1.RoleEnum }),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "role", void 0);
 //# sourceMappingURL=update.dto.js.map

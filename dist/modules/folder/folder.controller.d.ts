@@ -17,6 +17,7 @@ export declare class FolderController {
         updatedAt: Date;
         taskLists: import("../../entities/tasklist.entity").TaskListEntity[];
         defaultListId: number;
+        assignees: import("../../entities/user.entity").UserEntity[];
     }>;
     myFolders(): Promise<import("../../entities/folder.entity").FolderEntity[]>;
     listBySpace(spaceId: number): Promise<import("../../entities/folder.entity").FolderEntity[]>;
@@ -30,6 +31,7 @@ export declare class FolderController {
             folder: import("../../entities/folder.entity").FolderEntity;
             spaceId: number | null;
             space: import("../../entities/space.entity").SpaceEntity;
+            assignees: import("../../entities/user.entity").UserEntity[];
             isArchived: boolean;
             archivedAt: Date | null;
             archivedById: number | null;
@@ -49,6 +51,7 @@ export declare class FolderController {
         owner: import("../../entities/user.entity").UserEntity;
         spaceId: number;
         space: import("../../entities/space.entity").SpaceEntity;
+        assignees: import("../../entities/user.entity").UserEntity[];
         isArchived: boolean;
         archivedAt: Date | null;
         archivedById: number | null;

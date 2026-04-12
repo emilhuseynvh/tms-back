@@ -17,6 +17,7 @@ let TaskStatusEntity = class TaskStatusEntity extends typeorm_1.BaseEntity {
     name;
     color;
     icon;
+    order;
     tasks;
     createdAt;
     updatedAt;
@@ -38,6 +39,10 @@ __decorate([
     (0, typeorm_1.Column)({ default: 'circle' }),
     __metadata("design:type", String)
 ], TaskStatusEntity.prototype, "icon", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int', default: 0 }),
+    __metadata("design:type", Number)
+], TaskStatusEntity.prototype, "order", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => task_entity_1.TaskEntity, (task) => task.status),
     __metadata("design:type", Array)

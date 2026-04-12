@@ -44,11 +44,11 @@ __decorate([
     __metadata("design:type", String)
 ], TaskActivityEntity.prototype, "username", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'jsonb' }),
+    (0, typeorm_1.Column)({ type: 'json' }),
     __metadata("design:type", Object)
 ], TaskActivityEntity.prototype, "changes", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamp' }),
     __metadata("design:type", Date)
 ], TaskActivityEntity.prototype, "createdAt", void 0);
 exports.TaskActivityEntity = TaskActivityEntity = __decorate([

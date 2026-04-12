@@ -12,6 +12,7 @@ import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationType } from "../../entities/notification.entity";
+import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
 
 @Injectable()
 export class SpaceService {
@@ -22,41 +23,37 @@ export class SpaceService {
 		private taskRepo: Repository<TaskEntity>,
 		@InjectRepository(TaskListEntity)
 		private taskListRepo: Repository<TaskListEntity>,
+		private assigneeDefaults: AssigneeDefaultsService,
 		private cls: ClsService,
 		private activityLogService: ActivityLogService,
 		private notificationService: NotificationService
 	) { }
 
 	async create(ownerId: number, dto: CreateSpaceDto) {
+		const assigneeIds = await this.assigneeDefaults.mergeResourceAssignees(dto.assigneeIds, ownerId)
 		const space = this.spaceRepo.create({ ...dto, ownerId })
-
-		// Assignee-ləri əlavə et
-		if (dto.assigneeIds?.length) {
-			space.assignees = dto.assigneeIds.map(id => ({ id } as UserEntity))
-		}
+		space.assignees = assigneeIds.map((id) => ({ id } as UserEntity))
 
 		const savedSpace = await this.spaceRepo.save(space)
 
-		// Default list yarat (folder yox)
+		// Default list yarat (folder yox) — eyni assignee-lər (yaradan + adminlər + ...)
 		const defaultList = this.taskListRepo.create({
 			name: 'Siyahı',
 			spaceId: savedSpace.id,
-			folderId: null
+			folderId: null,
+			assignees: assigneeIds.map((id) => ({ id } as UserEntity)),
 		})
 		const savedDefaultList = await this.taskListRepo.save(defaultList)
 
-		// Assignee-lərə notification göndər
-		if (dto.assigneeIds?.length) {
-			for (const userId of dto.assigneeIds) {
-				if (userId !== ownerId) {
-					await this.notificationService.createNotification({
-						userId,
-						type: NotificationType.SPACE_ASSIGNED,
-						title: 'Space-ə əlavə edildiniz',
-						message: `"${savedSpace.name}" space-inə əlavə edildiniz`,
-						spaceId: savedSpace.id
-					})
-				}
+		for (const userId of assigneeIds) {
+			if (userId !== ownerId) {
+				await this.notificationService.createNotification({
+					userId,
+					type: NotificationType.SPACE_ASSIGNED,
+					title: 'Space-ə əlavə edildiniz',
+					message: `"${savedSpace.name}" space-inə əlavə edildiniz`,
+					spaceId: savedSpace.id
+				})
 			}
 		}
 
@@ -65,7 +62,7 @@ export class SpaceService {
 			savedSpace.id,
 			savedSpace.name,
 			`"${savedSpace.name}" sahəsi yaradıldı`,
-			dto.assigneeIds?.length ? { assignees: dto.assigneeIds } : undefined
+			assigneeIds.length ? { assignees: assigneeIds } : undefined
 		)
 
 		// Space-i taskLists ilə birlikdə qaytar

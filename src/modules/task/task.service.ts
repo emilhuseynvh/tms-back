@@ -10,6 +10,7 @@ import { UpdateTaskDto } from "./dto/update-task.dto";
 import { ReorderTaskDto } from "./dto/reorder-task.dto";
 import { FilterTaskDto } from "./dto/filter-task.dto";
 import { ClsService } from "nestjs-cls";
+import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
 import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
 import { NotificationService } from "../notification/notification.service";
@@ -24,6 +25,7 @@ export class TaskService {
 		private taskStatusRepo: Repository<TaskStatusEntity>,
 		@InjectRepository(TaskActivityEntity)
 		private taskActivityRepo: Repository<TaskActivityEntity>,
+		private assigneeDefaults: AssigneeDefaultsService,
 		private cls: ClsService,
 		private activityLogService: ActivityLogService,
 		@Inject(forwardRef(() => NotificationService))
@@ -36,6 +38,8 @@ export class TaskService {
 		if (dto.statusId !== undefined && dto.statusId !== null) {
 			await this.ensureStatusExists(dto.statusId)
 		}
+		const creator = this.cls.get('user')
+		const assigneeIds = this.assigneeDefaults.resolveTaskAssigneeIds(dto.assigneeIds, creator?.id)
 		const count = await this.taskRepo.count({ where: { taskListId: dto.taskListId } })
 		const task = this.taskRepo.create({
 			title: dto.title,
@@ -47,13 +51,13 @@ export class TaskService {
 			parentId: dto.parentId || null,
 			order: count,
 			link: dto.link ?? null,
-			assignees: dto.assigneeIds?.map((id) => ({ id } as UserEntity)) || []
+			assignees: assigneeIds.map((id) => ({ id } as UserEntity))
 		} as Partial<TaskEntity>)
 		const savedTask = await this.taskRepo.save(task)
 
 		// Assign edilmiş userlər üçün notification record yarat və bildiriş göndər
-		if (dto.assigneeIds && dto.assigneeIds.length > 0) {
-			for (const userId of dto.assigneeIds) {
+		if (assigneeIds.length > 0) {
+			for (const userId of assigneeIds) {
 				await this.notificationService.createNotificationRecord(savedTask.id, userId)
 				const notification = await this.notificationService.notifyTaskAssigned(savedTask.id, userId, savedTask.title)
 				this.notificationGateway.emitNewNotification(userId, notification)

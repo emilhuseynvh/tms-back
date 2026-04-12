@@ -20,6 +20,7 @@ const task_entity_1 = require("../../entities/task.entity");
 const task_status_entity_1 = require("../../entities/task-status.entity");
 const task_activity_entity_1 = require("../../entities/task-activity.entity");
 const nestjs_cls_1 = require("nestjs-cls");
+const assignee_defaults_service_1 = require("../../shared/services/assignee-defaults.service");
 const activity_log_service_1 = require("../activity-log/activity-log.service");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
 const notification_service_1 = require("../notification/notification.service");
@@ -28,14 +29,16 @@ let TaskService = class TaskService {
     taskRepo;
     taskStatusRepo;
     taskActivityRepo;
+    assigneeDefaults;
     cls;
     activityLogService;
     notificationService;
     notificationGateway;
-    constructor(taskRepo, taskStatusRepo, taskActivityRepo, cls, activityLogService, notificationService, notificationGateway) {
+    constructor(taskRepo, taskStatusRepo, taskActivityRepo, assigneeDefaults, cls, activityLogService, notificationService, notificationGateway) {
         this.taskRepo = taskRepo;
         this.taskStatusRepo = taskStatusRepo;
         this.taskActivityRepo = taskActivityRepo;
+        this.assigneeDefaults = assigneeDefaults;
         this.cls = cls;
         this.activityLogService = activityLogService;
         this.notificationService = notificationService;
@@ -45,6 +48,8 @@ let TaskService = class TaskService {
         if (dto.statusId !== undefined && dto.statusId !== null) {
             await this.ensureStatusExists(dto.statusId);
         }
+        const creator = this.cls.get('user');
+        const assigneeIds = this.assigneeDefaults.resolveTaskAssigneeIds(dto.assigneeIds, creator?.id);
         const count = await this.taskRepo.count({ where: { taskListId: dto.taskListId } });
         const task = this.taskRepo.create({
             title: dto.title,
@@ -56,11 +61,11 @@ let TaskService = class TaskService {
             parentId: dto.parentId || null,
             order: count,
             link: dto.link ?? null,
-            assignees: dto.assigneeIds?.map((id) => ({ id })) || []
+            assignees: assigneeIds.map((id) => ({ id }))
         });
         const savedTask = await this.taskRepo.save(task);
-        if (dto.assigneeIds && dto.assigneeIds.length > 0) {
-            for (const userId of dto.assigneeIds) {
+        if (assigneeIds.length > 0) {
+            for (const userId of assigneeIds) {
                 await this.notificationService.createNotificationRecord(savedTask.id, userId);
                 const notification = await this.notificationService.notifyTaskAssigned(savedTask.id, userId, savedTask.title);
                 this.notificationGateway.emitNewNotification(userId, notification);
@@ -69,6 +74,7 @@ let TaskService = class TaskService {
             }
         }
         await this.activityLogService.log(activity_log_entity_1.ActivityType.TASK_CREATE, savedTask.id, savedTask.title, `"${savedTask.title}" tapşırığı yaradıldı`);
+        await this.logTaskCreation(savedTask.id, savedTask.title);
         return savedTask;
     }
     async listByTaskList(taskListId, filters) {
@@ -93,7 +99,7 @@ let TaskService = class TaskService {
             queryBuilder.setParameter('userId', user.id);
         }
         if (filters?.search) {
-            queryBuilder.andWhere('(task.title ILIKE :search OR task.description ILIKE :search)', { search: `%${filters.search}%` });
+            queryBuilder.andWhere('(task.title LIKE :search OR task.description LIKE :search)', { search: `%${filters.search}%` });
         }
         if (filters?.startDate) {
             queryBuilder.andWhere('task.startAt >= :startDate', { startDate: filters.startDate });
@@ -297,6 +303,16 @@ let TaskService = class TaskService {
         });
         await this.taskActivityRepo.save(log);
     }
+    async logTaskCreation(taskId, taskTitle) {
+        const user = this.cls.get('user') || {};
+        const log = this.taskActivityRepo.create({
+            taskId,
+            userId: user.id ?? null,
+            username: user.username ?? null,
+            changes: { created: { from: null, to: taskTitle ? `"${taskTitle}" tapşırığı yaradıldı` : 'Tapşırıq yaradıldı' } }
+        });
+        await this.taskActivityRepo.save(log);
+    }
     async reorder(params) {
         const task = await this.taskRepo.findOne({ where: { id: params.taskId } });
         if (!task)
@@ -385,11 +401,12 @@ exports.TaskService = TaskService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(task_entity_1.TaskEntity)),
     __param(1, (0, typeorm_1.InjectRepository)(task_status_entity_1.TaskStatusEntity)),
     __param(2, (0, typeorm_1.InjectRepository)(task_activity_entity_1.TaskActivityEntity)),
-    __param(5, (0, common_1.Inject)((0, common_1.forwardRef)(() => notification_service_1.NotificationService))),
-    __param(6, (0, common_1.Inject)((0, common_1.forwardRef)(() => notification_gateway_1.NotificationGateway))),
+    __param(6, (0, common_1.Inject)((0, common_1.forwardRef)(() => notification_service_1.NotificationService))),
+    __param(7, (0, common_1.Inject)((0, common_1.forwardRef)(() => notification_gateway_1.NotificationGateway))),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
+        assignee_defaults_service_1.AssigneeDefaultsService,
         nestjs_cls_1.ClsService,
         activity_log_service_1.ActivityLogService,
         notification_service_1.NotificationService,

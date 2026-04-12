@@ -10,6 +10,7 @@ exports.UserModule = void 0;
 const common_1 = require("@nestjs/common");
 const user_controller_1 = require("./user.controller");
 const user_service_1 = require("./user.service");
+const assignee_defaults_service_1 = require("../../shared/services/assignee-defaults.service");
 const user_entity_1 = require("../../entities/user.entity");
 const typeorm_1 = require("@nestjs/typeorm");
 const uploads_entity_1 = require("../../entities/uploads.entity");
@@ -21,8 +22,8 @@ exports.UserModule = UserModule = __decorate([
     (0, common_1.Module)({
         imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.UserEntity, uploads_entity_1.UploadsEntity])],
         controllers: [user_controller_1.UserController],
-        providers: [user_service_1.UserService],
-        exports: [user_service_1.UserService]
+        providers: [user_service_1.UserService, assignee_defaults_service_1.AssigneeDefaultsService],
+        exports: [user_service_1.UserService, assignee_defaults_service_1.AssigneeDefaultsService]
     })
 ], UserModule);
 ;

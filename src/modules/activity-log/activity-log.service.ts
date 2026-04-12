@@ -4,6 +4,7 @@ import { Repository } from "typeorm";
 import { ActivityLogEntity, ActivityType } from "../../entities/activity-log.entity";
 import { FilterActivityLogDto } from "./dto/filter-activity-log.dto";
 import { ClsService } from "nestjs-cls";
+import { RoleEnum } from "../../shared/enums/role.enum";
 
 @Injectable()
 export class ActivityLogService {
@@ -37,12 +38,21 @@ export class ActivityLogService {
 		const limit = filters.limit || 20
 		const skip = (page - 1) * limit
 
+		const currentUser = this.cls.get('user')
+		const isAdmin = currentUser?.role === RoleEnum.ADMIN
+
 		const queryBuilder = this.activityLogRepo.createQueryBuilder('log')
 			.leftJoinAndSelect('log.user', 'user')
 			.orderBy('log.createdAt', 'DESC')
 
-		if (filters.userId) {
-			queryBuilder.andWhere('log.userId = :userId', { userId: filters.userId })
+		if (isAdmin) {
+			if (filters.userId) {
+				queryBuilder.andWhere('log.userId = :userId', { userId: filters.userId })
+			}
+		} else if (currentUser?.id) {
+			queryBuilder.andWhere('log.userId = :currentUserId', { currentUserId: currentUser.id })
+		} else {
+			queryBuilder.andWhere('1 = 0')
 		}
 
 		if (filters.type) {
@@ -59,12 +69,24 @@ export class ActivityLogService {
 			)
 		}
 
+		// Frontend Bakı təqvim günü üçün UTC ISO sərhədləri göndərir (YYYY-MM-DD və ya ISO)
 		if (filters.startDate) {
 			queryBuilder.andWhere('log.createdAt >= :startDate', { startDate: filters.startDate })
 		}
 
 		if (filters.endDate) {
 			queryBuilder.andWhere('log.createdAt <= :endDate', { endDate: filters.endDate })
+		}
+
+		if (filters.statusId != null && filters.statusId !== undefined) {
+			queryBuilder.andWhere(
+				`(
+					(log.changes->'statusId'->>'to') IS NOT NULL AND (log.changes->'statusId'->>'to')::int = :filterStatusId
+				) OR (
+					(log.changes->'statusId'->>'from') IS NOT NULL AND (log.changes->'statusId'->>'from')::int = :filterStatusId
+				)`,
+				{ filterStatusId: filters.statusId }
+			)
 		}
 
 		const [data, total] = await queryBuilder

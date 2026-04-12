@@ -24,6 +24,7 @@ let TaskListEntity = class TaskListEntity extends typeorm_1.BaseEntity {
     spaceId;
     space;
     tasks;
+    assignees;
     isArchived;
     archivedAt;
     archivedById;
@@ -53,6 +54,7 @@ __decorate([
 ], TaskListEntity.prototype, "folderId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => folder_entity_1.FolderEntity, (folder) => folder.taskLists, { onDelete: 'CASCADE', nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'folderId' }),
     __metadata("design:type", folder_entity_1.FolderEntity)
 ], TaskListEntity.prototype, "folder", void 0);
 __decorate([
@@ -69,11 +71,20 @@ __decorate([
     __metadata("design:type", Array)
 ], TaskListEntity.prototype, "tasks", void 0);
 __decorate([
+    (0, typeorm_1.ManyToMany)(() => user_entity_1.UserEntity, { eager: true }),
+    (0, typeorm_1.JoinTable)({
+        name: 'tasklist_assignees',
+        joinColumn: { name: 'taskListId' },
+        inverseJoinColumn: { name: 'userId' }
+    }),
+    __metadata("design:type", Array)
+], TaskListEntity.prototype, "assignees", void 0);
+__decorate([
     (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)
 ], TaskListEntity.prototype, "isArchived", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Object)
 ], TaskListEntity.prototype, "archivedAt", void 0);
 __decorate([

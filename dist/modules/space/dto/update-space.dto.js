@@ -16,6 +16,7 @@ const class_validator_1 = require("class-validator");
 class UpdateSpaceDto {
     name;
     description;
+    assigneeIds;
 }
 exports.UpdateSpaceDto = UpdateSpaceDto;
 __decorate([
@@ -32,4 +33,11 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", String)
 ], UpdateSpaceDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsInt)({ each: true }),
+    (0, swagger_1.ApiProperty)({ required: false, type: [Number] }),
+    __metadata("design:type", Array)
+], UpdateSpaceDto.prototype, "assigneeIds", void 0);
 //# sourceMappingURL=update-space.dto.js.map

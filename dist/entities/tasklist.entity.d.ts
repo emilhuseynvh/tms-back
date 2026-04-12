@@ -12,6 +12,7 @@ export declare class TaskListEntity extends BaseEntity {
     spaceId: number | null;
     space: SpaceEntity;
     tasks: TaskEntity[];
+    assignees: UserEntity[];
     isArchived: boolean;
     archivedAt: Date | null;
     archivedById: number | null;

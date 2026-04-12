@@ -5,6 +5,7 @@ export declare class TaskStatusEntity extends BaseEntity {
     name: string;
     color: string;
     icon: string;
+    order: number;
     tasks: TaskEntity[];
     createdAt: Date;
     updatedAt: Date;

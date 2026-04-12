@@ -5,11 +5,15 @@ import { UpdateTaskListDto } from "./dto/update-tasklist.dto";
 import { FilterTaskListDto } from "./dto/filter-tasklist.dto";
 import { ClsService } from "nestjs-cls";
 import { ActivityLogService } from "../activity-log/activity-log.service";
+import { NotificationService } from "../notification/notification.service";
+import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
 export declare class TaskListService {
     private taskListRepo;
+    private assigneeDefaults;
     private cls;
     private activityLogService;
-    constructor(taskListRepo: Repository<TaskListEntity>, cls: ClsService, activityLogService: ActivityLogService);
+    private notificationService;
+    constructor(taskListRepo: Repository<TaskListEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService);
     create(dto: CreateTaskListDto): Promise<TaskListEntity>;
     listBySpace(spaceId: number): Promise<TaskListEntity[]>;
     getOne(id: number): Promise<TaskListEntity>;

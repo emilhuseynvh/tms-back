@@ -148,13 +148,16 @@ let NotificationService = class NotificationService {
         }
         return tasks;
     }
-    async createNotification(userId, type, title, message, taskId) {
+    async createNotification(data) {
         const notification = this.notificationRepo.create({
-            userId,
-            type,
-            title,
-            message,
-            taskId: taskId || null,
+            userId: data.userId,
+            type: data.type,
+            title: data.title,
+            message: data.message,
+            taskId: data.taskId || null,
+            spaceId: data.spaceId || null,
+            folderId: data.folderId || null,
+            listId: data.listId || null,
             isRead: false
         });
         return await this.notificationRepo.save(notification);
@@ -172,7 +175,7 @@ let NotificationService = class NotificationService {
             order: { createdAt: 'DESC' },
             skip: (page - 1) * limit,
             take: limit,
-            relations: ['task']
+            relations: ['task', 'task.taskList']
         });
         return {
             data,
@@ -208,16 +211,40 @@ let NotificationService = class NotificationService {
         await this.notificationRepo.delete({ userId });
     }
     async notifyTaskAssigned(taskId, userId, taskTitle) {
-        return await this.createNotification(userId, notification_entity_1.NotificationType.TASK_ASSIGNED, 'Yeni tapşırıq təyin edildi', `Sizə "${taskTitle}" tapşırığı təyin edildi`, taskId);
+        return await this.createNotification({
+            userId,
+            type: notification_entity_1.NotificationType.TASK_ASSIGNED,
+            title: 'Yeni tapşırıq təyin edildi',
+            message: `Sizə "${taskTitle}" tapşırığı təyin edildi`,
+            taskId
+        });
     }
     async notifyTaskUnassigned(taskId, userId, taskTitle) {
-        return await this.createNotification(userId, notification_entity_1.NotificationType.TASK_UNASSIGNED, 'Tapşırıqdan çıxarıldınız', `"${taskTitle}" tapşırığından çıxarıldınız`, taskId);
+        return await this.createNotification({
+            userId,
+            type: notification_entity_1.NotificationType.TASK_UNASSIGNED,
+            title: 'Tapşırıqdan çıxarıldınız',
+            message: `"${taskTitle}" tapşırığından çıxarıldınız`,
+            taskId
+        });
     }
     async notifyTaskDeadline(taskId, userId, taskTitle, hoursLeft) {
-        return await this.createNotification(userId, notification_entity_1.NotificationType.TASK_DEADLINE, 'Deadline yaxınlaşır', `"${taskTitle}" tapşırığının bitmə vaxtına ${hoursLeft} saat qalıb`, taskId);
+        return await this.createNotification({
+            userId,
+            type: notification_entity_1.NotificationType.TASK_DEADLINE,
+            title: 'Deadline yaxınlaşır',
+            message: `"${taskTitle}" tapşırığının bitmə vaxtına ${hoursLeft} saat qalıb`,
+            taskId
+        });
     }
     async notifyTaskUpdated(taskId, userId, taskTitle, updatedBy) {
-        return await this.createNotification(userId, notification_entity_1.NotificationType.TASK_UPDATED, 'Tapşırıq yeniləndi', `"${taskTitle}" tapşırığı ${updatedBy} tərəfindən yeniləndi`, taskId);
+        return await this.createNotification({
+            userId,
+            type: notification_entity_1.NotificationType.TASK_UPDATED,
+            title: 'Tapşırıq yeniləndi',
+            message: `"${taskTitle}" tapşırığı ${updatedBy} tərəfindən yeniləndi`,
+            taskId
+        });
     }
 };
 exports.NotificationService = NotificationService;

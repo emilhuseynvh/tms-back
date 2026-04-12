@@ -16,6 +16,7 @@ const class_validator_1 = require("class-validator");
 class CreateSpaceDto {
     name;
     description;
+    assigneeIds;
 }
 exports.CreateSpaceDto = CreateSpaceDto;
 __decorate([
@@ -31,4 +32,11 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", String)
 ], CreateSpaceDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsInt)({ each: true }),
+    (0, swagger_1.ApiProperty)({ required: false, type: [Number] }),
+    __metadata("design:type", Array)
+], CreateSpaceDto.prototype, "assigneeIds", void 0);
 //# sourceMappingURL=create-space.dto.js.map

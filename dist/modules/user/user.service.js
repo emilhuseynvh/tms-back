@@ -54,12 +54,12 @@ let UserService = class UserService {
         }
         if (search) {
             if (role) {
-                queryBuilder.andWhere('(user.username ILIKE :search OR user.email ILIKE :search)', {
+                queryBuilder.andWhere('(user.username LIKE :search OR user.email LIKE :search)', {
                     search: `%${search}%`,
                 });
             }
             else {
-                queryBuilder.where('(user.username ILIKE :search OR user.email ILIKE :search)', {
+                queryBuilder.where('(user.username LIKE :search OR user.email LIKE :search)', {
                     search: `%${search}%`,
                 });
             }
@@ -133,6 +133,11 @@ let UserService = class UserService {
             checkedUser.email = params.email;
         if (params.phone !== undefined)
             checkedUser.phone = params.phone;
+        if (params.role !== undefined)
+            checkedUser.role = params.role;
+        if (params.password && params.password.trim() !== '') {
+            checkedUser.password = await (0, bcrypt_1.hash)(params.password, 10);
+        }
         await checkedUser.save();
         return { message: 'Əməkdaş uğurla yeniləndi!' };
     }
