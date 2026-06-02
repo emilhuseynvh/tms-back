@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/commo
 import { FolderService } from "./folder.service";
 import { CreateFolderDto } from "./dto/create-folder.dto";
 import { UpdateFolderDto } from "./dto/update-folder.dto";
+import { FilterFolderDetailsDto } from "./dto/filter-folder-details.dto";
 import { ApiTags } from "@nestjs/swagger";
 import { Auth } from "../../shared/decorators/auth.decorator";
 import { ClsService } from "nestjs-cls";
@@ -39,8 +40,8 @@ export class FolderController {
 	}
 
 	@Get(':id/full')
-	async getFullDetails(@Param('id') id: number, @Query('search') search?: string) {
-		return await this.folderService.getFullDetails(Number(id), search)
+	async getFullDetails(@Param('id') id: number, @Query() filters: FilterFolderDetailsDto) {
+		return await this.folderService.getFullDetails(Number(id), filters)
 	}
 
 	@Post('reorder/:spaceId')

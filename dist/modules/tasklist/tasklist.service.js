@@ -23,6 +23,7 @@ const activity_log_entity_1 = require("../../entities/activity-log.entity");
 const notification_service_1 = require("../notification/notification.service");
 const notification_entity_1 = require("../../entities/notification.entity");
 const assignee_defaults_service_1 = require("../../shared/services/assignee-defaults.service");
+const filter_date_utils_1 = require("../../shared/utils/filter-date.utils");
 let TaskListService = class TaskListService {
     taskListRepo;
     assigneeDefaults;
@@ -85,11 +86,12 @@ let TaskListService = class TaskListService {
         if (filters?.search) {
             queryBuilder.andWhere('(taskList.name LIKE :search OR task.title LIKE :search OR task.description LIKE :search)', { search: `%${filters.search}%` });
         }
-        if (filters?.startDate) {
-            queryBuilder.andWhere('task.startAt >= :startDate', { startDate: filters.startDate });
+        const { start: rangeStart, end: rangeEnd } = (0, filter_date_utils_1.resolveFilterDateRange)(filters?.startDate, filters?.endDate);
+        if (rangeStart) {
+            queryBuilder.andWhere('task.startAt >= :filterStartAt', { filterStartAt: rangeStart });
         }
-        if (filters?.endDate) {
-            queryBuilder.andWhere('task.startAt <= :endDate', { endDate: filters.endDate });
+        if (rangeEnd) {
+            queryBuilder.andWhere('task.dueAt <= :filterDueAt', { filterDueAt: rangeEnd });
         }
         return await queryBuilder
             .orderBy('taskList.order', 'ASC')

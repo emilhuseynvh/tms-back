@@ -12,6 +12,7 @@ import { ActivityType } from "../../entities/activity-log.entity";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationType } from "../../entities/notification.entity";
 import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
+import { resolveFilterDateRange } from "../../shared/utils/filter-date.utils";
 
 @Injectable()
 export class TaskListService {
@@ -93,12 +94,17 @@ export class TaskListService {
 			)
 		}
 
-		if (filters?.startDate) {
-			queryBuilder.andWhere('task.startAt >= :startDate', { startDate: filters.startDate })
+		const { start: rangeStart, end: rangeEnd } = resolveFilterDateRange(
+			filters?.startDate,
+			filters?.endDate,
+		)
+
+		if (rangeStart) {
+			queryBuilder.andWhere('task.startAt >= :filterStartAt', { filterStartAt: rangeStart })
 		}
 
-		if (filters?.endDate) {
-			queryBuilder.andWhere('task.startAt <= :endDate', { endDate: filters.endDate })
+		if (rangeEnd) {
+			queryBuilder.andWhere('task.dueAt <= :filterDueAt', { filterDueAt: rangeEnd })
 		}
 
 		return await queryBuilder

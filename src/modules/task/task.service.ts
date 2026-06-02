@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException, Inject, forwardRef } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { TaskEntity } from "../../entities/task.entity";
+import { TaskListEntity } from "../../entities/tasklist.entity";
 import { TaskStatusEntity } from "../../entities/task-status.entity";
 import { UserEntity } from "../../entities/user.entity";
 import { TaskActivityEntity } from "../../entities/task-activity.entity";
@@ -15,12 +16,15 @@ import { ActivityLogService } from "../activity-log/activity-log.service";
 import { ActivityType } from "../../entities/activity-log.entity";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationGateway } from "../notification/notification.gateway";
+import { resolveFilterDateRange } from "../../shared/utils/filter-date.utils";
 
 @Injectable()
 export class TaskService {
 	constructor(
 		@InjectRepository(TaskEntity)
 		private taskRepo: Repository<TaskEntity>,
+		@InjectRepository(TaskListEntity)
+		private taskListRepo: Repository<TaskListEntity>,
 		@InjectRepository(TaskStatusEntity)
 		private taskStatusRepo: Repository<TaskStatusEntity>,
 		@InjectRepository(TaskActivityEntity)
@@ -111,12 +115,17 @@ export class TaskService {
 			)
 		}
 
-		if (filters?.startDate) {
-			queryBuilder.andWhere('task.startAt >= :startDate', { startDate: filters.startDate })
+		const { start: rangeStart, end: rangeEnd } = resolveFilterDateRange(
+			filters?.startDate,
+			filters?.endDate,
+		)
+
+		if (rangeStart) {
+			queryBuilder.andWhere('task.startAt >= :filterStartAt', { filterStartAt: rangeStart })
 		}
 
-		if (filters?.endDate) {
-			queryBuilder.andWhere('task.startAt <= :endDate', { endDate: filters.endDate })
+		if (rangeEnd) {
+			queryBuilder.andWhere('task.dueAt <= :filterDueAt', { filterDueAt: rangeEnd })
 		}
 
 		if (filters?.statusId) {
@@ -270,20 +279,13 @@ export class TaskService {
 					toId: dto.parentId
 				}
 			}
-			task.parentId = dto.parentId as number
+			task.parentId = dto.parentId ?? null
 		}
 		if (dto.taskListId !== undefined && dto.taskListId !== task.taskListId) {
-			await this.taskRepo
-				.createQueryBuilder()
-				.update(TaskEntity)
-				.set({ order: () => "\"order\" - 1" })
-				.where('"taskListId" = :listId AND "order" > :oldOrder', { listId: task.taskListId, oldOrder: task.order })
-				.execute()
-
-			const newIndex = await this.taskRepo.count({ where: { taskListId: dto.taskListId } })
+			await this.moveTaskToListSafely(task, dto.taskListId, {
+				detachFromParent: dto.parentId === null,
+			})
 			task.taskListId = dto.taskListId
-			task.order = newIndex
-			await this.taskRepo.save(task)
 			await this.logTaskActivity(task.id, changes)
 
 			await this.activityLogService.log(
@@ -350,6 +352,82 @@ export class TaskService {
 			changes
 		})
 		await this.taskActivityRepo.save(log)
+	}
+
+	private async ensureActiveTaskList(taskListId: number): Promise<TaskListEntity> {
+		const list = await this.taskListRepo.findOne({
+			where: { id: taskListId, isArchived: false },
+		})
+		if (!list) {
+			throw new NotFoundException('Hədəf siyahı tapılmadı və ya arxivlənib')
+		}
+		return list
+	}
+
+	/**
+	 * Köçürür: yalnız taskListId, order və lazım olanda parentId yenilənir.
+	 * Heç bir sətir silinmir; bütün addımlar tranzaksiyada icra olunur.
+	 */
+	private async moveTaskToListSafely(
+		task: TaskEntity,
+		targetListId: number,
+		options: { detachFromParent?: boolean } = {},
+	): Promise<void> {
+		if (task.taskListId === targetListId) return
+
+		await this.ensureActiveTaskList(targetListId)
+
+		await this.taskRepo.manager.transaction(async (manager) => {
+			const taskRepo = manager.getRepository(TaskEntity)
+
+			await taskRepo
+				.createQueryBuilder()
+				.update(TaskEntity)
+				.set({ order: () => '"order" - 1' })
+				.where('"taskListId" = :listId AND "order" > :oldOrder', {
+					listId: task.taskListId,
+					oldOrder: task.order,
+				})
+				.execute()
+
+			const newIndex = await taskRepo.count({ where: { taskListId: targetListId } })
+
+			const updateFields: { taskListId: number; order: number; parentId?: number | null } = {
+				taskListId: targetListId,
+				order: newIndex,
+			}
+
+			if (options.detachFromParent) {
+				if (task.parentId !== null) {
+					updateFields.parentId = null
+				}
+			} else if (task.parentId) {
+				const parent = await taskRepo.findOne({ where: { id: task.parentId } })
+				if (parent && parent.taskListId !== targetListId) {
+					throw new BadRequestException(
+						'Ana tapşırıq başqa siyahıdadır. Əvvəlcə ana tapşırığı köçürün və ya alt tapşırığı ayrı köçürmək üçün parentId: null göndərin.',
+					)
+				}
+			}
+
+			await taskRepo.update({ id: task.id }, updateFields)
+			await this.syncDescendantsTaskListIdInRepo(taskRepo, task.id, targetListId)
+		})
+	}
+
+	/** Yalnız alt tapşırıqların taskListId sahəsini yeniləyir (parentId və digər məlumatlar toxunulmur). */
+	private async syncDescendantsTaskListIdInRepo(
+		taskRepo: Repository<TaskEntity>,
+		parentId: number,
+		taskListId: number,
+	): Promise<void> {
+		const children = await taskRepo.find({ where: { parentId } })
+		for (const child of children) {
+			if (child.taskListId !== taskListId) {
+				await taskRepo.update({ id: child.id }, { taskListId })
+			}
+			await this.syncDescendantsTaskListIdInRepo(taskRepo, child.id, taskListId)
+		}
 	}
 
 	private async logTaskCreation(taskId: number, taskTitle?: string) {

@@ -5,6 +5,7 @@ import { ActivityLogEntity, ActivityType } from "../../entities/activity-log.ent
 import { FilterActivityLogDto } from "./dto/filter-activity-log.dto";
 import { ClsService } from "nestjs-cls";
 import { RoleEnum } from "../../shared/enums/role.enum";
+import { resolveFilterDateRange } from "../../shared/utils/filter-date.utils";
 
 @Injectable()
 export class ActivityLogService {
@@ -69,13 +70,24 @@ export class ActivityLogService {
 			)
 		}
 
-		// Frontend Bakı təqvim günü üçün UTC ISO sərhədləri göndərir (YYYY-MM-DD və ya ISO)
-		if (filters.startDate) {
-			queryBuilder.andWhere('log.createdAt >= :startDate', { startDate: filters.startDate })
-		}
+		const { start: rangeStart, end: rangeEnd } = resolveFilterDateRange(
+			filters.startDate,
+			filters.endDate,
+		)
 
-		if (filters.endDate) {
-			queryBuilder.andWhere('log.createdAt <= :endDate', { endDate: filters.endDate })
+		if (rangeStart && rangeEnd) {
+			queryBuilder.andWhere(
+				'log.createdAt >= :filterRangeStart AND log.createdAt <= :filterRangeEnd',
+				{ filterRangeStart: rangeStart, filterRangeEnd: rangeEnd },
+			)
+		} else if (rangeStart) {
+			queryBuilder.andWhere('log.createdAt >= :filterRangeStart', {
+				filterRangeStart: rangeStart,
+			})
+		} else if (rangeEnd) {
+			queryBuilder.andWhere('log.createdAt <= :filterRangeEnd', {
+				filterRangeEnd: rangeEnd,
+			})
 		}
 
 		if (filters.statusId != null && filters.statusId !== undefined) {

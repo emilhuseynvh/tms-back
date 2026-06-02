@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const task_entity_1 = require("../../entities/task.entity");
+const tasklist_entity_1 = require("../../entities/tasklist.entity");
 const task_status_entity_1 = require("../../entities/task-status.entity");
 const task_activity_entity_1 = require("../../entities/task-activity.entity");
 const nestjs_cls_1 = require("nestjs-cls");
@@ -25,8 +26,10 @@ const activity_log_service_1 = require("../activity-log/activity-log.service");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
 const notification_service_1 = require("../notification/notification.service");
 const notification_gateway_1 = require("../notification/notification.gateway");
+const filter_date_utils_1 = require("../../shared/utils/filter-date.utils");
 let TaskService = class TaskService {
     taskRepo;
+    taskListRepo;
     taskStatusRepo;
     taskActivityRepo;
     assigneeDefaults;
@@ -34,8 +37,9 @@ let TaskService = class TaskService {
     activityLogService;
     notificationService;
     notificationGateway;
-    constructor(taskRepo, taskStatusRepo, taskActivityRepo, assigneeDefaults, cls, activityLogService, notificationService, notificationGateway) {
+    constructor(taskRepo, taskListRepo, taskStatusRepo, taskActivityRepo, assigneeDefaults, cls, activityLogService, notificationService, notificationGateway) {
         this.taskRepo = taskRepo;
+        this.taskListRepo = taskListRepo;
         this.taskStatusRepo = taskStatusRepo;
         this.taskActivityRepo = taskActivityRepo;
         this.assigneeDefaults = assigneeDefaults;
@@ -101,11 +105,12 @@ let TaskService = class TaskService {
         if (filters?.search) {
             queryBuilder.andWhere('(task.title LIKE :search OR task.description LIKE :search)', { search: `%${filters.search}%` });
         }
-        if (filters?.startDate) {
-            queryBuilder.andWhere('task.startAt >= :startDate', { startDate: filters.startDate });
+        const { start: rangeStart, end: rangeEnd } = (0, filter_date_utils_1.resolveFilterDateRange)(filters?.startDate, filters?.endDate);
+        if (rangeStart) {
+            queryBuilder.andWhere('task.startAt >= :filterStartAt', { filterStartAt: rangeStart });
         }
-        if (filters?.endDate) {
-            queryBuilder.andWhere('task.startAt <= :endDate', { endDate: filters.endDate });
+        if (rangeEnd) {
+            queryBuilder.andWhere('task.dueAt <= :filterDueAt', { filterDueAt: rangeEnd });
         }
         if (filters?.statusId) {
             queryBuilder.andWhere('task.statusId = :statusId', { statusId: parseInt(filters.statusId) });
@@ -246,19 +251,13 @@ let TaskService = class TaskService {
                     toId: dto.parentId
                 };
             }
-            task.parentId = dto.parentId;
+            task.parentId = dto.parentId ?? null;
         }
         if (dto.taskListId !== undefined && dto.taskListId !== task.taskListId) {
-            await this.taskRepo
-                .createQueryBuilder()
-                .update(task_entity_1.TaskEntity)
-                .set({ order: () => "\"order\" - 1" })
-                .where('"taskListId" = :listId AND "order" > :oldOrder', { listId: task.taskListId, oldOrder: task.order })
-                .execute();
-            const newIndex = await this.taskRepo.count({ where: { taskListId: dto.taskListId } });
+            await this.moveTaskToListSafely(task, dto.taskListId, {
+                detachFromParent: dto.parentId === null,
+            });
             task.taskListId = dto.taskListId;
-            task.order = newIndex;
-            await this.taskRepo.save(task);
             await this.logTaskActivity(task.id, changes);
             await this.activityLogService.log(activity_log_entity_1.ActivityType.TASK_UPDATE, id, task.title, `"${task.title}" tapşırığı yeniləndi`, { ...changes });
             return await this.taskRepo.findOne({
@@ -302,6 +301,59 @@ let TaskService = class TaskService {
             changes
         });
         await this.taskActivityRepo.save(log);
+    }
+    async ensureActiveTaskList(taskListId) {
+        const list = await this.taskListRepo.findOne({
+            where: { id: taskListId, isArchived: false },
+        });
+        if (!list) {
+            throw new common_1.NotFoundException('Hədəf siyahı tapılmadı və ya arxivlənib');
+        }
+        return list;
+    }
+    async moveTaskToListSafely(task, targetListId, options = {}) {
+        if (task.taskListId === targetListId)
+            return;
+        await this.ensureActiveTaskList(targetListId);
+        await this.taskRepo.manager.transaction(async (manager) => {
+            const taskRepo = manager.getRepository(task_entity_1.TaskEntity);
+            await taskRepo
+                .createQueryBuilder()
+                .update(task_entity_1.TaskEntity)
+                .set({ order: () => '"order" - 1' })
+                .where('"taskListId" = :listId AND "order" > :oldOrder', {
+                listId: task.taskListId,
+                oldOrder: task.order,
+            })
+                .execute();
+            const newIndex = await taskRepo.count({ where: { taskListId: targetListId } });
+            const updateFields = {
+                taskListId: targetListId,
+                order: newIndex,
+            };
+            if (options.detachFromParent) {
+                if (task.parentId !== null) {
+                    updateFields.parentId = null;
+                }
+            }
+            else if (task.parentId) {
+                const parent = await taskRepo.findOne({ where: { id: task.parentId } });
+                if (parent && parent.taskListId !== targetListId) {
+                    throw new common_1.BadRequestException('Ana tapşırıq başqa siyahıdadır. Əvvəlcə ana tapşırığı köçürün və ya alt tapşırığı ayrı köçürmək üçün parentId: null göndərin.');
+                }
+            }
+            await taskRepo.update({ id: task.id }, updateFields);
+            await this.syncDescendantsTaskListIdInRepo(taskRepo, task.id, targetListId);
+        });
+    }
+    async syncDescendantsTaskListIdInRepo(taskRepo, parentId, taskListId) {
+        const children = await taskRepo.find({ where: { parentId } });
+        for (const child of children) {
+            if (child.taskListId !== taskListId) {
+                await taskRepo.update({ id: child.id }, { taskListId });
+            }
+            await this.syncDescendantsTaskListIdInRepo(taskRepo, child.id, taskListId);
+        }
     }
     async logTaskCreation(taskId, taskTitle) {
         const user = this.cls.get('user') || {};
@@ -399,11 +451,13 @@ exports.TaskService = TaskService;
 exports.TaskService = TaskService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(task_entity_1.TaskEntity)),
-    __param(1, (0, typeorm_1.InjectRepository)(task_status_entity_1.TaskStatusEntity)),
-    __param(2, (0, typeorm_1.InjectRepository)(task_activity_entity_1.TaskActivityEntity)),
-    __param(6, (0, common_1.Inject)((0, common_1.forwardRef)(() => notification_service_1.NotificationService))),
-    __param(7, (0, common_1.Inject)((0, common_1.forwardRef)(() => notification_gateway_1.NotificationGateway))),
+    __param(1, (0, typeorm_1.InjectRepository)(tasklist_entity_1.TaskListEntity)),
+    __param(2, (0, typeorm_1.InjectRepository)(task_status_entity_1.TaskStatusEntity)),
+    __param(3, (0, typeorm_1.InjectRepository)(task_activity_entity_1.TaskActivityEntity)),
+    __param(7, (0, common_1.Inject)((0, common_1.forwardRef)(() => notification_service_1.NotificationService))),
+    __param(8, (0, common_1.Inject)((0, common_1.forwardRef)(() => notification_gateway_1.NotificationGateway))),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         assignee_defaults_service_1.AssigneeDefaultsService,

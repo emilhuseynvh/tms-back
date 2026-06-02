@@ -8,6 +8,7 @@ import { ClsService } from "nestjs-cls";
 import { ActivityLogService } from "../activity-log/activity-log.service";
 import { NotificationService } from "../notification/notification.service";
 import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
+import { FilterFolderDetailsDto } from "./dto/filter-folder-details.dto";
 export declare class FolderService {
     private folderRepo;
     private taskListRepo;
@@ -31,26 +32,14 @@ export declare class FolderService {
     listAll(): Promise<FolderEntity[]>;
     listByOwner(ownerId: number): Promise<FolderEntity[]>;
     listBySpace(spaceId: number): Promise<FolderEntity[]>;
-    getFullDetails(id: number, search?: string): Promise<{
+    private taskMatchesFilters;
+    private hasActiveTaskFilters;
+    private applyFolderFilters;
+    getFullDetails(id: number, filters?: FilterFolderDetailsDto): Promise<{
         taskLists: {
-            tasks: import("../../entities/task.entity").TaskEntity[];
             id: number;
             name: string;
-            order: number;
-            folderId: number | null;
-            folder: FolderEntity;
-            spaceId: number | null;
-            space: import("../../entities/space.entity").SpaceEntity;
-            assignees: UserEntity[];
-            isArchived: boolean;
-            archivedAt: Date | null;
-            archivedById: number | null;
-            archivedBy: UserEntity;
-            deletedById: number;
-            deletedBy: UserEntity;
-            createdAt: Date;
-            updatedAt: Date;
-            deletedAt: Date;
+            tasks: any[];
         }[];
         allTasks: any[];
         id: number;

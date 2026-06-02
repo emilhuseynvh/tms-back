@@ -1,6 +1,7 @@
 import { FolderService } from "./folder.service";
 import { CreateFolderDto } from "./dto/create-folder.dto";
 import { UpdateFolderDto } from "./dto/update-folder.dto";
+import { FilterFolderDetailsDto } from "./dto/filter-folder-details.dto";
 import { ClsService } from "nestjs-cls";
 export declare class FolderController {
     private folderService;
@@ -21,26 +22,11 @@ export declare class FolderController {
     }>;
     myFolders(): Promise<import("../../entities/folder.entity").FolderEntity[]>;
     listBySpace(spaceId: number): Promise<import("../../entities/folder.entity").FolderEntity[]>;
-    getFullDetails(id: number, search?: string): Promise<{
+    getFullDetails(id: number, filters: FilterFolderDetailsDto): Promise<{
         taskLists: {
-            tasks: import("../../entities/task.entity").TaskEntity[];
             id: number;
             name: string;
-            order: number;
-            folderId: number | null;
-            folder: import("../../entities/folder.entity").FolderEntity;
-            spaceId: number | null;
-            space: import("../../entities/space.entity").SpaceEntity;
-            assignees: import("../../entities/user.entity").UserEntity[];
-            isArchived: boolean;
-            archivedAt: Date | null;
-            archivedById: number | null;
-            archivedBy: import("../../entities/user.entity").UserEntity;
-            deletedById: number;
-            deletedBy: import("../../entities/user.entity").UserEntity;
-            createdAt: Date;
-            updatedAt: Date;
-            deletedAt: Date;
+            tasks: any[];
         }[];
         allTasks: any[];
         id: number;

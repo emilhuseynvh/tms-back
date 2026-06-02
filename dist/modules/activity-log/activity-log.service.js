@@ -19,6 +19,7 @@ const typeorm_2 = require("typeorm");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
 const nestjs_cls_1 = require("nestjs-cls");
 const role_enum_1 = require("../../shared/enums/role.enum");
+const filter_date_utils_1 = require("../../shared/utils/filter-date.utils");
 let ActivityLogService = class ActivityLogService {
     activityLogRepo;
     cls;
@@ -67,11 +68,19 @@ let ActivityLogService = class ActivityLogService {
         if (filters.search) {
             queryBuilder.andWhere('(log.entityName LIKE :search OR log.description LIKE :search OR user.username LIKE :search)', { search: `%${filters.search}%` });
         }
-        if (filters.startDate) {
-            queryBuilder.andWhere('log.createdAt >= :startDate', { startDate: filters.startDate });
+        const { start: rangeStart, end: rangeEnd } = (0, filter_date_utils_1.resolveFilterDateRange)(filters.startDate, filters.endDate);
+        if (rangeStart && rangeEnd) {
+            queryBuilder.andWhere('log.createdAt >= :filterRangeStart AND log.createdAt <= :filterRangeEnd', { filterRangeStart: rangeStart, filterRangeEnd: rangeEnd });
         }
-        if (filters.endDate) {
-            queryBuilder.andWhere('log.createdAt <= :endDate', { endDate: filters.endDate });
+        else if (rangeStart) {
+            queryBuilder.andWhere('log.createdAt >= :filterRangeStart', {
+                filterRangeStart: rangeStart,
+            });
+        }
+        else if (rangeEnd) {
+            queryBuilder.andWhere('log.createdAt <= :filterRangeEnd', {
+                filterRangeEnd: rangeEnd,
+            });
         }
         if (filters.statusId != null && filters.statusId !== undefined) {
             queryBuilder.andWhere(`(

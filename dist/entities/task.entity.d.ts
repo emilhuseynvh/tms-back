@@ -16,7 +16,7 @@ export declare class TaskEntity extends BaseEntity {
     doc: string;
     meetingNotes: string;
     taskList: TaskListEntity;
-    parentId: number;
+    parentId: number | null;
     parent: TaskEntity;
     children: TaskEntity[];
     assignees: UserEntity[];

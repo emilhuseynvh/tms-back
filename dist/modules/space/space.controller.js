@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const space_service_1 = require("./space.service");
 const create_space_dto_1 = require("./dto/create-space.dto");
 const update_space_dto_1 = require("./dto/update-space.dto");
+const filter_space_details_dto_1 = require("./dto/filter-space-details.dto");
 const swagger_1 = require("@nestjs/swagger");
 const auth_decorator_1 = require("../../shared/decorators/auth.decorator");
 const nestjs_cls_1 = require("nestjs-cls");
@@ -37,8 +38,8 @@ let SpaceController = class SpaceController {
     async getOne(id) {
         return await this.spaceService.getOne(Number(id));
     }
-    async getFullDetails(id, search) {
-        return await this.spaceService.getFullDetails(Number(id), search);
+    async getFullDetails(id, filters) {
+        return await this.spaceService.getFullDetails(Number(id), filters);
     }
     async create(body) {
         const user = this.cls.get('user');
@@ -80,9 +81,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)(':id/full'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)('search')),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, String]),
+    __metadata("design:paramtypes", [Number, filter_space_details_dto_1.FilterSpaceDetailsDto]),
     __metadata("design:returntype", Promise)
 ], SpaceController.prototype, "getFullDetails", null);
 __decorate([

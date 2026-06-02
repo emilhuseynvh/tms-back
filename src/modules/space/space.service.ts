@@ -13,6 +13,8 @@ import { ActivityType } from "../../entities/activity-log.entity";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationType } from "../../entities/notification.entity";
 import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
+import { FilterSpaceDetailsDto } from "./dto/filter-space-details.dto";
+import { taskMatchesTaskDateFilters } from "../../shared/utils/filter-date.utils";
 
 @Injectable()
 export class SpaceService {
@@ -85,11 +87,22 @@ export class SpaceService {
 
 		// Admin bütün space-ləri görür
 		if (user?.role === 'admin') {
-			return await this.spaceRepo.find({
-				where: { isArchived: false },
-				order: { createdAt: 'DESC' },
-				relations: ['folders', 'folders.taskLists', 'taskLists', 'assignees', 'folders.assignees', 'folders.taskLists.assignees', 'taskLists.assignees']
-			})
+			return await this.spaceRepo
+				.createQueryBuilder('space')
+				.leftJoinAndSelect('space.assignees', 'spaceAssignees')
+				.leftJoinAndSelect('space.folders', 'folders', 'folders.isArchived = false AND folders.deletedAt IS NULL')
+				.leftJoinAndSelect('folders.assignees', 'folderAssignees')
+				.leftJoinAndSelect('folders.taskLists', 'folderTaskLists', 'folderTaskLists.isArchived = false AND folderTaskLists.deletedAt IS NULL')
+				.leftJoinAndSelect('folderTaskLists.assignees', 'folderTaskListAssignees')
+				.leftJoinAndSelect('space.taskLists', 'taskLists', 'taskLists.isArchived = false AND taskLists.deletedAt IS NULL AND taskLists.folderId IS NULL')
+				.leftJoinAndSelect('taskLists.assignees', 'taskListAssignees')
+				.where('space.isArchived = false')
+				.andWhere('space.deletedAt IS NULL')
+				.orderBy('space.order', 'ASC')
+				.addOrderBy('folders.order', 'ASC')
+				.addOrderBy('folderTaskLists.order', 'ASC')
+				.addOrderBy('taskLists.order', 'ASC')
+				.getMany()
 		}
 
 		// User-in özünün yaratdığı space-ləri tap
@@ -193,7 +206,73 @@ export class SpaceService {
 		return space
 	}
 
-	async getFullDetails(id: number, search?: string) {
+	private taskMatchesFilters(task: { title?: string; description?: string; statusId?: number | null; startAt?: Date | string | null; dueAt?: Date | string | null; assignees?: { id: number }[] }, filters: FilterSpaceDetailsDto): boolean {
+		if (filters.search) {
+			const searchLower = filters.search.toLowerCase()
+			const titleMatch = task.title?.toLowerCase().includes(searchLower)
+			const descMatch = task.description?.toLowerCase().includes(searchLower)
+			if (!titleMatch && !descMatch) return false
+		}
+
+		if (filters.statusId) {
+			if (task.statusId !== parseInt(filters.statusId, 10)) return false
+		}
+
+		if (filters.assigneeId) {
+			const assigneeIds = task.assignees?.map((a) => a.id) || []
+			if (!assigneeIds.includes(parseInt(filters.assigneeId, 10))) return false
+		}
+
+		if (!taskMatchesTaskDateFilters(task, filters.startDate, filters.endDate)) {
+			return false
+		}
+
+		return true
+	}
+
+	private hasActiveTaskFilters(filters?: FilterSpaceDetailsDto): boolean {
+		if (!filters) return false
+		return !!(filters.search || filters.statusId || filters.assigneeId || filters.startDate || filters.endDate)
+	}
+
+	private applyListFilters(
+		taskLists: { id: number; name: string; tasks: any[] }[],
+		filters?: FilterSpaceDetailsDto
+	) {
+		if (!this.hasActiveTaskFilters(filters)) {
+			const allTasks: any[] = []
+			taskLists.forEach((list) => {
+				allTasks.push(...list.tasks.map((t) => ({ ...t, listName: list.name })))
+			})
+			return { taskLists, allTasks }
+		}
+
+		const searchLower = filters?.search?.toLowerCase()
+		const filteredLists: typeof taskLists = []
+		const allTasks: any[] = []
+
+		for (const list of taskLists) {
+			const listNameMatches = searchLower ? list.name.toLowerCase().includes(searchLower) : false
+			const onlySearchFilter = filters?.search && !filters.statusId && !filters.assigneeId && !filters.startDate && !filters.endDate
+
+			let tasks = list.tasks
+			if (listNameMatches && onlySearchFilter) {
+				// Siyahı adı uyğun gəlirsə, digər filtr yoxdursa bütün tapşırıqları göstər
+			} else {
+				tasks = list.tasks.filter((t) => this.taskMatchesFilters(t, filters!))
+			}
+
+			const includeList = listNameMatches || tasks.length > 0
+			if (includeList) {
+				filteredLists.push({ ...list, tasks })
+				allTasks.push(...tasks.map((t) => ({ ...t, listName: list.name })))
+			}
+		}
+
+		return { taskLists: filteredLists, allTasks }
+	}
+
+	async getFullDetails(id: number, filters?: FilterSpaceDetailsDto) {
 		const space = await this.spaceRepo.findOne({
 			where: { id, isArchived: false },
 			relations: ['folders', 'folders.taskLists', 'folders.taskLists.tasks', 'folders.taskLists.tasks.assignees', 'folders.taskLists.tasks.status', 'taskLists', 'taskLists.tasks', 'taskLists.tasks.assignees', 'taskLists.tasks.status']
@@ -220,33 +299,49 @@ export class SpaceService {
 				tasks: list.tasks?.filter(t => !t.isArchived && !t.deletedAt) || []
 			})) || []
 
-		const allTasks: any[] = []
-		folders.forEach(folder => {
-			folder.taskLists.forEach(list => {
-				allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: folder.name })))
+		if (!this.hasActiveTaskFilters(filters)) {
+			const allTasks: any[] = []
+			folders.forEach(folder => {
+				folder.taskLists.forEach(list => {
+					allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: folder.name })))
+				})
 			})
-		})
-		directLists.forEach(list => {
-			allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: null })))
-		})
+			directLists.forEach(list => {
+				allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: null })))
+			})
+			return { ...space, folders, directLists, allTasks }
+		}
 
-		if (search) {
-			const searchLower = search.toLowerCase()
-			const filteredFolders = folders.filter(f => f.name.toLowerCase().includes(searchLower))
-			const filteredLists = directLists.filter(l => l.name.toLowerCase().includes(searchLower))
-			const filteredTasks = allTasks.filter(t => t.title?.toLowerCase().includes(searchLower) || t.description?.toLowerCase().includes(searchLower))
-			return {
-				...space,
-				folders: filteredFolders,
-				directLists: filteredLists,
-				allTasks: filteredTasks
+		const searchLower = filters?.search?.toLowerCase()
+		const onlySearchFilter = filters?.search && !filters.statusId && !filters.assigneeId && !filters.startDate && !filters.endDate
+		const filteredFolders: any[] = []
+		const allTasks: any[] = []
+
+		for (const folder of folders) {
+			const folderNameMatches = searchLower ? folder.name.toLowerCase().includes(searchLower) : false
+
+			if (folderNameMatches && onlySearchFilter) {
+				filteredFolders.push(folder)
+				folder.taskLists.forEach(list => {
+					allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: folder.name })))
+				})
+				continue
+			}
+
+			const { taskLists: filteredLists, allTasks: folderListTasks } = this.applyListFilters(folder.taskLists, filters)
+			if (filteredLists.length > 0) {
+				filteredFolders.push({ ...folder, taskLists: filteredLists })
+				allTasks.push(...folderListTasks.map(t => ({ ...t, folderName: folder.name })))
 			}
 		}
 
+		const { taskLists: filteredDirectLists, allTasks: directTasks } = this.applyListFilters(directLists, filters)
+		allTasks.push(...directTasks.map(t => ({ ...t, folderName: null })))
+
 		return {
 			...space,
-			folders,
-			directLists,
+			folders: filteredFolders,
+			directLists: filteredDirectLists,
 			allTasks
 		}
 	}

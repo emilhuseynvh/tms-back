@@ -1,6 +1,7 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { TaskEntity } from "../../entities/task.entity";
+import { TaskListEntity } from "../../entities/tasklist.entity";
 import { TaskStatusEntity } from "../../entities/task-status.entity";
 import { TaskActivityEntity } from "../../entities/task-activity.entity";
 import { TaskService } from "./task.service";
@@ -10,7 +11,7 @@ import { NotificationModule } from "../notification/notification.module";
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([TaskEntity, TaskStatusEntity, TaskActivityEntity]),
+		TypeOrmModule.forFeature([TaskEntity, TaskListEntity, TaskStatusEntity, TaskActivityEntity]),
 		ActivityLogModule,
 		forwardRef(() => NotificationModule)
 	],

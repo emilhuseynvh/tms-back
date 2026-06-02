@@ -1,5 +1,6 @@
 import { Repository } from "typeorm";
 import { TaskEntity } from "../../entities/task.entity";
+import { TaskListEntity } from "../../entities/tasklist.entity";
 import { TaskStatusEntity } from "../../entities/task-status.entity";
 import { TaskActivityEntity } from "../../entities/task-activity.entity";
 import { CreateTaskDto } from "./dto/create-task.dto";
@@ -13,6 +14,7 @@ import { NotificationService } from "../notification/notification.service";
 import { NotificationGateway } from "../notification/notification.gateway";
 export declare class TaskService {
     private taskRepo;
+    private taskListRepo;
     private taskStatusRepo;
     private taskActivityRepo;
     private assigneeDefaults;
@@ -20,7 +22,7 @@ export declare class TaskService {
     private activityLogService;
     private notificationService;
     private notificationGateway;
-    constructor(taskRepo: Repository<TaskEntity>, taskStatusRepo: Repository<TaskStatusEntity>, taskActivityRepo: Repository<TaskActivityEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService, notificationGateway: NotificationGateway);
+    constructor(taskRepo: Repository<TaskEntity>, taskListRepo: Repository<TaskListEntity>, taskStatusRepo: Repository<TaskStatusEntity>, taskActivityRepo: Repository<TaskActivityEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService, notificationGateway: NotificationGateway);
     create(dto: CreateTaskDto): Promise<TaskEntity>;
     listByTaskList(taskListId: number, filters?: FilterTaskDto): Promise<TaskEntity[]>;
     private loadChildren;
@@ -28,6 +30,9 @@ export declare class TaskService {
     private ensureStatusExists;
     private collectChanges;
     private logTaskActivity;
+    private ensureActiveTaskList;
+    private moveTaskToListSafely;
+    private syncDescendantsTaskListIdInRepo;
     private logTaskCreation;
     reorder(params: ReorderTaskDto): Promise<TaskEntity>;
     deleteTask(id: number): Promise<{

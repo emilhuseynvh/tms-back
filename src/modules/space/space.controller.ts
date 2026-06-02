@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/commo
 import { SpaceService } from "./space.service";
 import { CreateSpaceDto } from "./dto/create-space.dto";
 import { UpdateSpaceDto } from "./dto/update-space.dto";
+import { FilterSpaceDetailsDto } from "./dto/filter-space-details.dto";
 import { ApiTags } from "@nestjs/swagger";
 import { Auth } from "../../shared/decorators/auth.decorator";
 import { ClsService } from "nestjs-cls";
@@ -32,8 +33,8 @@ export class SpaceController {
 	}
 
 	@Get(':id/full')
-	async getFullDetails(@Param('id') id: number, @Query('search') search?: string) {
-		return await this.spaceService.getFullDetails(Number(id), search)
+	async getFullDetails(@Param('id') id: number, @Query() filters: FilterSpaceDetailsDto) {
+		return await this.spaceService.getFullDetails(Number(id), filters)
 	}
 
 	@Post()

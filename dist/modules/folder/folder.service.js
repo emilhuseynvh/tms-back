@@ -24,6 +24,7 @@ const activity_log_entity_1 = require("../../entities/activity-log.entity");
 const notification_service_1 = require("../notification/notification.service");
 const notification_entity_1 = require("../../entities/notification.entity");
 const assignee_defaults_service_1 = require("../../shared/services/assignee-defaults.service");
+const filter_date_utils_1 = require("../../shared/utils/filter-date.utils");
 let FolderService = class FolderService {
     folderRepo;
     taskListRepo;
@@ -94,7 +95,62 @@ let FolderService = class FolderService {
             relations: ['taskLists']
         });
     }
-    async getFullDetails(id, search) {
+    taskMatchesFilters(task, filters) {
+        if (filters.search) {
+            const searchLower = filters.search.toLowerCase();
+            const titleMatch = task.title?.toLowerCase().includes(searchLower);
+            const descMatch = task.description?.toLowerCase().includes(searchLower);
+            if (!titleMatch && !descMatch)
+                return false;
+        }
+        if (filters.statusId) {
+            if (task.statusId !== parseInt(filters.statusId, 10))
+                return false;
+        }
+        if (filters.assigneeId) {
+            const assigneeIds = task.assignees?.map((a) => a.id) || [];
+            if (!assigneeIds.includes(parseInt(filters.assigneeId, 10)))
+                return false;
+        }
+        if (!(0, filter_date_utils_1.taskMatchesTaskDateFilters)(task, filters.startDate, filters.endDate)) {
+            return false;
+        }
+        return true;
+    }
+    hasActiveTaskFilters(filters) {
+        if (!filters)
+            return false;
+        return !!(filters.search || filters.statusId || filters.assigneeId || filters.startDate || filters.endDate);
+    }
+    applyFolderFilters(taskLists, filters) {
+        if (!this.hasActiveTaskFilters(filters)) {
+            const allTasks = [];
+            taskLists.forEach((list) => {
+                allTasks.push(...list.tasks.map((t) => ({ ...t, listName: list.name })));
+            });
+            return { taskLists, allTasks };
+        }
+        const searchLower = filters?.search?.toLowerCase();
+        const filteredLists = [];
+        const allTasks = [];
+        for (const list of taskLists) {
+            const listNameMatches = searchLower ? list.name.toLowerCase().includes(searchLower) : false;
+            const onlySearchFilter = filters?.search && !filters.statusId && !filters.assigneeId && !filters.startDate && !filters.endDate;
+            let tasks = list.tasks;
+            if (listNameMatches && onlySearchFilter) {
+            }
+            else {
+                tasks = list.tasks.filter((t) => this.taskMatchesFilters(t, filters));
+            }
+            const includeList = listNameMatches || tasks.length > 0;
+            if (includeList) {
+                filteredLists.push({ ...list, tasks });
+                allTasks.push(...tasks.map((t) => ({ ...t, listName: list.name })));
+            }
+        }
+        return { taskLists: filteredLists, allTasks };
+    }
+    async getFullDetails(id, filters) {
         const folder = await this.folderRepo.findOne({
             where: { id, isArchived: false },
             relations: ['taskLists', 'taskLists.tasks', 'taskLists.tasks.assignees', 'taskLists.tasks.status', 'space']
@@ -107,23 +163,10 @@ let FolderService = class FolderService {
             ...list,
             tasks: list.tasks?.filter(t => !t.isArchived && !t.deletedAt) || []
         })) || [];
-        const allTasks = [];
-        taskLists.forEach(list => {
-            allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name })));
-        });
-        if (search) {
-            const searchLower = search.toLowerCase();
-            const filteredLists = taskLists.filter(l => l.name.toLowerCase().includes(searchLower));
-            const filteredTasks = allTasks.filter(t => t.title?.toLowerCase().includes(searchLower) || t.description?.toLowerCase().includes(searchLower));
-            return {
-                ...folder,
-                taskLists: filteredLists,
-                allTasks: filteredTasks
-            };
-        }
+        const { taskLists: filteredLists, allTasks } = this.applyFolderFilters(taskLists, filters);
         return {
             ...folder,
-            taskLists,
+            taskLists: filteredLists,
             allTasks
         };
     }

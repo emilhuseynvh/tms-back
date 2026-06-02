@@ -47,7 +47,7 @@ export class TaskEntity extends BaseEntity {
 	taskList: TaskListEntity
 
 	@Column({ nullable: true })
-	parentId: number
+	parentId: number | null
 
 	@ManyToOne(() => TaskEntity, (task) => task.children, { nullable: true, onDelete: 'CASCADE' })
 	parent: TaskEntity

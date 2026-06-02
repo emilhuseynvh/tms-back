@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const folder_service_1 = require("./folder.service");
 const create_folder_dto_1 = require("./dto/create-folder.dto");
 const update_folder_dto_1 = require("./dto/update-folder.dto");
+const filter_folder_details_dto_1 = require("./dto/filter-folder-details.dto");
 const swagger_1 = require("@nestjs/swagger");
 const auth_decorator_1 = require("../../shared/decorators/auth.decorator");
 const nestjs_cls_1 = require("nestjs-cls");
@@ -41,8 +42,8 @@ let FolderController = class FolderController {
     async listBySpace(spaceId) {
         return await this.folderService.listBySpace(Number(spaceId));
     }
-    async getFullDetails(id, search) {
-        return await this.folderService.getFullDetails(Number(id), search);
+    async getFullDetails(id, filters) {
+        return await this.folderService.getFullDetails(Number(id), filters);
     }
     async reorderFolders(spaceId, body) {
         return await this.folderService.reorderFolders(Number(spaceId), body.folderIds);
@@ -91,9 +92,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)(':id/full'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)('search')),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, String]),
+    __metadata("design:paramtypes", [Number, filter_folder_details_dto_1.FilterFolderDetailsDto]),
     __metadata("design:returntype", Promise)
 ], FolderController.prototype, "getFullDetails", null);
 __decorate([

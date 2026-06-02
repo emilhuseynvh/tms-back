@@ -10,6 +10,7 @@ exports.TaskModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const task_entity_1 = require("../../entities/task.entity");
+const tasklist_entity_1 = require("../../entities/tasklist.entity");
 const task_status_entity_1 = require("../../entities/task-status.entity");
 const task_activity_entity_1 = require("../../entities/task-activity.entity");
 const task_service_1 = require("./task.service");
@@ -22,7 +23,7 @@ exports.TaskModule = TaskModule;
 exports.TaskModule = TaskModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([task_entity_1.TaskEntity, task_status_entity_1.TaskStatusEntity, task_activity_entity_1.TaskActivityEntity]),
+            typeorm_1.TypeOrmModule.forFeature([task_entity_1.TaskEntity, tasklist_entity_1.TaskListEntity, task_status_entity_1.TaskStatusEntity, task_activity_entity_1.TaskActivityEntity]),
             activity_log_module_1.ActivityLogModule,
             (0, common_1.forwardRef)(() => notification_module_1.NotificationModule)
         ],

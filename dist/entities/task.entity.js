@@ -98,7 +98,7 @@ __decorate([
 ], TaskEntity.prototype, "taskList", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", Number)
+    __metadata("design:type", Object)
 ], TaskEntity.prototype, "parentId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => TaskEntity, (task) => task.children, { nullable: true, onDelete: 'CASCADE' }),
