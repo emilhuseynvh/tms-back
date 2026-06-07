@@ -5,7 +5,6 @@ const envPath = join(__dirname, '../../.env')
 
 config({ path: envPath })
 
-
 export default {
     dbHost: process.env.DB_HOST,
     dbPort: parseInt(process.env.DB_PORT || '5432', 10),
