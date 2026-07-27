@@ -2,6 +2,7 @@ import { Controller, Get, Param, ParseIntPipe, Post, Delete } from "@nestjs/comm
 import { ApiTags } from "@nestjs/swagger";
 import { TrashService } from "./trash.service";
 import { Auth } from "../../shared/decorators/auth.decorator";
+import { RoleEnum } from "../../shared/enums/role.enum";
 
 @ApiTags('trash')
 @Controller('trash')
@@ -39,25 +40,25 @@ export class TrashController {
 	}
 
 	@Delete('space/:id')
-	@Auth()
+	@Auth(RoleEnum.ADMIN)
 	async permanentDeleteSpace(@Param('id', ParseIntPipe) id: number) {
 		return await this.trashService.permanentDeleteSpace(id)
 	}
 
 	@Delete('folder/:id')
-	@Auth()
+	@Auth(RoleEnum.ADMIN)
 	async permanentDeleteFolder(@Param('id', ParseIntPipe) id: number) {
 		return await this.trashService.permanentDeleteFolder(id)
 	}
 
 	@Delete('list/:id')
-	@Auth()
+	@Auth(RoleEnum.ADMIN)
 	async permanentDeleteList(@Param('id', ParseIntPipe) id: number) {
 		return await this.trashService.permanentDeleteList(id)
 	}
 
 	@Delete('task/:id')
-	@Auth()
+	@Auth(RoleEnum.ADMIN)
 	async permanentDeleteTask(@Param('id', ParseIntPipe) id: number) {
 		return await this.trashService.permanentDeleteTask(id)
 	}

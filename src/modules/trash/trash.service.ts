@@ -192,8 +192,8 @@ export class TrashService {
 
 		if (!space) throw new NotFoundException('Sahə tapılmadı!')
 
-		if (user.role !== 'admin' && space.ownerId !== user.id) {
-			throw new ForbiddenException('Bu sahəni silmək üçün icazəniz yoxdur!')
+		if (user.role !== 'admin') {
+			throw new ForbiddenException('Həmişəlik silmək yalnız adminlər üçün icazəlidir!')
 		}
 
 		await this.spaceRepo.delete(id)
@@ -210,8 +210,8 @@ export class TrashService {
 
 		if (!folder) throw new NotFoundException('Qovluq tapılmadı!')
 
-		if (user.role !== 'admin' && folder.ownerId !== user.id) {
-			throw new ForbiddenException('Bu qovluğu silmək üçün icazəniz yoxdur!')
+		if (user.role !== 'admin') {
+			throw new ForbiddenException('Həmişəlik silmək yalnız adminlər üçün icazəlidir!')
 		}
 
 		await this.folderRepo.delete(id)
@@ -229,8 +229,8 @@ export class TrashService {
 
 		if (!list) throw new NotFoundException('Siyahı tapılmadı!')
 
-		if (user.role !== 'admin' && list.folder?.ownerId !== user.id) {
-			throw new ForbiddenException('Bu siyahını silmək üçün icazəniz yoxdur!')
+		if (user.role !== 'admin') {
+			throw new ForbiddenException('Həmişəlik silmək yalnız adminlər üçün icazəlidir!')
 		}
 
 		await this.taskListRepo.delete(id)
@@ -249,8 +249,8 @@ export class TrashService {
 
 		if (!task) throw new NotFoundException('Tapşırıq tapılmadı!')
 
-		if (user.role !== 'admin' && task.taskList?.folder?.ownerId !== user.id) {
-			throw new ForbiddenException('Bu tapşırığı silmək üçün icazəniz yoxdur!')
+		if (user.role !== 'admin') {
+			throw new ForbiddenException('Həmişəlik silmək yalnız adminlər üçün icazəlidir!')
 		}
 
 		await this.taskRepo.delete(id)
