@@ -421,11 +421,6 @@ export class SpaceService {
 
 		if (!space) throw new NotFoundException('Sahə tapılmadı!')
 
-		const user = this.cls.get('user')
-		if (user?.role !== 'admin' && space.ownerId !== userId) {
-			throw new UnauthorizedException('Sahəni silmək üçün icazəniz yoxdur!')
-		}
-
 		await this.spaceRepo.softDelete({ id })
 
 		await this.activityLogService.log(
