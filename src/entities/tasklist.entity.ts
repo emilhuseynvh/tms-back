@@ -12,6 +12,12 @@ export class TaskListEntity extends BaseEntity {
 	@Column()
 	name: string
 
+	@Column({ default: 'list' })
+	type: string
+
+	@Column({ type: 'text', nullable: true })
+	content: string | null
+
 	@Column({ type: 'int', default: 0 })
 	order: number
 

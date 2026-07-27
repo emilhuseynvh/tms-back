@@ -34,6 +34,8 @@ export class TaskListService {
 		const assigneeIds = await this.assigneeDefaults.mergeResourceAssignees(dto.assigneeIds, user?.id)
 		const list = new TaskListEntity()
 		list.name = dto.name
+		list.type = dto.type || 'list'
+		list.content = dto.content || null
 		list.folderId = dto.folderId || null
 		list.spaceId = dto.spaceId || null
 		list.assignees = assigneeIds.map((id) => ({ id } as UserEntity))
@@ -169,7 +171,8 @@ export class TaskListService {
 
 		if (dto.name) changes.name = { old: oldName, new: dto.name }
 
-		Object.assign(taskList, { name: dto.name })
+		if (dto.name !== undefined) taskList.name = dto.name
+		if (dto.content !== undefined) taskList.content = dto.content
 		await this.taskListRepo.save(taskList)
 
 		await this.activityLogService.log(

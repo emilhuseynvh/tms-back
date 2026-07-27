@@ -7,6 +7,16 @@ export class CreateTaskListDto {
 	name: string
 
 	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false })
+	type?: string
+
+	@IsOptional()
+	@IsString()
+	@ApiProperty({ required: false })
+	content?: string
+
+	@IsOptional()
 	@IsNumber()
 	@ApiProperty({ required: false })
 	folderId?: number

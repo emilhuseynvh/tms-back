@@ -95,11 +95,7 @@ export class ChatService {
     }
 
     async createGroup(userId: number, params: CreateGroupDto) {
-        // Prevent user from adding themselves explicitly
-        if (params.memberIds.includes(userId)) {
-            throw new BadRequestException('Özünüzü qrupa əlavə edə bilməzsiniz! Siz avtomatik olaraq qrupa əlavə olunacaqsınız.');
-        }
-
+        // Yaradan avtomatik üzv olur; özünü seçibsə, dedup ilə təkrarın qarşısı alınır
         const memberIds = [...new Set([userId, ...params.memberIds])];
 
         const users = await this.userRepo.findBy({ id: In(memberIds) });
