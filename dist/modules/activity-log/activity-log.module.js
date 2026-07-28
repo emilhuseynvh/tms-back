@@ -10,6 +10,10 @@ exports.ActivityLogModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
+const task_entity_1 = require("../../entities/task.entity");
+const tasklist_entity_1 = require("../../entities/tasklist.entity");
+const folder_entity_1 = require("../../entities/folder.entity");
+const space_entity_1 = require("../../entities/space.entity");
 const activity_log_service_1 = require("./activity-log.service");
 const activity_log_controller_1 = require("./activity-log.controller");
 let ActivityLogModule = class ActivityLogModule {
@@ -17,7 +21,7 @@ let ActivityLogModule = class ActivityLogModule {
 exports.ActivityLogModule = ActivityLogModule;
 exports.ActivityLogModule = ActivityLogModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([activity_log_entity_1.ActivityLogEntity])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([activity_log_entity_1.ActivityLogEntity, task_entity_1.TaskEntity, tasklist_entity_1.TaskListEntity, folder_entity_1.FolderEntity, space_entity_1.SpaceEntity])],
         controllers: [activity_log_controller_1.ActivityLogController],
         providers: [activity_log_service_1.ActivityLogService],
         exports: [activity_log_service_1.ActivityLogService]

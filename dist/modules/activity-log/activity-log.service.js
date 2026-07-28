@@ -17,15 +17,117 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
+const task_entity_1 = require("../../entities/task.entity");
+const tasklist_entity_1 = require("../../entities/tasklist.entity");
+const folder_entity_1 = require("../../entities/folder.entity");
+const space_entity_1 = require("../../entities/space.entity");
 const nestjs_cls_1 = require("nestjs-cls");
 const role_enum_1 = require("../../shared/enums/role.enum");
 const filter_date_utils_1 = require("../../shared/utils/filter-date.utils");
 let ActivityLogService = class ActivityLogService {
     activityLogRepo;
+    taskRepo;
+    taskListRepo;
+    folderRepo;
+    spaceRepo;
     cls;
-    constructor(activityLogRepo, cls) {
+    constructor(activityLogRepo, taskRepo, taskListRepo, folderRepo, spaceRepo, cls) {
         this.activityLogRepo = activityLogRepo;
+        this.taskRepo = taskRepo;
+        this.taskListRepo = taskListRepo;
+        this.folderRepo = folderRepo;
+        this.spaceRepo = spaceRepo;
         this.cls = cls;
+    }
+    async enrichWithContext(logs) {
+        const taskIds = [];
+        const listIds = [];
+        const folderIds = [];
+        const spaceIds = [];
+        logs.forEach(log => {
+            if (!log.entityId)
+                return;
+            if (log.type.startsWith('task_'))
+                taskIds.push(log.entityId);
+            else if (log.type.startsWith('list_'))
+                listIds.push(log.entityId);
+            else if (log.type.startsWith('folder_'))
+                folderIds.push(log.entityId);
+            else if (log.type.startsWith('space_'))
+                spaceIds.push(log.entityId);
+        });
+        const tasks = taskIds.length
+            ? await this.taskRepo.find({ where: { id: (0, typeorm_2.In)(taskIds) }, withDeleted: true, select: ['id', 'taskListId', 'deletedAt'] })
+            : [];
+        const taskMap = new Map(tasks.map(t => [t.id, t]));
+        const allListIds = [...new Set([...listIds, ...tasks.map(t => t.taskListId).filter(Boolean)])];
+        const lists = allListIds.length
+            ? await this.taskListRepo.find({ where: { id: (0, typeorm_2.In)(allListIds) }, withDeleted: true, select: ['id', 'name', 'type', 'folderId', 'spaceId', 'deletedAt'] })
+            : [];
+        const listMap = new Map(lists.map(l => [l.id, l]));
+        const allFolderIds = [...new Set([...folderIds, ...lists.map(l => l.folderId).filter(Boolean)])];
+        const folders = allFolderIds.length
+            ? await this.folderRepo.find({ where: { id: (0, typeorm_2.In)(allFolderIds) }, withDeleted: true, select: ['id', 'name', 'spaceId', 'deletedAt'] })
+            : [];
+        const folderMap = new Map(folders.map(f => [f.id, f]));
+        const allSpaceIds = [...new Set([
+                ...spaceIds,
+                ...lists.map(l => l.spaceId).filter(Boolean),
+                ...folders.map(f => f.spaceId).filter(Boolean),
+            ])];
+        const spaces = allSpaceIds.length
+            ? await this.spaceRepo.find({ where: { id: (0, typeorm_2.In)(allSpaceIds) }, withDeleted: true, select: ['id', 'name', 'deletedAt'] })
+            : [];
+        const spaceMap = new Map(spaces.map(s => [s.id, s]));
+        logs.forEach(log => {
+            let list;
+            let folder;
+            let space;
+            let entityDeleted = false;
+            if (log.type.startsWith('task_')) {
+                const task = taskMap.get(log.entityId);
+                entityDeleted = !!task?.deletedAt;
+                if (task?.taskListId)
+                    list = listMap.get(task.taskListId);
+            }
+            else if (log.type.startsWith('list_')) {
+                list = listMap.get(log.entityId);
+                entityDeleted = !!list?.deletedAt;
+            }
+            else if (log.type.startsWith('folder_')) {
+                folder = folderMap.get(log.entityId);
+                entityDeleted = !!folder?.deletedAt;
+            }
+            else if (log.type.startsWith('space_')) {
+                space = spaceMap.get(log.entityId);
+                entityDeleted = !!space?.deletedAt;
+            }
+            if (list) {
+                if (list.folderId)
+                    folder = folderMap.get(list.folderId);
+                if (list.spaceId)
+                    space = spaceMap.get(list.spaceId);
+            }
+            if (folder && !space && folder.spaceId)
+                space = spaceMap.get(folder.spaceId);
+            const chainDeleted = entityDeleted || !!list?.deletedAt || !!folder?.deletedAt || !!space?.deletedAt;
+            let url = null;
+            if (!chainDeleted && space) {
+                const base = folder ? `/tasks/space/${space.id}/folder/${folder.id}` : `/tasks/space/${space.id}`;
+                if (list) {
+                    url = list.type === 'meeting' ? `${base}/note/${list.id}` : `${base}/list/${list.id}`;
+                }
+                else {
+                    url = base;
+                }
+            }
+            log.context = {
+                spaceName: space?.name || null,
+                folderName: folder?.name || null,
+                listName: list?.name || null,
+                url,
+            };
+        });
     }
     async log(type, entityId, entityName, description, changes) {
         const user = this.cls.get('user');
@@ -93,6 +195,7 @@ let ActivityLogService = class ActivityLogService {
             .skip(skip)
             .take(limit)
             .getManyAndCount();
+        await this.enrichWithContext(data);
         return {
             data,
             meta: {
@@ -108,7 +211,15 @@ exports.ActivityLogService = ActivityLogService;
 exports.ActivityLogService = ActivityLogService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(activity_log_entity_1.ActivityLogEntity)),
+    __param(1, (0, typeorm_1.InjectRepository)(task_entity_1.TaskEntity)),
+    __param(2, (0, typeorm_1.InjectRepository)(tasklist_entity_1.TaskListEntity)),
+    __param(3, (0, typeorm_1.InjectRepository)(folder_entity_1.FolderEntity)),
+    __param(4, (0, typeorm_1.InjectRepository)(space_entity_1.SpaceEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         nestjs_cls_1.ClsService])
 ], ActivityLogService);
 //# sourceMappingURL=activity-log.service.js.map
