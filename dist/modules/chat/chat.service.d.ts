@@ -25,6 +25,7 @@ export declare class ChatService {
     getUserRooms(userId: number): Promise<ChatRoomEntity[]>;
     getMessages(roomId: number, userId: number, page?: number, limit?: number): Promise<MessageEntity[]>;
     sendMessage(roomId: number, senderId: number, content: string): Promise<MessageEntity | null>;
+    editMessage(messageId: number, userId: number, content: string): Promise<MessageEntity | null>;
     markAsRead(roomId: number, userId: number): Promise<void>;
     search(userId: number, query: string): Promise<{
         users: UserEntity[];

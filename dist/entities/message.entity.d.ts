@@ -9,5 +9,10 @@ export declare class MessageEntity extends BaseEntity {
     senderId: number;
     sender: UserEntity;
     isRead: boolean;
+    isEdited: boolean;
+    editHistory: {
+        content: string;
+        editedAt: string;
+    }[] | null;
     createdAt: Date;
 }

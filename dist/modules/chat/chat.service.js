@@ -303,6 +303,34 @@ let ChatService = class ChatService {
             relations: ['sender', 'sender.avatar', 'room'],
         });
     }
+    async editMessage(messageId, userId, content) {
+        const message = await this.messageRepo.findOne({
+            where: { id: messageId },
+        });
+        if (!message) {
+            throw new common_1.NotFoundException('Mesaj tapılmadı!');
+        }
+        if (message.senderId !== userId) {
+            throw new common_1.ForbiddenException('Yalnız öz mesajınızı redaktə edə bilərsiniz!');
+        }
+        const trimmed = (content || '').trim();
+        if (!trimmed) {
+            throw new common_1.BadRequestException('Mesaj boş ola bilməz!');
+        }
+        if (trimmed !== message.content) {
+            message.editHistory = [
+                ...(message.editHistory || []),
+                { content: message.content, editedAt: new Date().toISOString() },
+            ];
+            message.content = trimmed;
+            message.isEdited = true;
+            await message.save();
+        }
+        return await this.messageRepo.findOne({
+            where: { id: message.id },
+            relations: ['sender', 'sender.avatar'],
+        });
+    }
     async markAsRead(roomId, userId) {
         await this.messageRepo
             .createQueryBuilder()

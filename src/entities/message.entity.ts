@@ -35,6 +35,13 @@ export class MessageEntity extends BaseEntity {
     @Column({ type: 'boolean', default: false, nullable: false })
     isRead: boolean;
 
+    @Column({ type: 'boolean', default: false })
+    isEdited: boolean;
+
+    // Köhnə versiyalar: [{ content, editedAt }]
+    @Column({ type: 'json', nullable: true })
+    editHistory: { content: string; editedAt: string }[] | null;
+
     @CreateDateColumn()
     createdAt: Date;
 }

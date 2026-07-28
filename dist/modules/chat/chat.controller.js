@@ -24,12 +24,15 @@ const create_direct_chat_dto_1 = require("./dto/create-direct-chat.dto");
 const send_message_body_dto_1 = require("./dto/send-message-body.dto");
 const nestjs_cls_1 = require("nestjs-cls");
 const auth_decorator_1 = require("../../shared/decorators/auth.decorator");
+const chat_gateway_1 = require("./chat.gateway");
 let ChatController = class ChatController {
     chatService;
     cls;
-    constructor(chatService, cls) {
+    chatGateway;
+    constructor(chatService, cls, chatGateway) {
         this.chatService = chatService;
         this.cls = cls;
+        this.chatGateway = chatGateway;
     }
     async createDirectChat(params) {
         const user = this.cls.get('user');
@@ -66,6 +69,14 @@ let ChatController = class ChatController {
     async sendMessage(roomId, params) {
         const user = this.cls.get('user');
         return await this.chatService.sendMessage(roomId, user.id, params.content);
+    }
+    async editMessage(messageId, params) {
+        const user = this.cls.get('user');
+        const message = await this.chatService.editMessage(messageId, user.id, params.content);
+        if (message) {
+            this.chatGateway.server.to(`room:${message.roomId}`).emit('message:updated', message);
+        }
+        return message;
     }
     async markAsRead(roomId) {
         const user = this.cls.get('user');
@@ -167,6 +178,17 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "sendMessage", null);
 __decorate([
+    (0, common_1.Post)('messages/:messageId/edit'),
+    (0, auth_decorator_1.Auth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Mesajı redaktə etmək (yalnız göndərən)' }),
+    (0, swagger_1.ApiParam)({ name: 'messageId', type: Number }),
+    __param(0, (0, common_1.Param)('messageId', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, send_message_body_dto_1.SendMessageBodyDto]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "editMessage", null);
+__decorate([
     (0, common_1.Post)('rooms/:roomId/read'),
     (0, auth_decorator_1.Auth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Mesajları oxundu olaraq işarələmək' }),
@@ -190,6 +212,7 @@ exports.ChatController = ChatController = __decorate([
     (0, swagger_1.ApiTags)('chat'),
     (0, common_1.Controller)('chat'),
     __metadata("design:paramtypes", [chat_service_1.ChatService,
-        nestjs_cls_1.ClsService])
+        nestjs_cls_1.ClsService,
+        chat_gateway_1.ChatGateway])
 ], ChatController);
 //# sourceMappingURL=chat.controller.js.map

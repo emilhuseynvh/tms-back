@@ -376,6 +376,41 @@ export class ChatService {
         });
     }
 
+    async editMessage(messageId: number, userId: number, content: string) {
+        const message = await this.messageRepo.findOne({
+            where: { id: messageId },
+        });
+
+        if (!message) {
+            throw new NotFoundException('Mesaj tapılmadı!');
+        }
+
+        if (message.senderId !== userId) {
+            throw new ForbiddenException('Yalnız öz mesajınızı redaktə edə bilərsiniz!');
+        }
+
+        const trimmed = (content || '').trim();
+        if (!trimmed) {
+            throw new BadRequestException('Mesaj boş ola bilməz!');
+        }
+
+        if (trimmed !== message.content) {
+            // Köhnə versiyanı tarixçəyə əlavə et
+            message.editHistory = [
+                ...(message.editHistory || []),
+                { content: message.content, editedAt: new Date().toISOString() },
+            ];
+            message.content = trimmed;
+            message.isEdited = true;
+            await message.save();
+        }
+
+        return await this.messageRepo.findOne({
+            where: { id: message.id },
+            relations: ['sender', 'sender.avatar'],
+        });
+    }
+
     async markAsRead(roomId: number, userId: number) {
         await this.messageRepo
             .createQueryBuilder()

@@ -18,6 +18,7 @@ import { SendMessageDto } from './dto/send-message.dto';
 import { SendMessageBodyDto } from './dto/send-message-body.dto';
 import { ClsService } from 'nestjs-cls';
 import { Auth } from 'src/shared/decorators/auth.decorator';
+import { ChatGateway } from './chat.gateway';
 
 @ApiTags('chat')
 @Controller('chat')
@@ -25,6 +26,7 @@ export class ChatController {
     constructor(
         private chatService: ChatService,
         private cls: ClsService,
+        private chatGateway: ChatGateway,
     ) {}
 
     @Post('direct')
@@ -109,6 +111,23 @@ export class ChatController {
     ) {
         const user = this.cls.get('user');
         return await this.chatService.sendMessage(roomId, user.id, params.content);
+    }
+
+    @Post('messages/:messageId/edit')
+    @Auth()
+    @ApiOperation({ summary: 'Mesajı redaktə etmək (yalnız göndərən)' })
+    @ApiParam({ name: 'messageId', type: Number })
+    async editMessage(
+        @Param('messageId', ParseIntPipe) messageId: number,
+        @Body() params: SendMessageBodyDto,
+    ) {
+        const user = this.cls.get('user');
+        const message = await this.chatService.editMessage(messageId, user.id, params.content);
+        // Otaqdakı digər istifadəçilərə canlı yayımla
+        if (message) {
+            this.chatGateway.server.to(`room:${message.roomId}`).emit('message:updated', message);
+        }
+        return message;
     }
 
     @Post('rooms/:roomId/read')
