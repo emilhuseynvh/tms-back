@@ -21,5 +21,12 @@ export class CreateGroupDto {
     @IsNotEmpty()
     @ApiProperty()
     memberIds: number[];
+
+    @Type()
+    @IsArray()
+    @IsNumber({}, { each: true })
+    @IsOptional()
+    @ApiProperty({ required: false, description: 'Admin olacaq üzvlər. Verilməsə, yaradan admin olur.' })
+    adminIds?: number[];
 }
 

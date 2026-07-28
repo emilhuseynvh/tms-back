@@ -16,6 +16,7 @@ const chat_room_entity_1 = require("../../entities/chat-room.entity");
 const chat_room_member_entity_1 = require("../../entities/chat-room-member.entity");
 const message_entity_1 = require("../../entities/message.entity");
 const user_entity_1 = require("../../entities/user.entity");
+const uploads_entity_1 = require("../../entities/uploads.entity");
 const ws_auth_guard_1 = require("../../guard/ws-auth.guard");
 let ChatModule = class ChatModule {
 };
@@ -28,6 +29,7 @@ exports.ChatModule = ChatModule = __decorate([
                 chat_room_member_entity_1.ChatRoomMemberEntity,
                 message_entity_1.MessageEntity,
                 user_entity_1.UserEntity,
+                uploads_entity_1.UploadsEntity,
             ]),
         ],
         controllers: [chat_controller_1.ChatController],

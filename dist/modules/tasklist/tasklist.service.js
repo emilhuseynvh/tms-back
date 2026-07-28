@@ -107,11 +107,6 @@ let TaskListService = class TaskListService {
         });
         if (!taskList)
             throw new common_1.NotFoundException('Siyahı tapılmadı');
-        const user = this.cls.get('user');
-        const ownerId = taskList.folder?.ownerId || taskList.space?.ownerId;
-        if (user.role !== 'admin' && ownerId !== user.id) {
-            throw new common_1.UnauthorizedException('Siyahını yeniləmək üçün icazəniz yoxdur');
-        }
         const oldName = taskList.name;
         const changes = {};
         if (dto.assigneeIds !== undefined) {

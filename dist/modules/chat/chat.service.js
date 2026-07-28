@@ -20,17 +20,20 @@ const chat_room_entity_1 = require("../../entities/chat-room.entity");
 const chat_room_member_entity_1 = require("../../entities/chat-room-member.entity");
 const message_entity_1 = require("../../entities/message.entity");
 const user_entity_1 = require("../../entities/user.entity");
+const uploads_entity_1 = require("../../entities/uploads.entity");
 const chat_room_type_enum_1 = require("../../shared/enums/chat-room-type.enum");
 let ChatService = class ChatService {
     chatRoomRepo;
     memberRepo;
     messageRepo;
     userRepo;
-    constructor(chatRoomRepo, memberRepo, messageRepo, userRepo) {
+    uploadRepo;
+    constructor(chatRoomRepo, memberRepo, messageRepo, userRepo, uploadRepo) {
         this.chatRoomRepo = chatRoomRepo;
         this.memberRepo = memberRepo;
         this.messageRepo = messageRepo;
         this.userRepo = userRepo;
+        this.uploadRepo = uploadRepo;
     }
     async createDirectChat(userId, params) {
         const otherUser = await this.userRepo.findOne({
@@ -100,10 +103,11 @@ let ChatService = class ChatService {
             createdById: userId,
         });
         await room.save();
+        const adminIds = new Set(params.adminIds?.length ? params.adminIds : [userId]);
         const members = memberIds.map((memberId) => this.memberRepo.create({
             roomId: room.id,
             userId: memberId,
-            isAdmin: memberId === userId,
+            isAdmin: adminIds.has(memberId),
         }));
         await this.memberRepo.save(members);
         return await this.getRoomById(room.id, userId);
@@ -122,6 +126,9 @@ let ChatService = class ChatService {
         const userMember = room.members.find((m) => m.userId === userId);
         if (!userMember) {
             throw new common_1.ForbiddenException('Bu chat-ə giriş hüququnuz yoxdur!');
+        }
+        if (!userMember.isAdmin) {
+            throw new common_1.ForbiddenException('Yalnız qrup adminləri üzv əlavə edə bilər!');
         }
         if (params.userIds.includes(userId)) {
             throw new common_1.BadRequestException('Özünüzü qrupa əlavə edə bilməzsiniz!');
@@ -143,10 +150,76 @@ let ChatService = class ChatService {
         await this.memberRepo.save(members);
         return await this.getRoomById(room.id, userId);
     }
+    async removeMember(userId, params) {
+        const room = await this.chatRoomRepo.findOne({
+            where: { id: params.roomId },
+            relations: ['members'],
+        });
+        if (!room) {
+            throw new common_1.NotFoundException('Chat tapılmadı!');
+        }
+        if (room.type === chat_room_type_enum_1.ChatRoomType.DIRECT) {
+            throw new common_1.BadRequestException('Direct chat-dən üzv çıxarıla bilməz!');
+        }
+        const userMember = room.members.find((m) => m.userId === userId);
+        if (!userMember) {
+            throw new common_1.ForbiddenException('Bu chat-ə giriş hüququnuz yoxdur!');
+        }
+        if (!userMember.isAdmin) {
+            throw new common_1.ForbiddenException('Yalnız qrup adminləri üzv çıxara bilər!');
+        }
+        if (params.userId === userId) {
+            throw new common_1.BadRequestException('Özünüzü qrupdan çıxara bilməzsiniz!');
+        }
+        const targetMember = room.members.find((m) => m.userId === params.userId);
+        if (!targetMember) {
+            throw new common_1.NotFoundException('İstifadəçi qrupun üzvü deyil!');
+        }
+        await this.memberRepo.delete({ id: targetMember.id });
+        return await this.getRoomById(room.id, userId);
+    }
+    async updateGroup(userId, params) {
+        const room = await this.chatRoomRepo.findOne({
+            where: { id: params.roomId },
+            relations: ['members'],
+        });
+        if (!room) {
+            throw new common_1.NotFoundException('Chat tapılmadı!');
+        }
+        if (room.type === chat_room_type_enum_1.ChatRoomType.DIRECT) {
+            throw new common_1.BadRequestException('Direct chat redaktə edilə bilməz!');
+        }
+        const userMember = room.members.find((m) => m.userId === userId);
+        if (!userMember) {
+            throw new common_1.ForbiddenException('Bu chat-ə giriş hüququnuz yoxdur!');
+        }
+        if (!userMember.isAdmin) {
+            throw new common_1.ForbiddenException('Yalnız qrup adminləri qrupu redaktə edə bilər!');
+        }
+        if (params.name !== undefined && params.name.trim()) {
+            room.name = params.name.trim();
+        }
+        if (params.description !== undefined) {
+            room.description = params.description;
+        }
+        if (params.avatarId !== undefined) {
+            if (params.avatarId === 0 || params.avatarId === null) {
+                room.avatarId = null;
+            }
+            else {
+                const avatar = await this.uploadRepo.findOne({ where: { id: params.avatarId } });
+                if (!avatar)
+                    throw new common_1.NotFoundException('Şəkil tapılmadı!');
+                room.avatarId = params.avatarId;
+            }
+        }
+        await room.save();
+        return await this.getRoomById(room.id, userId);
+    }
     async getRoomById(roomId, userId) {
         const room = await this.chatRoomRepo.findOne({
             where: { id: roomId },
-            relations: ['members', 'members.user', 'members.user.avatar', 'createdBy', 'createdBy.avatar'],
+            relations: ['members', 'members.user', 'members.user.avatar', 'createdBy', 'createdBy.avatar', 'avatar'],
         });
         if (!room) {
             throw new common_1.NotFoundException('Chat tapılmadı!');
@@ -175,6 +248,7 @@ let ChatService = class ChatService {
             .leftJoinAndSelect('user.avatar', 'avatar')
             .leftJoinAndSelect('room.createdBy', 'createdBy')
             .leftJoinAndSelect('createdBy.avatar', 'createdByAvatar')
+            .leftJoinAndSelect('room.avatar', 'roomAvatar')
             .orderBy('room.updatedAt', 'DESC')
             .getMany();
         for (const room of rooms) {
@@ -291,7 +365,9 @@ exports.ChatService = ChatService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(chat_room_member_entity_1.ChatRoomMemberEntity)),
     __param(2, (0, typeorm_1.InjectRepository)(message_entity_1.MessageEntity)),
     __param(3, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
+    __param(4, (0, typeorm_1.InjectRepository)(uploads_entity_1.UploadsEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

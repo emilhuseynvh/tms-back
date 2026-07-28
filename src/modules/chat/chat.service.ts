@@ -12,7 +12,10 @@ import { MessageEntity } from '../../entities/message.entity';
 import { UserEntity } from '../../entities/user.entity';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import { RemoveMemberDto } from './dto/remove-member.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 import { CreateDirectChatDto } from './dto/create-direct-chat.dto';
+import { UploadsEntity } from '../../entities/uploads.entity';
 import { ChatRoomType } from 'src/shared/enums/chat-room-type.enum';
 
 @Injectable()
@@ -26,6 +29,8 @@ export class ChatService {
         private messageRepo: Repository<MessageEntity>,
         @InjectRepository(UserEntity)
         private userRepo: Repository<UserEntity>,
+        @InjectRepository(UploadsEntity)
+        private uploadRepo: Repository<UploadsEntity>,
     ) {}
 
     async createDirectChat(userId: number, params: CreateDirectChatDto) {
@@ -111,11 +116,16 @@ export class ChatService {
         });
         await room.save();
 
+        // Admin seçilibsə onlar, seçilməyibsə yaradan admin olur
+        const adminIds = new Set(
+            params.adminIds?.length ? params.adminIds : [userId],
+        );
+
         const members = memberIds.map((memberId) =>
             this.memberRepo.create({
                 roomId: room.id,
                 userId: memberId,
-                isAdmin: memberId === userId,
+                isAdmin: adminIds.has(memberId),
             }),
         );
 
@@ -141,6 +151,10 @@ export class ChatService {
         const userMember = room.members.find((m) => m.userId === userId);
         if (!userMember) {
             throw new ForbiddenException('Bu chat-ə giriş hüququnuz yoxdur!');
+        }
+
+        if (!userMember.isAdmin) {
+            throw new ForbiddenException('Yalnız qrup adminləri üzv əlavə edə bilər!');
         }
 
         // Prevent user from adding themselves
@@ -175,10 +189,91 @@ export class ChatService {
         return await this.getRoomById(room.id, userId);
     }
 
+    async removeMember(userId: number, params: RemoveMemberDto) {
+        const room = await this.chatRoomRepo.findOne({
+            where: { id: params.roomId },
+            relations: ['members'],
+        });
+
+        if (!room) {
+            throw new NotFoundException('Chat tapılmadı!');
+        }
+
+        if (room.type === ChatRoomType.DIRECT) {
+            throw new BadRequestException('Direct chat-dən üzv çıxarıla bilməz!');
+        }
+
+        const userMember = room.members.find((m) => m.userId === userId);
+        if (!userMember) {
+            throw new ForbiddenException('Bu chat-ə giriş hüququnuz yoxdur!');
+        }
+
+        if (!userMember.isAdmin) {
+            throw new ForbiddenException('Yalnız qrup adminləri üzv çıxara bilər!');
+        }
+
+        if (params.userId === userId) {
+            throw new BadRequestException('Özünüzü qrupdan çıxara bilməzsiniz!');
+        }
+
+        const targetMember = room.members.find((m) => m.userId === params.userId);
+        if (!targetMember) {
+            throw new NotFoundException('İstifadəçi qrupun üzvü deyil!');
+        }
+
+        await this.memberRepo.delete({ id: targetMember.id });
+
+        return await this.getRoomById(room.id, userId);
+    }
+
+    async updateGroup(userId: number, params: UpdateGroupDto) {
+        const room = await this.chatRoomRepo.findOne({
+            where: { id: params.roomId },
+            relations: ['members'],
+        });
+
+        if (!room) {
+            throw new NotFoundException('Chat tapılmadı!');
+        }
+
+        if (room.type === ChatRoomType.DIRECT) {
+            throw new BadRequestException('Direct chat redaktə edilə bilməz!');
+        }
+
+        const userMember = room.members.find((m) => m.userId === userId);
+        if (!userMember) {
+            throw new ForbiddenException('Bu chat-ə giriş hüququnuz yoxdur!');
+        }
+
+        if (!userMember.isAdmin) {
+            throw new ForbiddenException('Yalnız qrup adminləri qrupu redaktə edə bilər!');
+        }
+
+        if (params.name !== undefined && params.name.trim()) {
+            room.name = params.name.trim();
+        }
+        if (params.description !== undefined) {
+            room.description = params.description;
+        }
+        if (params.avatarId !== undefined) {
+            if (params.avatarId === 0 || params.avatarId === null) {
+                room.avatarId = null;
+            } else {
+                const avatar = await this.uploadRepo.findOne({ where: { id: params.avatarId } });
+                if (!avatar) throw new NotFoundException('Şəkil tapılmadı!');
+                room.avatarId = params.avatarId;
+            }
+        }
+
+        await room.save();
+
+        return await this.getRoomById(room.id, userId);
+    }
+
     async getRoomById(roomId: number, userId: number) {
         const room = await this.chatRoomRepo.findOne({
             where: { id: roomId },
-            relations: ['members', 'members.user', 'members.user.avatar', 'createdBy', 'createdBy.avatar'],
+            relations: ['members', 'members.user', 'members.user.avatar', 'createdBy', 'createdBy.avatar', 'avatar'],
         });
 
         if (!room) {
@@ -212,6 +307,7 @@ export class ChatService {
             .leftJoinAndSelect('user.avatar', 'avatar')
             .leftJoinAndSelect('room.createdBy', 'createdBy')
             .leftJoinAndSelect('createdBy.avatar', 'createdByAvatar')
+            .leftJoinAndSelect('room.avatar', 'roomAvatar')
             .orderBy('room.updatedAt', 'DESC')
             .getMany();
 

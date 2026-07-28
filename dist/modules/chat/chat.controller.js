@@ -18,6 +18,8 @@ const swagger_1 = require("@nestjs/swagger");
 const chat_service_1 = require("./chat.service");
 const create_group_dto_1 = require("./dto/create-group.dto");
 const add_member_dto_1 = require("./dto/add-member.dto");
+const remove_member_dto_1 = require("./dto/remove-member.dto");
+const update_group_dto_1 = require("./dto/update-group.dto");
 const create_direct_chat_dto_1 = require("./dto/create-direct-chat.dto");
 const send_message_body_dto_1 = require("./dto/send-message-body.dto");
 const nestjs_cls_1 = require("nestjs-cls");
@@ -40,6 +42,14 @@ let ChatController = class ChatController {
     async addMember(params) {
         const user = this.cls.get('user');
         return await this.chatService.addMembers(user.id, params);
+    }
+    async removeMember(params) {
+        const user = this.cls.get('user');
+        return await this.chatService.removeMember(user.id, params);
+    }
+    async updateGroup(params) {
+        const user = this.cls.get('user');
+        return await this.chatService.updateGroup(user.id, params);
     }
     async getRooms() {
         const user = this.cls.get('user');
@@ -89,12 +99,30 @@ __decorate([
 __decorate([
     (0, common_1.Post)('group/add-member'),
     (0, auth_decorator_1.Auth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Qrupa üzv əlavə etmək' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Qrupa üzv əlavə etmək (yalnız qrup adminləri)' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [add_member_dto_1.AddMemberDto]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "addMember", null);
+__decorate([
+    (0, common_1.Post)('group/remove-member'),
+    (0, auth_decorator_1.Auth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Qrupdan üzv çıxarmaq (yalnız qrup adminləri)' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [remove_member_dto_1.RemoveMemberDto]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "removeMember", null);
+__decorate([
+    (0, common_1.Post)('group/update'),
+    (0, auth_decorator_1.Auth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Qrup məlumatlarını yeniləmək (yalnız qrup adminləri)' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [update_group_dto_1.UpdateGroupDto]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "updateGroup", null);
 __decorate([
     (0, common_1.Get)('rooms'),
     (0, auth_decorator_1.Auth)(),

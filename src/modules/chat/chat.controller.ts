@@ -11,6 +11,8 @@ import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody } from '@nestjs/swag
 import { ChatService } from './chat.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import { RemoveMemberDto } from './dto/remove-member.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 import { CreateDirectChatDto } from './dto/create-direct-chat.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { SendMessageBodyDto } from './dto/send-message-body.dto';
@@ -43,10 +45,26 @@ export class ChatController {
 
     @Post('group/add-member')
     @Auth()
-    @ApiOperation({ summary: 'Qrupa üzv əlavə etmək' })
+    @ApiOperation({ summary: 'Qrupa üzv əlavə etmək (yalnız qrup adminləri)' })
     async addMember(@Body() params: AddMemberDto) {
         const user = this.cls.get('user');
         return await this.chatService.addMembers(user.id, params);
+    }
+
+    @Post('group/remove-member')
+    @Auth()
+    @ApiOperation({ summary: 'Qrupdan üzv çıxarmaq (yalnız qrup adminləri)' })
+    async removeMember(@Body() params: RemoveMemberDto) {
+        const user = this.cls.get('user');
+        return await this.chatService.removeMember(user.id, params);
+    }
+
+    @Post('group/update')
+    @Auth()
+    @ApiOperation({ summary: 'Qrup məlumatlarını yeniləmək (yalnız qrup adminləri)' })
+    async updateGroup(@Body() params: UpdateGroupDto) {
+        const user = this.cls.get('user');
+        return await this.chatService.updateGroup(user.id, params);
     }
 
     @Get('rooms')

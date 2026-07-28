@@ -10,6 +10,7 @@ import {
     JoinColumn,
 } from 'typeorm';
 import { UserEntity } from './user.entity';
+import { UploadsEntity } from './uploads.entity';
 import { ChatRoomMemberEntity } from './chat-room-member.entity';
 import { MessageEntity } from './message.entity';
 import { ChatRoomType } from 'src/shared/enums/chat-room-type.enum';
@@ -29,6 +30,13 @@ export class ChatRoomEntity extends BaseEntity {
 
     @Column({ type: 'enum', enum: ChatRoomType, default: ChatRoomType.DIRECT })
     type: ChatRoomType;
+
+    @Column({ nullable: true })
+    avatarId: number | null;
+
+    @ManyToOne(() => UploadsEntity, { nullable: true })
+    @JoinColumn({ name: 'avatarId' })
+    avatar: UploadsEntity | null;
 
     @Column({ nullable: true })
     createdById: number; 

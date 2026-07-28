@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatRoomEntity = void 0;
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("./user.entity");
+const uploads_entity_1 = require("./uploads.entity");
 const chat_room_member_entity_1 = require("./chat-room-member.entity");
 const message_entity_1 = require("./message.entity");
 const chat_room_type_enum_1 = require("../shared/enums/chat-room-type.enum");
@@ -20,6 +21,8 @@ let ChatRoomEntity = class ChatRoomEntity extends typeorm_1.BaseEntity {
     name;
     description;
     type;
+    avatarId;
+    avatar;
     createdById;
     createdBy;
     members;
@@ -44,6 +47,15 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: chat_room_type_enum_1.ChatRoomType, default: chat_room_type_enum_1.ChatRoomType.DIRECT }),
     __metadata("design:type", String)
 ], ChatRoomEntity.prototype, "type", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], ChatRoomEntity.prototype, "avatarId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => uploads_entity_1.UploadsEntity, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'avatarId' }),
+    __metadata("design:type", Object)
+], ChatRoomEntity.prototype, "avatar", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Number)

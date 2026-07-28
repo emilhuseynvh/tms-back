@@ -1,6 +1,8 @@
 import { ChatService } from './chat.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import { RemoveMemberDto } from './dto/remove-member.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 import { CreateDirectChatDto } from './dto/create-direct-chat.dto';
 import { SendMessageBodyDto } from './dto/send-message-body.dto';
 import { ClsService } from 'nestjs-cls';
@@ -11,6 +13,8 @@ export declare class ChatController {
     createDirectChat(params: CreateDirectChatDto): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
     createGroup(params: CreateGroupDto): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
     addMember(params: AddMemberDto): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
+    removeMember(params: RemoveMemberDto): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
+    updateGroup(params: UpdateGroupDto): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
     getRooms(): Promise<import("../../entities/chat-room.entity").ChatRoomEntity[]>;
     getRoom(roomId: number): Promise<import("../../entities/chat-room.entity").ChatRoomEntity>;
     getMessages(roomId: number, page?: number, limit?: number): Promise<import("../../entities/message.entity").MessageEntity[]>;

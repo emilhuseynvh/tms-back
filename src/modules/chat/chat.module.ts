@@ -7,6 +7,7 @@ import { ChatRoomEntity } from '../../entities/chat-room.entity';
 import { ChatRoomMemberEntity } from '../../entities/chat-room-member.entity';
 import { MessageEntity } from '../../entities/message.entity';
 import { UserEntity } from '../../entities/user.entity';
+import { UploadsEntity } from '../../entities/uploads.entity';
 import { WsAuthGuard } from '../../guard/ws-auth.guard';
 
 @Module({
@@ -16,6 +17,7 @@ import { WsAuthGuard } from '../../guard/ws-auth.guard';
             ChatRoomMemberEntity,
             MessageEntity,
             UserEntity,
+            UploadsEntity,
         ]),
     ],
     controllers: [ChatController],
