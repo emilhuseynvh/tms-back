@@ -34,6 +34,7 @@ const trash_module_1 = require("./modules/trash/trash.module");
 const space_module_1 = require("./modules/space/space.module");
 const notification_module_1 = require("./modules/notification/notification.module");
 const archive_module_1 = require("./modules/archive/archive.module");
+const settings_module_1 = require("./modules/settings/settings.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -69,7 +70,8 @@ exports.AppModule = AppModule = __decorate([
             trash_module_1.TrashModule,
             space_module_1.SpaceModule,
             notification_module_1.NotificationModule,
-            archive_module_1.ArchiveModule
+            archive_module_1.ArchiveModule,
+            settings_module_1.SettingsModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

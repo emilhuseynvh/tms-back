@@ -22,6 +22,7 @@ import { TrashModule } from './modules/trash/trash.module';
 import { SpaceModule } from './modules/space/space.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { ArchiveModule } from './modules/archive/archive.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
@@ -54,7 +55,8 @@ import { ArchiveModule } from './modules/archive/archive.module';
     TrashModule,
     SpaceModule,
     NotificationModule,
-    ArchiveModule
+    ArchiveModule,
+    SettingsModule
   ],
   controllers: [AppController],
   providers: [AppService],
