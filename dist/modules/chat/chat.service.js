@@ -22,18 +22,21 @@ const message_entity_1 = require("../../entities/message.entity");
 const user_entity_1 = require("../../entities/user.entity");
 const uploads_entity_1 = require("../../entities/uploads.entity");
 const chat_room_type_enum_1 = require("../../shared/enums/chat-room-type.enum");
+const nestjs_cls_1 = require("nestjs-cls");
 let ChatService = class ChatService {
     chatRoomRepo;
     memberRepo;
     messageRepo;
     userRepo;
     uploadRepo;
-    constructor(chatRoomRepo, memberRepo, messageRepo, userRepo, uploadRepo) {
+    cls;
+    constructor(chatRoomRepo, memberRepo, messageRepo, userRepo, uploadRepo, cls) {
         this.chatRoomRepo = chatRoomRepo;
         this.memberRepo = memberRepo;
         this.messageRepo = messageRepo;
         this.userRepo = userRepo;
         this.uploadRepo = uploadRepo;
+        this.cls = cls;
     }
     async createDirectChat(userId, params) {
         const otherUser = await this.userRepo.findOne({
@@ -148,7 +151,31 @@ let ChatService = class ChatService {
             isAdmin: false,
         }));
         await this.memberRepo.save(members);
-        return await this.getRoomById(room.id, userId);
+        const addedNames = users
+            .filter((u) => newMemberIds.includes(u.id))
+            .map((u) => u.username)
+            .join(', ');
+        const sysMsg = await this.addSystemMessage(room.id, userId, `${this.actorName()} qrupa əlavə etdi: ${addedNames}`);
+        const result = await this.getRoomById(room.id, userId);
+        result.systemMessages = [sysMsg];
+        return result;
+    }
+    async addSystemMessage(roomId, senderId, content) {
+        const message = this.messageRepo.create({
+            roomId,
+            senderId,
+            content,
+            isSystem: true,
+        });
+        await message.save();
+        return await this.messageRepo.findOne({
+            where: { id: message.id },
+            relations: ['sender', 'sender.avatar'],
+        });
+    }
+    actorName() {
+        const user = this.cls?.get?.('user');
+        return user?.username || 'İstifadəçi';
     }
     async removeMember(userId, params) {
         const room = await this.chatRoomRepo.findOne({
@@ -176,7 +203,46 @@ let ChatService = class ChatService {
             throw new common_1.NotFoundException('İstifadəçi qrupun üzvü deyil!');
         }
         await this.memberRepo.delete({ id: targetMember.id });
-        return await this.getRoomById(room.id, userId);
+        const targetUser = await this.userRepo.findOne({ where: { id: params.userId } });
+        const sysMsg = await this.addSystemMessage(room.id, userId, `${this.actorName()} ${targetUser?.username || 'istifadəçini'} qrupdan çıxardı`);
+        const result = await this.getRoomById(room.id, userId);
+        result.systemMessages = [sysMsg];
+        return result;
+    }
+    async setAdmin(userId, params) {
+        const room = await this.chatRoomRepo.findOne({
+            where: { id: params.roomId },
+            relations: ['members'],
+        });
+        if (!room) {
+            throw new common_1.NotFoundException('Chat tapılmadı!');
+        }
+        if (room.type === chat_room_type_enum_1.ChatRoomType.DIRECT) {
+            throw new common_1.BadRequestException('Direct chat-də admin təyin edilə bilməz!');
+        }
+        const requester = room.members.find((m) => m.userId === userId);
+        if (!requester) {
+            throw new common_1.ForbiddenException('Bu chat-ə giriş hüququnuz yoxdur!');
+        }
+        if (!requester.isAdmin) {
+            throw new common_1.ForbiddenException('Yalnız qrup adminləri admin təyin edə bilər!');
+        }
+        if (params.userId === userId) {
+            throw new common_1.BadRequestException('Öz admin statusunuzu dəyişə bilməzsiniz!');
+        }
+        const targetMember = room.members.find((m) => m.userId === params.userId);
+        if (!targetMember) {
+            throw new common_1.NotFoundException('İstifadəçi qrupun üzvü deyil!');
+        }
+        targetMember.isAdmin = params.isAdmin;
+        await this.memberRepo.save(targetMember);
+        const targetUser = await this.userRepo.findOne({ where: { id: params.userId } });
+        const sysMsg = await this.addSystemMessage(room.id, userId, params.isAdmin
+            ? `${this.actorName()} ${targetUser?.username || 'istifadəçini'} admin etdi`
+            : `${this.actorName()} ${targetUser?.username || 'istifadəçinin'} adminliyini aldı`);
+        const result = await this.getRoomById(room.id, userId);
+        result.systemMessages = [sysMsg];
+        return result;
     }
     async updateGroup(userId, params) {
         const room = await this.chatRoomRepo.findOne({
@@ -196,14 +262,19 @@ let ChatService = class ChatService {
         if (!userMember.isAdmin) {
             throw new common_1.ForbiddenException('Yalnız qrup adminləri qrupu redaktə edə bilər!');
         }
-        if (params.name !== undefined && params.name.trim()) {
+        const sysContents = [];
+        if (params.name !== undefined && params.name.trim() && params.name.trim() !== room.name) {
             room.name = params.name.trim();
+            sysContents.push(`${this.actorName()} qrup adını "${room.name}" etdi`);
         }
-        if (params.description !== undefined) {
+        if (params.description !== undefined && params.description !== room.description) {
             room.description = params.description;
+            sysContents.push(`${this.actorName()} qrup təsvirini yenilədi`);
         }
         if (params.avatarId !== undefined) {
             if (params.avatarId === 0 || params.avatarId === null) {
+                if (room.avatarId)
+                    sysContents.push(`${this.actorName()} qrup şəklini sildi`);
                 room.avatarId = null;
             }
             else {
@@ -211,10 +282,17 @@ let ChatService = class ChatService {
                 if (!avatar)
                     throw new common_1.NotFoundException('Şəkil tapılmadı!');
                 room.avatarId = params.avatarId;
+                sysContents.push(`${this.actorName()} qrup şəklini yenilədi`);
             }
         }
         await room.save();
-        return await this.getRoomById(room.id, userId);
+        const sysMsgs = [];
+        for (const content of sysContents) {
+            sysMsgs.push(await this.addSystemMessage(room.id, userId, content));
+        }
+        const result = await this.getRoomById(room.id, userId);
+        result.systemMessages = sysMsgs;
+        return result;
     }
     async getRoomById(roomId, userId) {
         const room = await this.chatRoomRepo.findOne({
@@ -398,6 +476,7 @@ exports.ChatService = ChatService = __decorate([
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
-        typeorm_2.Repository])
+        typeorm_2.Repository,
+        nestjs_cls_1.ClsService])
 ], ChatService);
 //# sourceMappingURL=chat.service.js.map

@@ -38,6 +38,10 @@ export class MessageEntity extends BaseEntity {
     @Column({ type: 'boolean', default: false })
     isEdited: boolean;
 
+    // Sistem mesajı (üzv əlavə/çıxarma, şəkil/ad dəyişikliyi və s.)
+    @Column({ type: 'boolean', default: false })
+    isSystem: boolean;
+
     // Köhnə versiyalar: [{ content, editedAt }]
     @Column({ type: 'json', nullable: true })
     editHistory: { content: string; editedAt: string }[] | null;

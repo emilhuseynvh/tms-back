@@ -9,17 +9,26 @@ import { RemoveMemberDto } from './dto/remove-member.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { CreateDirectChatDto } from './dto/create-direct-chat.dto';
 import { UploadsEntity } from '../../entities/uploads.entity';
+import { ClsService } from 'nestjs-cls';
 export declare class ChatService {
     private chatRoomRepo;
     private memberRepo;
     private messageRepo;
     private userRepo;
     private uploadRepo;
-    constructor(chatRoomRepo: Repository<ChatRoomEntity>, memberRepo: Repository<ChatRoomMemberEntity>, messageRepo: Repository<MessageEntity>, userRepo: Repository<UserEntity>, uploadRepo: Repository<UploadsEntity>);
+    private cls;
+    constructor(chatRoomRepo: Repository<ChatRoomEntity>, memberRepo: Repository<ChatRoomMemberEntity>, messageRepo: Repository<MessageEntity>, userRepo: Repository<UserEntity>, uploadRepo: Repository<UploadsEntity>, cls: ClsService);
     createDirectChat(userId: number, params: CreateDirectChatDto): Promise<ChatRoomEntity>;
     createGroup(userId: number, params: CreateGroupDto): Promise<ChatRoomEntity>;
     addMembers(userId: number, params: AddMemberDto): Promise<ChatRoomEntity>;
+    private addSystemMessage;
+    private actorName;
     removeMember(userId: number, params: RemoveMemberDto): Promise<ChatRoomEntity>;
+    setAdmin(userId: number, params: {
+        roomId: number;
+        userId: number;
+        isAdmin: boolean;
+    }): Promise<ChatRoomEntity>;
     updateGroup(userId: number, params: UpdateGroupDto): Promise<ChatRoomEntity>;
     getRoomById(roomId: number, userId: number): Promise<ChatRoomEntity>;
     getUserRooms(userId: number): Promise<ChatRoomEntity[]>;

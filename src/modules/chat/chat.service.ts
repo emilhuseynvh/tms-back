@@ -17,6 +17,7 @@ import { UpdateGroupDto } from './dto/update-group.dto';
 import { CreateDirectChatDto } from './dto/create-direct-chat.dto';
 import { UploadsEntity } from '../../entities/uploads.entity';
 import { ChatRoomType } from 'src/shared/enums/chat-room-type.enum';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class ChatService {
@@ -31,6 +32,7 @@ export class ChatService {
         private userRepo: Repository<UserEntity>,
         @InjectRepository(UploadsEntity)
         private uploadRepo: Repository<UploadsEntity>,
+        private cls: ClsService,
     ) {}
 
     async createDirectChat(userId: number, params: CreateDirectChatDto) {
@@ -186,7 +188,40 @@ export class ChatService {
 
         await this.memberRepo.save(members);
 
-        return await this.getRoomById(room.id, userId);
+        const addedNames = users
+            .filter((u) => newMemberIds.includes(u.id))
+            .map((u) => u.username)
+            .join(', ');
+        const sysMsg = await this.addSystemMessage(
+            room.id,
+            userId,
+            `${this.actorName()} qrupa əlavə etdi: ${addedNames}`,
+        );
+
+        const result = await this.getRoomById(room.id, userId);
+        (result as any).systemMessages = [sysMsg];
+        return result;
+    }
+
+    // Sistem mesajı yaradır (üzv dəyişikliyi, şəkil/ad yenilənməsi və s.)
+    private async addSystemMessage(roomId: number, senderId: number, content: string) {
+        const message = this.messageRepo.create({
+            roomId,
+            senderId,
+            content,
+            isSystem: true,
+        });
+        await message.save();
+
+        return await this.messageRepo.findOne({
+            where: { id: message.id },
+            relations: ['sender', 'sender.avatar'],
+        });
+    }
+
+    private actorName(): string {
+        const user = this.cls?.get?.('user');
+        return user?.username || 'İstifadəçi';
     }
 
     async removeMember(userId: number, params: RemoveMemberDto) {
@@ -223,7 +258,65 @@ export class ChatService {
 
         await this.memberRepo.delete({ id: targetMember.id });
 
-        return await this.getRoomById(room.id, userId);
+        const targetUser = await this.userRepo.findOne({ where: { id: params.userId } });
+        const sysMsg = await this.addSystemMessage(
+            room.id,
+            userId,
+            `${this.actorName()} ${targetUser?.username || 'istifadəçini'} qrupdan çıxardı`,
+        );
+
+        const result = await this.getRoomById(room.id, userId);
+        (result as any).systemMessages = [sysMsg];
+        return result;
+    }
+
+    async setAdmin(userId: number, params: { roomId: number; userId: number; isAdmin: boolean }) {
+        const room = await this.chatRoomRepo.findOne({
+            where: { id: params.roomId },
+            relations: ['members'],
+        });
+
+        if (!room) {
+            throw new NotFoundException('Chat tapılmadı!');
+        }
+
+        if (room.type === ChatRoomType.DIRECT) {
+            throw new BadRequestException('Direct chat-də admin təyin edilə bilməz!');
+        }
+
+        const requester = room.members.find((m) => m.userId === userId);
+        if (!requester) {
+            throw new ForbiddenException('Bu chat-ə giriş hüququnuz yoxdur!');
+        }
+
+        if (!requester.isAdmin) {
+            throw new ForbiddenException('Yalnız qrup adminləri admin təyin edə bilər!');
+        }
+
+        if (params.userId === userId) {
+            throw new BadRequestException('Öz admin statusunuzu dəyişə bilməzsiniz!');
+        }
+
+        const targetMember = room.members.find((m) => m.userId === params.userId);
+        if (!targetMember) {
+            throw new NotFoundException('İstifadəçi qrupun üzvü deyil!');
+        }
+
+        targetMember.isAdmin = params.isAdmin;
+        await this.memberRepo.save(targetMember);
+
+        const targetUser = await this.userRepo.findOne({ where: { id: params.userId } });
+        const sysMsg = await this.addSystemMessage(
+            room.id,
+            userId,
+            params.isAdmin
+                ? `${this.actorName()} ${targetUser?.username || 'istifadəçini'} admin etdi`
+                : `${this.actorName()} ${targetUser?.username || 'istifadəçinin'} adminliyini aldı`,
+        );
+
+        const result = await this.getRoomById(room.id, userId);
+        (result as any).systemMessages = [sysMsg];
+        return result;
     }
 
     async updateGroup(userId: number, params: UpdateGroupDto) {
@@ -249,25 +342,38 @@ export class ChatService {
             throw new ForbiddenException('Yalnız qrup adminləri qrupu redaktə edə bilər!');
         }
 
-        if (params.name !== undefined && params.name.trim()) {
+        const sysContents: string[] = [];
+
+        if (params.name !== undefined && params.name.trim() && params.name.trim() !== room.name) {
             room.name = params.name.trim();
+            sysContents.push(`${this.actorName()} qrup adını "${room.name}" etdi`);
         }
-        if (params.description !== undefined) {
+        if (params.description !== undefined && params.description !== room.description) {
             room.description = params.description;
+            sysContents.push(`${this.actorName()} qrup təsvirini yenilədi`);
         }
         if (params.avatarId !== undefined) {
             if (params.avatarId === 0 || params.avatarId === null) {
+                if (room.avatarId) sysContents.push(`${this.actorName()} qrup şəklini sildi`);
                 room.avatarId = null;
             } else {
                 const avatar = await this.uploadRepo.findOne({ where: { id: params.avatarId } });
                 if (!avatar) throw new NotFoundException('Şəkil tapılmadı!');
                 room.avatarId = params.avatarId;
+                sysContents.push(`${this.actorName()} qrup şəklini yenilədi`);
             }
         }
 
         await room.save();
 
-        return await this.getRoomById(room.id, userId);
+        const sysMsgs: any[] = [];
+        for (const content of sysContents) {
+            sysMsgs.push(await this.addSystemMessage(room.id, userId, content));
+        }
+
+        const result = await this.getRoomById(room.id, userId);
+        (result as any).systemMessages = sysMsgs;
+        return result;
     }
 
     async getRoomById(roomId: number, userId: number) {

@@ -22,6 +22,7 @@ let MessageEntity = class MessageEntity extends typeorm_1.BaseEntity {
     sender;
     isRead;
     isEdited;
+    isSystem;
     editHistory;
     createdAt;
 };
@@ -60,6 +61,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'boolean', default: false }),
     __metadata("design:type", Boolean)
 ], MessageEntity.prototype, "isEdited", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], MessageEntity.prototype, "isSystem", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'json', nullable: true }),
     __metadata("design:type", Object)

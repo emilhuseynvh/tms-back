@@ -13,6 +13,7 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { RemoveMemberDto } from './dto/remove-member.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
+import { SetAdminDto } from './dto/set-admin.dto';
 import { CreateDirectChatDto } from './dto/create-direct-chat.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { SendMessageBodyDto } from './dto/send-message-body.dto';
@@ -28,6 +29,17 @@ export class ChatController {
         private cls: ClsService,
         private chatGateway: ChatGateway,
     ) {}
+
+    // Servisin topladığı sistem mesajlarını otağa canlı yayımla
+    private broadcastSystemMessages(room: any) {
+        const sysMsgs = room?.systemMessages;
+        if (Array.isArray(sysMsgs)) {
+            sysMsgs.filter(Boolean).forEach((msg: any) => {
+                this.chatGateway.server.to(`room:${msg.roomId}`).emit('message:new', msg);
+            });
+        }
+        return room;
+    }
 
     @Post('direct')
     @Auth()
@@ -50,7 +62,8 @@ export class ChatController {
     @ApiOperation({ summary: 'Qrupa üzv əlavə etmək (yalnız qrup adminləri)' })
     async addMember(@Body() params: AddMemberDto) {
         const user = this.cls.get('user');
-        return await this.chatService.addMembers(user.id, params);
+        const room = await this.chatService.addMembers(user.id, params);
+        return this.broadcastSystemMessages(room);
     }
 
     @Post('group/remove-member')
@@ -58,7 +71,8 @@ export class ChatController {
     @ApiOperation({ summary: 'Qrupdan üzv çıxarmaq (yalnız qrup adminləri)' })
     async removeMember(@Body() params: RemoveMemberDto) {
         const user = this.cls.get('user');
-        return await this.chatService.removeMember(user.id, params);
+        const room = await this.chatService.removeMember(user.id, params);
+        return this.broadcastSystemMessages(room);
     }
 
     @Post('group/update')
@@ -66,7 +80,17 @@ export class ChatController {
     @ApiOperation({ summary: 'Qrup məlumatlarını yeniləmək (yalnız qrup adminləri)' })
     async updateGroup(@Body() params: UpdateGroupDto) {
         const user = this.cls.get('user');
-        return await this.chatService.updateGroup(user.id, params);
+        const room = await this.chatService.updateGroup(user.id, params);
+        return this.broadcastSystemMessages(room);
+    }
+
+    @Post('group/set-admin')
+    @Auth()
+    @ApiOperation({ summary: 'Qrup üzvünə admin ver / adminliyini al (yalnız qrup adminləri)' })
+    async setAdmin(@Body() params: SetAdminDto) {
+        const user = this.cls.get('user');
+        const room = await this.chatService.setAdmin(user.id, params);
+        return this.broadcastSystemMessages(room);
     }
 
     @Get('rooms')
