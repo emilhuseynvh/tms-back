@@ -157,8 +157,8 @@ let TrashService = class TrashService {
             .getOne();
         if (!space)
             throw new common_1.NotFoundException('Sahə tapılmadı!');
-        if (user.role !== 'admin' && space.ownerId !== user.id) {
-            throw new common_1.ForbiddenException('Bu sahəni silmək üçün icazəniz yoxdur!');
+        if (user.role !== 'admin') {
+            throw new common_1.ForbiddenException('Həmişəlik silmək yalnız adminlər üçün icazəlidir!');
         }
         await this.spaceRepo.delete(id);
         return { message: 'Sahə həmişəlik silindi!' };
@@ -172,8 +172,8 @@ let TrashService = class TrashService {
             .getOne();
         if (!folder)
             throw new common_1.NotFoundException('Qovluq tapılmadı!');
-        if (user.role !== 'admin' && folder.ownerId !== user.id) {
-            throw new common_1.ForbiddenException('Bu qovluğu silmək üçün icazəniz yoxdur!');
+        if (user.role !== 'admin') {
+            throw new common_1.ForbiddenException('Həmişəlik silmək yalnız adminlər üçün icazəlidir!');
         }
         await this.folderRepo.delete(id);
         return { message: 'Qovluq həmişəlik silindi!' };
@@ -188,8 +188,8 @@ let TrashService = class TrashService {
             .getOne();
         if (!list)
             throw new common_1.NotFoundException('Siyahı tapılmadı!');
-        if (user.role !== 'admin' && list.folder?.ownerId !== user.id) {
-            throw new common_1.ForbiddenException('Bu siyahını silmək üçün icazəniz yoxdur!');
+        if (user.role !== 'admin') {
+            throw new common_1.ForbiddenException('Həmişəlik silmək yalnız adminlər üçün icazəlidir!');
         }
         await this.taskListRepo.delete(id);
         return { message: 'Siyahı həmişəlik silindi!' };
@@ -205,8 +205,8 @@ let TrashService = class TrashService {
             .getOne();
         if (!task)
             throw new common_1.NotFoundException('Tapşırıq tapılmadı!');
-        if (user.role !== 'admin' && task.taskList?.folder?.ownerId !== user.id) {
-            throw new common_1.ForbiddenException('Bu tapşırığı silmək üçün icazəniz yoxdur!');
+        if (user.role !== 'admin') {
+            throw new common_1.ForbiddenException('Həmişəlik silmək yalnız adminlər üçün icazəlidir!');
         }
         await this.taskRepo.delete(id);
         return { message: 'Tapşırıq həmişəlik silindi!' };

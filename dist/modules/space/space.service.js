@@ -355,10 +355,6 @@ let SpaceService = class SpaceService {
         const space = await this.spaceRepo.findOne({ where: { id } });
         if (!space)
             throw new common_1.NotFoundException('Sahə tapılmadı!');
-        const user = this.cls.get('user');
-        if (user?.role !== 'admin' && space.ownerId !== userId) {
-            throw new common_1.UnauthorizedException('Sahəni silmək üçün icazəniz yoxdur!');
-        }
         await this.spaceRepo.softDelete({ id });
         await this.activityLogService.log(activity_log_entity_1.ActivityType.SPACE_DELETE, id, space.name, `"${space.name}" sahəsi silindi`);
         return { message: "Sahə uğurla silindi" };

@@ -88,9 +88,6 @@ let ChatService = class ChatService {
         return await this.getRoomById(room.id, userId);
     }
     async createGroup(userId, params) {
-        if (params.memberIds.includes(userId)) {
-            throw new common_1.BadRequestException('Özünüzü qrupa əlavə edə bilməzsiniz! Siz avtomatik olaraq qrupa əlavə olunacaqsınız.');
-        }
         const memberIds = [...new Set([userId, ...params.memberIds])];
         const users = await this.userRepo.findBy({ id: (0, typeorm_2.In)(memberIds) });
         if (users.length !== memberIds.length) {

@@ -14,6 +14,8 @@ const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreateTaskListDto {
     name;
+    type;
+    content;
     folderId;
     spaceId;
     assigneeIds;
@@ -24,6 +26,18 @@ __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], CreateTaskListDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], CreateTaskListDto.prototype, "type", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], CreateTaskListDto.prototype, "content", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),

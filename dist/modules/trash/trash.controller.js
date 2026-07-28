@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const trash_service_1 = require("./trash.service");
 const auth_decorator_1 = require("../../shared/decorators/auth.decorator");
+const role_enum_1 = require("../../shared/enums/role.enum");
 let TrashController = class TrashController {
     trashService;
     constructor(trashService) {
@@ -92,7 +93,7 @@ __decorate([
 ], TrashController.prototype, "restoreTask", null);
 __decorate([
     (0, common_1.Delete)('space/:id'),
-    (0, auth_decorator_1.Auth)(),
+    (0, auth_decorator_1.Auth)(role_enum_1.RoleEnum.ADMIN),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -100,7 +101,7 @@ __decorate([
 ], TrashController.prototype, "permanentDeleteSpace", null);
 __decorate([
     (0, common_1.Delete)('folder/:id'),
-    (0, auth_decorator_1.Auth)(),
+    (0, auth_decorator_1.Auth)(role_enum_1.RoleEnum.ADMIN),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -108,7 +109,7 @@ __decorate([
 ], TrashController.prototype, "permanentDeleteFolder", null);
 __decorate([
     (0, common_1.Delete)('list/:id'),
-    (0, auth_decorator_1.Auth)(),
+    (0, auth_decorator_1.Auth)(role_enum_1.RoleEnum.ADMIN),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -116,7 +117,7 @@ __decorate([
 ], TrashController.prototype, "permanentDeleteList", null);
 __decorate([
     (0, common_1.Delete)('task/:id'),
-    (0, auth_decorator_1.Auth)(),
+    (0, auth_decorator_1.Auth)(role_enum_1.RoleEnum.ADMIN),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),

@@ -6,6 +6,8 @@ import { UserEntity } from "./user.entity";
 export declare class TaskListEntity extends BaseEntity {
     id: number;
     name: string;
+    type: string;
+    content: string | null;
     order: number;
     folderId: number | null;
     folder: FolderEntity;

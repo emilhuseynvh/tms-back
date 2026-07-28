@@ -7,7 +7,7 @@ const typeorm_1 = require("typeorm");
 const _1 = __importDefault(require("."));
 const path_1 = require("path");
 exports.default = new typeorm_1.DataSource({
-    type: 'mysql',
+    type: 'postgres',
     host: _1.default.dbHost,
     port: _1.default.dbPort,
     username: _1.default.dbUsername,

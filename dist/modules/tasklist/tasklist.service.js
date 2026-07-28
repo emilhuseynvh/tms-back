@@ -45,6 +45,8 @@ let TaskListService = class TaskListService {
         const assigneeIds = await this.assigneeDefaults.mergeResourceAssignees(dto.assigneeIds, user?.id);
         const list = new tasklist_entity_1.TaskListEntity();
         list.name = dto.name;
+        list.type = dto.type || 'list';
+        list.content = dto.content || null;
         list.folderId = dto.folderId || null;
         list.spaceId = dto.spaceId || null;
         list.assignees = assigneeIds.map((id) => ({ id }));
@@ -142,7 +144,10 @@ let TaskListService = class TaskListService {
         }
         if (dto.name)
             changes.name = { old: oldName, new: dto.name };
-        Object.assign(taskList, { name: dto.name });
+        if (dto.name !== undefined)
+            taskList.name = dto.name;
+        if (dto.content !== undefined)
+            taskList.content = dto.content;
         await this.taskListRepo.save(taskList);
         await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_UPDATE, id, taskList.name, `"${oldName}" siyahısı yeniləndi`, changes);
         return { message: "Siyahı uğurla yeniləndi" };

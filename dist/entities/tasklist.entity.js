@@ -18,6 +18,8 @@ const user_entity_1 = require("./user.entity");
 let TaskListEntity = class TaskListEntity extends typeorm_1.BaseEntity {
     id;
     name;
+    type;
+    content;
     order;
     folderId;
     folder;
@@ -44,6 +46,14 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], TaskListEntity.prototype, "name", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 'list' }),
+    __metadata("design:type", String)
+], TaskListEntity.prototype, "type", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", Object)
+], TaskListEntity.prototype, "content", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'int', default: 0 }),
     __metadata("design:type", Number)

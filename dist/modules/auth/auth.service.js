@@ -46,6 +46,7 @@ let AuthService = class AuthService {
             select: {
                 id: true,
                 username: true,
+                avatarId: true,
                 avatar: true,
                 email: true,
                 phone: true,
