@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Put, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
 import AuthGuard from "../../guard/auth.guard";
 import { RoleGuard } from "../../guard/role.guard";
@@ -6,6 +6,7 @@ import { Role } from "../../shared/decorators/role.decorator";
 import { RoleEnum } from "../../shared/enums/role.enum";
 import { NotificationService } from "./notification.service";
 import { UpdateNotificationSettingsDto } from "./dto/update-settings.dto";
+import { SendTaskNotificationDto } from "./dto/send-task-notification.dto";
 import { ClsService } from "nestjs-cls";
 
 @ApiTags('Notifications')
@@ -34,6 +35,12 @@ export class NotificationController {
 			parseInt(page),
 			parseInt(limit)
 		)
+	}
+
+	@Post('send')
+	async sendTaskNotification(@Body() body: SendTaskNotificationDto) {
+		const user = this.cls.get('user')
+		return await this.notificationService.sendTaskMessage(user, body.taskId, body.userIds, body.message)
 	}
 
 	@Get('unread-count')

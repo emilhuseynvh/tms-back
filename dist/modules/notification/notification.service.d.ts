@@ -29,6 +29,12 @@ export declare class NotificationService implements OnModuleInit {
         userIds: number[];
     }[]>;
     getUserPendingNotifications(userId: number): Promise<TaskEntity[]>;
+    sendTaskMessage(sender: {
+        id: number;
+        username?: string;
+    }, taskId: number, userIds: number[], message: string): Promise<{
+        message: string;
+    }>;
     createNotification(data: {
         userId: number;
         type: NotificationType;

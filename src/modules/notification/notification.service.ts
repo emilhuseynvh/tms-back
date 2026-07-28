@@ -183,6 +183,28 @@ export class NotificationService implements OnModuleInit {
 		return tasks
 	}
 
+	// Taska təyin edilmiş seçilmiş istifadəçilərə xüsusi mesaj bildirişi göndər
+	async sendTaskMessage(sender: { id: number; username?: string }, taskId: number, userIds: number[], message: string) {
+		const task = await this.taskRepo.findOne({ where: { id: taskId } })
+		if (!task) {
+			throw new Error('Tapşırıq tapılmadı!')
+		}
+
+		const targetIds = [...new Set(userIds)].filter((id) => id !== sender.id)
+
+		for (const userId of targetIds) {
+			await this.createNotification({
+				userId,
+				type: NotificationType.TASK_MESSAGE,
+				title: `"${task.title}" tapşırığı üzrə mesaj`,
+				message: `${sender.username || 'İstifadəçi'}: ${message}`,
+				taskId: task.id,
+			})
+		}
+
+		return { message: `${targetIds.length} istifadəçiyə bildiriş göndərildi!` }
+	}
+
 	async createNotification(data: {
 		userId: number,
 		type: NotificationType,

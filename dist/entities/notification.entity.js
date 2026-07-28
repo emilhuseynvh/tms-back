@@ -28,6 +28,7 @@ var NotificationType;
     NotificationType["FOLDER_UNASSIGNED"] = "folder_unassigned";
     NotificationType["LIST_ASSIGNED"] = "list_assigned";
     NotificationType["LIST_UNASSIGNED"] = "list_unassigned";
+    NotificationType["TASK_MESSAGE"] = "task_message";
 })(NotificationType || (exports.NotificationType = NotificationType = {}));
 let NotificationEntity = class NotificationEntity extends typeorm_1.BaseEntity {
     id;

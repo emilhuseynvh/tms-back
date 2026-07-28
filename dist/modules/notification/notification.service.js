@@ -148,6 +148,23 @@ let NotificationService = class NotificationService {
         }
         return tasks;
     }
+    async sendTaskMessage(sender, taskId, userIds, message) {
+        const task = await this.taskRepo.findOne({ where: { id: taskId } });
+        if (!task) {
+            throw new Error('Tapşırıq tapılmadı!');
+        }
+        const targetIds = [...new Set(userIds)].filter((id) => id !== sender.id);
+        for (const userId of targetIds) {
+            await this.createNotification({
+                userId,
+                type: notification_entity_1.NotificationType.TASK_MESSAGE,
+                title: `"${task.title}" tapşırığı üzrə mesaj`,
+                message: `${sender.username || 'İstifadəçi'}: ${message}`,
+                taskId: task.id,
+            });
+        }
+        return { message: `${targetIds.length} istifadəçiyə bildiriş göndərildi!` };
+    }
     async createNotification(data) {
         const notification = this.notificationRepo.create({
             userId: data.userId,

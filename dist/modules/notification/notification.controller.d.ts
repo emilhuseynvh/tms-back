@@ -1,5 +1,6 @@
 import { NotificationService } from "./notification.service";
 import { UpdateNotificationSettingsDto } from "./dto/update-settings.dto";
+import { SendTaskNotificationDto } from "./dto/send-task-notification.dto";
 import { ClsService } from "nestjs-cls";
 export declare class NotificationController {
     private notificationService;
@@ -9,6 +10,9 @@ export declare class NotificationController {
         data: import("../../entities/notification.entity").NotificationEntity[];
         total: number;
         hasMore: boolean;
+    }>;
+    sendTaskNotification(body: SendTaskNotificationDto): Promise<{
+        message: string;
     }>;
     getUnreadCount(): Promise<{
         count: number;

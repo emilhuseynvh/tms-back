@@ -14,7 +14,8 @@ export declare enum NotificationType {
     FOLDER_ASSIGNED = "folder_assigned",
     FOLDER_UNASSIGNED = "folder_unassigned",
     LIST_ASSIGNED = "list_assigned",
-    LIST_UNASSIGNED = "list_unassigned"
+    LIST_UNASSIGNED = "list_unassigned",
+    TASK_MESSAGE = "task_message"
 }
 export declare class NotificationEntity extends BaseEntity {
     id: number;

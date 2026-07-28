@@ -24,6 +24,7 @@ const role_decorator_1 = require("../../shared/decorators/role.decorator");
 const role_enum_1 = require("../../shared/enums/role.enum");
 const notification_service_1 = require("./notification.service");
 const update_settings_dto_1 = require("./dto/update-settings.dto");
+const send_task_notification_dto_1 = require("./dto/send-task-notification.dto");
 const nestjs_cls_1 = require("nestjs-cls");
 let NotificationController = class NotificationController {
     notificationService;
@@ -35,6 +36,10 @@ let NotificationController = class NotificationController {
     async getMyNotifications(filter = 'all', page = '1', limit = '20') {
         const user = this.cls.get('user');
         return await this.notificationService.getUserNotifications(user.id, filter, parseInt(page), parseInt(limit));
+    }
+    async sendTaskNotification(body) {
+        const user = this.cls.get('user');
+        return await this.notificationService.sendTaskMessage(user, body.taskId, body.userIds, body.message);
     }
     async getUnreadCount() {
         const user = this.cls.get('user');
@@ -80,6 +85,13 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], NotificationController.prototype, "getMyNotifications", null);
+__decorate([
+    (0, common_1.Post)('send'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [send_task_notification_dto_1.SendTaskNotificationDto]),
+    __metadata("design:returntype", Promise)
+], NotificationController.prototype, "sendTaskNotification", null);
 __decorate([
     (0, common_1.Get)('unread-count'),
     __metadata("design:type", Function),

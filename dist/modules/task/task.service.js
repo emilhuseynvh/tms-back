@@ -317,15 +317,7 @@ let TaskService = class TaskService {
         await this.ensureActiveTaskList(targetListId);
         await this.taskRepo.manager.transaction(async (manager) => {
             const taskRepo = manager.getRepository(task_entity_1.TaskEntity);
-            await taskRepo
-                .createQueryBuilder()
-                .update(task_entity_1.TaskEntity)
-                .set({ order: () => '"order" - 1' })
-                .where('"taskListId" = :listId AND "order" > :oldOrder', {
-                listId: task.taskListId,
-                oldOrder: task.order,
-            })
-                .execute();
+            await taskRepo.decrement({ taskListId: task.taskListId, order: (0, typeorm_2.MoreThan)(task.order) }, 'order', 1);
             const newIndex = await taskRepo.count({ where: { taskListId: targetListId } });
             const updateFields = {
                 taskListId: targetListId,
@@ -377,20 +369,10 @@ let TaskService = class TaskService {
         if (targetIndex === currentOrder)
             return task;
         if (targetIndex < currentOrder) {
-            await this.taskRepo
-                .createQueryBuilder()
-                .update(task_entity_1.TaskEntity)
-                .set({ order: () => "\"order\" + 1" })
-                .where('"taskListId" = :listId AND "order" >= :start AND "order" < :end', { listId: currentListId, start: targetIndex, end: currentOrder })
-                .execute();
+            await this.taskRepo.increment({ taskListId: currentListId, order: (0, typeorm_2.Between)(targetIndex, currentOrder - 1) }, 'order', 1);
         }
         else {
-            await this.taskRepo
-                .createQueryBuilder()
-                .update(task_entity_1.TaskEntity)
-                .set({ order: () => "\"order\" - 1" })
-                .where('"taskListId" = :listId AND "order" <= :end AND "order" > :start', { listId: currentListId, start: currentOrder, end: targetIndex })
-                .execute();
+            await this.taskRepo.decrement({ taskListId: currentListId, order: (0, typeorm_2.Between)(currentOrder + 1, targetIndex) }, 'order', 1);
         }
         task.order = targetIndex;
         return await this.taskRepo.save(task);

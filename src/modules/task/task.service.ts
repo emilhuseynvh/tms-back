@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, MoreThan, Between } from "typeorm";
 import { TaskEntity } from "../../entities/task.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
 import { TaskStatusEntity } from "../../entities/task-status.entity";
@@ -380,15 +380,12 @@ export class TaskService {
 		await this.taskRepo.manager.transaction(async (manager) => {
 			const taskRepo = manager.getRepository(TaskEntity)
 
-			await taskRepo
-				.createQueryBuilder()
-				.update(TaskEntity)
-				.set({ order: () => '"order" - 1' })
-				.where('"taskListId" = :listId AND "order" > :oldOrder', {
-					listId: task.taskListId,
-					oldOrder: task.order,
-				})
-				.execute()
+			// increment/decrement hər iki DB-də (mysql/postgres) düzgün identifikator dırnaqlaması yaradır
+			await taskRepo.decrement(
+				{ taskListId: task.taskListId, order: MoreThan(task.order) },
+				'order',
+				1,
+			)
 
 			const newIndex = await taskRepo.count({ where: { taskListId: targetListId } })
 
@@ -455,19 +452,19 @@ export class TaskService {
 		if (targetIndex === currentOrder) return task
 
 		if (targetIndex < currentOrder) {
-			await this.taskRepo
-				.createQueryBuilder()
-				.update(TaskEntity)
-				.set({ order: () => "\"order\" + 1" })
-				.where('"taskListId" = :listId AND "order" >= :start AND "order" < :end', { listId: currentListId, start: targetIndex, end: currentOrder })
-				.execute()
+			// order >= targetIndex AND order < currentOrder
+			await this.taskRepo.increment(
+				{ taskListId: currentListId, order: Between(targetIndex, currentOrder - 1) },
+				'order',
+				1,
+			)
 		} else {
-			await this.taskRepo
-				.createQueryBuilder()
-				.update(TaskEntity)
-				.set({ order: () => "\"order\" - 1" })
-				.where('"taskListId" = :listId AND "order" <= :end AND "order" > :start', { listId: currentListId, start: currentOrder, end: targetIndex })
-				.execute()
+			// order > currentOrder AND order <= targetIndex
+			await this.taskRepo.decrement(
+				{ taskListId: currentListId, order: Between(currentOrder + 1, targetIndex) },
+				'order',
+				1,
+			)
 		}
 		task.order = targetIndex
 		return await this.taskRepo.save(task)
