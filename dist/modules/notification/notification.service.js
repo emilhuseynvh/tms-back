@@ -154,16 +154,17 @@ let NotificationService = class NotificationService {
             throw new Error('Tapşırıq tapılmadı!');
         }
         const targetIds = [...new Set(userIds)].filter((id) => id !== sender.id);
+        const notifications = [];
         for (const userId of targetIds) {
-            await this.createNotification({
+            notifications.push(await this.createNotification({
                 userId,
                 type: notification_entity_1.NotificationType.TASK_MESSAGE,
                 title: `"${task.title}" tapşırığı üzrə mesaj`,
                 message: `${sender.username || 'İstifadəçi'}: ${message}`,
                 taskId: task.id,
-            });
+            }));
         }
-        return { message: `${targetIds.length} istifadəçiyə bildiriş göndərildi!` };
+        return { message: `${targetIds.length} istifadəçiyə bildiriş göndərildi!`, notifications };
     }
     async createNotification(data) {
         const notification = this.notificationRepo.create({

@@ -192,17 +192,18 @@ export class NotificationService implements OnModuleInit {
 
 		const targetIds = [...new Set(userIds)].filter((id) => id !== sender.id)
 
+		const notifications: NotificationEntity[] = []
 		for (const userId of targetIds) {
-			await this.createNotification({
+			notifications.push(await this.createNotification({
 				userId,
 				type: NotificationType.TASK_MESSAGE,
 				title: `"${task.title}" tapşırığı üzrə mesaj`,
 				message: `${sender.username || 'İstifadəçi'}: ${message}`,
 				taskId: task.id,
-			})
+			}))
 		}
 
-		return { message: `${targetIds.length} istifadəçiyə bildiriş göndərildi!` }
+		return { message: `${targetIds.length} istifadəçiyə bildiriş göndərildi!`, notifications }
 	}
 
 	async createNotification(data: {

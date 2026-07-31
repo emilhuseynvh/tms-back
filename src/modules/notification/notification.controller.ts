@@ -5,6 +5,7 @@ import { RoleGuard } from "../../guard/role.guard";
 import { Role } from "../../shared/decorators/role.decorator";
 import { RoleEnum } from "../../shared/enums/role.enum";
 import { NotificationService } from "./notification.service";
+import { NotificationGateway } from "./notification.gateway";
 import { UpdateNotificationSettingsDto } from "./dto/update-settings.dto";
 import { SendTaskNotificationDto } from "./dto/send-task-notification.dto";
 import { ClsService } from "nestjs-cls";
@@ -16,6 +17,7 @@ import { ClsService } from "nestjs-cls";
 export class NotificationController {
 	constructor(
 		private notificationService: NotificationService,
+		private notificationGateway: NotificationGateway,
 		private cls: ClsService
 	) { }
 
@@ -40,7 +42,16 @@ export class NotificationController {
 	@Post('send')
 	async sendTaskNotification(@Body() body: SendTaskNotificationDto) {
 		const user = this.cls.get('user')
-		return await this.notificationService.sendTaskMessage(user, body.taskId, body.userIds, body.message)
+		const result = await this.notificationService.sendTaskMessage(user, body.taskId, body.userIds, body.message)
+
+		// Real-time yayım: hər alan istifadəçiyə bildiriş + oxunmamış sayı
+		for (const notification of result.notifications) {
+			this.notificationGateway.emitNewNotification(notification.userId, notification)
+			const count = await this.notificationService.getUnreadCount(notification.userId)
+			this.notificationGateway.emitUnreadCountUpdate(notification.userId, count)
+		}
+
+		return { message: result.message }
 	}
 
 	@Get('unread-count')

@@ -34,6 +34,7 @@ export declare class NotificationService implements OnModuleInit {
         username?: string;
     }, taskId: number, userIds: number[], message: string): Promise<{
         message: string;
+        notifications: NotificationEntity[];
     }>;
     createNotification(data: {
         userId: number;

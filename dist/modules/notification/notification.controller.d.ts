@@ -1,11 +1,13 @@
 import { NotificationService } from "./notification.service";
+import { NotificationGateway } from "./notification.gateway";
 import { UpdateNotificationSettingsDto } from "./dto/update-settings.dto";
 import { SendTaskNotificationDto } from "./dto/send-task-notification.dto";
 import { ClsService } from "nestjs-cls";
 export declare class NotificationController {
     private notificationService;
+    private notificationGateway;
     private cls;
-    constructor(notificationService: NotificationService, cls: ClsService);
+    constructor(notificationService: NotificationService, notificationGateway: NotificationGateway, cls: ClsService);
     getMyNotifications(filter?: 'all' | 'unread' | 'read', page?: string, limit?: string): Promise<{
         data: import("../../entities/notification.entity").NotificationEntity[];
         total: number;
