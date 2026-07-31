@@ -248,7 +248,35 @@ export class NotificationService implements OnModuleInit {
 			order: { createdAt: 'DESC' },
 			skip: (page - 1) * limit,
 			take: limit,
-			relations: ['task', 'task.taskList']
+			relations: ['task', 'task.taskList', 'task.taskList.folder', 'list', 'list.folder', 'folder', 'space']
+		})
+
+		// Hər bildiriş üçün keçid URL-i hesabla (kliklə həmin yerə getmək üçün)
+		const buildListUrl = (list: any): string | null => {
+			if (!list) return null
+			let base: string | null = null
+			if (list.folderId && list.folder?.spaceId) {
+				base = `/tasks/space/${list.folder.spaceId}/folder/${list.folderId}`
+			} else if (list.spaceId) {
+				base = `/tasks/space/${list.spaceId}`
+			}
+			if (!base) return null
+			const segment = list.type === 'meeting' ? 'note' : 'list'
+			return `${base}/${segment}/${list.id}`
+		}
+
+		data.forEach((n: any) => {
+			let url: string | null = null
+			if (n.task?.taskList) {
+				url = buildListUrl(n.task.taskList)
+			} else if (n.list) {
+				url = buildListUrl(n.list)
+			} else if (n.folder) {
+				url = n.folder.spaceId ? `/tasks/space/${n.folder.spaceId}/folder/${n.folder.id}` : null
+			} else if (n.spaceId) {
+				url = `/tasks/space/${n.spaceId}`
+			}
+			n.url = url
 		})
 
 		return {

@@ -35,6 +35,7 @@ export class TaskListService {
 		const list = new TaskListEntity()
 		list.name = dto.name
 		list.type = dto.type || 'list'
+		list.createdById = user?.id || null
 		list.content = dto.content || null
 		list.folderId = dto.folderId || null
 		list.spaceId = dto.spaceId || null

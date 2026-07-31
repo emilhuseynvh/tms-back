@@ -192,7 +192,38 @@ let NotificationService = class NotificationService {
             order: { createdAt: 'DESC' },
             skip: (page - 1) * limit,
             take: limit,
-            relations: ['task', 'task.taskList']
+            relations: ['task', 'task.taskList', 'task.taskList.folder', 'list', 'list.folder', 'folder', 'space']
+        });
+        const buildListUrl = (list) => {
+            if (!list)
+                return null;
+            let base = null;
+            if (list.folderId && list.folder?.spaceId) {
+                base = `/tasks/space/${list.folder.spaceId}/folder/${list.folderId}`;
+            }
+            else if (list.spaceId) {
+                base = `/tasks/space/${list.spaceId}`;
+            }
+            if (!base)
+                return null;
+            const segment = list.type === 'meeting' ? 'note' : 'list';
+            return `${base}/${segment}/${list.id}`;
+        };
+        data.forEach((n) => {
+            let url = null;
+            if (n.task?.taskList) {
+                url = buildListUrl(n.task.taskList);
+            }
+            else if (n.list) {
+                url = buildListUrl(n.list);
+            }
+            else if (n.folder) {
+                url = n.folder.spaceId ? `/tasks/space/${n.folder.spaceId}/folder/${n.folder.id}` : null;
+            }
+            else if (n.spaceId) {
+                url = `/tasks/space/${n.spaceId}`;
+            }
+            n.url = url;
         });
         return {
             data,

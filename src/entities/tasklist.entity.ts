@@ -15,6 +15,14 @@ export class TaskListEntity extends BaseEntity {
 	@Column({ default: 'list' })
 	type: string
 
+	// Siyahını yaradan istifadəçi
+	@Column({ nullable: true })
+	createdById: number | null
+
+	@ManyToOne(() => UserEntity, { nullable: true })
+	@JoinColumn({ name: 'createdById' })
+	createdBy: UserEntity
+
 	@Column({ type: 'text', nullable: true })
 	content: string | null
 

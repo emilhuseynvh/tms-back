@@ -7,6 +7,8 @@ export declare class TaskListEntity extends BaseEntity {
     id: number;
     name: string;
     type: string;
+    createdById: number | null;
+    createdBy: UserEntity;
     content: string | null;
     order: number;
     folderId: number | null;

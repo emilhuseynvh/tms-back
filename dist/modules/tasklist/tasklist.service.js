@@ -46,6 +46,7 @@ let TaskListService = class TaskListService {
         const list = new tasklist_entity_1.TaskListEntity();
         list.name = dto.name;
         list.type = dto.type || 'list';
+        list.createdById = user?.id || null;
         list.content = dto.content || null;
         list.folderId = dto.folderId || null;
         list.spaceId = dto.spaceId || null;

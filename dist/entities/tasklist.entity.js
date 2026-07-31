@@ -19,6 +19,8 @@ let TaskListEntity = class TaskListEntity extends typeorm_1.BaseEntity {
     id;
     name;
     type;
+    createdById;
+    createdBy;
     content;
     order;
     folderId;
@@ -50,6 +52,15 @@ __decorate([
     (0, typeorm_1.Column)({ default: 'list' }),
     __metadata("design:type", String)
 ], TaskListEntity.prototype, "type", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], TaskListEntity.prototype, "createdById", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'createdById' }),
+    __metadata("design:type", user_entity_1.UserEntity)
+], TaskListEntity.prototype, "createdBy", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
     __metadata("design:type", Object)
