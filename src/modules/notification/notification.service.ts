@@ -190,7 +190,8 @@ export class NotificationService implements OnModuleInit {
 			throw new Error('Tapşırıq tapılmadı!')
 		}
 
-		const targetIds = [...new Set(userIds)].filter((id) => id !== sender.id)
+		// Özünə də göndərmək mümkündür (özünə xatırlatma kimi)
+		const targetIds = [...new Set(userIds)]
 
 		const notifications: NotificationEntity[] = []
 		for (const userId of targetIds) {

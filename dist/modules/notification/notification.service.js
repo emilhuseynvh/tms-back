@@ -153,7 +153,7 @@ let NotificationService = class NotificationService {
         if (!task) {
             throw new Error('Tapşırıq tapılmadı!');
         }
-        const targetIds = [...new Set(userIds)].filter((id) => id !== sender.id);
+        const targetIds = [...new Set(userIds)];
         const notifications = [];
         for (const userId of targetIds) {
             notifications.push(await this.createNotification({
