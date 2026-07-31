@@ -83,6 +83,7 @@ let UserService = class UserService {
             avatarId: params.avatarId ?? null,
             email: params.email,
             username: params.username,
+            shortName: params.shortName || null,
             password: params.password,
             phone: params.phone,
             role: params.role ?? role_enum_1.RoleEnum.USER,
@@ -129,6 +130,8 @@ let UserService = class UserService {
         }
         if (params.username !== undefined)
             checkedUser.username = params.username;
+        if (params.shortName !== undefined)
+            checkedUser.shortName = params.shortName || null;
         if (params.email !== undefined)
             checkedUser.email = params.email;
         if (params.phone !== undefined)

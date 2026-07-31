@@ -10,6 +10,10 @@ export class UserEntity extends BaseEntity {
     @Column()
     username: string
 
+    // Qısa ad (maks. 3 böyük hərf)
+    @Column({ type: 'varchar', length: 3, nullable: true })
+    shortName: string | null
+
     @Column({ nullable: true })
     avatarId: number | null
 

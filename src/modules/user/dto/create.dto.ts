@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsNumber, IsString, IsOptional } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsNumber, IsString, IsOptional, MaxLength } from "class-validator";
 import { RoleEnum } from "../../../shared/enums/role.enum";
 
 export class CreateUserDto {
@@ -8,6 +8,14 @@ export class CreateUserDto {
     @IsString()
     @ApiProperty()
     username: string
+
+    @Type()
+    @IsString()
+    @IsOptional()
+    @MaxLength(3)
+    @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase().trim() : value))
+    @ApiProperty({ required: false, description: 'Qısa ad — maks. 3 böyük hərf' })
+    shortName?: string
 
     @Type()
     @IsNumber()

@@ -16,6 +16,7 @@ const role_enum_1 = require("../shared/enums/role.enum");
 let UserEntity = class UserEntity extends typeorm_1.BaseEntity {
     id;
     username;
+    shortName;
     avatarId;
     phone;
     email;
@@ -33,6 +34,10 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], UserEntity.prototype, "username", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 3, nullable: true }),
+    __metadata("design:type", Object)
+], UserEntity.prototype, "shortName", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Object)

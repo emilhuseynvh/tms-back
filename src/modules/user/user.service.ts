@@ -82,6 +82,7 @@ export class UserService {
             avatarId: params.avatarId ?? null,
             email: params.email,
             username: params.username,
+            shortName: params.shortName || null,
             password: params.password,
             phone: params.phone,
             role: params.role ?? RoleEnum.USER,
@@ -141,6 +142,7 @@ export class UserService {
 
         // Only update the fields that are provided
         if (params.username !== undefined) checkedUser.username = params.username
+        if (params.shortName !== undefined) checkedUser.shortName = params.shortName || null
         if (params.email !== undefined) checkedUser.email = params.email
         if (params.phone !== undefined) checkedUser.phone = params.phone
         if (params.role !== undefined) checkedUser.role = params.role

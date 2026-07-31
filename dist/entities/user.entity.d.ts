@@ -3,6 +3,7 @@ import { RoleEnum } from "../shared/enums/role.enum";
 export declare class UserEntity extends BaseEntity {
     id: number;
     username: string;
+    shortName: string | null;
     avatarId: number | null;
     phone: string;
     email: string;

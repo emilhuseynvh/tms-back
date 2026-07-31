@@ -10,6 +10,7 @@ export declare class AuthService {
         token: string;
         id: number;
         username: string;
+        shortName: string | null;
         avatarId: number | null;
         phone: string;
         email: string;

@@ -16,6 +16,7 @@ const class_validator_1 = require("class-validator");
 const role_enum_1 = require("../../../shared/enums/role.enum");
 class CreateUserDto {
     username;
+    shortName;
     avatarId;
     phone;
     email;
@@ -29,6 +30,15 @@ __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "username", void 0);
+__decorate([
+    (0, class_transformer_1.Type)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(3),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.toUpperCase().trim() : value)),
+    (0, swagger_1.ApiProperty)({ required: false, description: 'Qısa ad — maks. 3 böyük hərf' }),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "shortName", void 0);
 __decorate([
     (0, class_transformer_1.Type)(),
     (0, class_validator_1.IsNumber)(),
