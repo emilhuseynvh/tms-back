@@ -37,6 +37,30 @@ let TaskService = class TaskService {
     activityLogService;
     notificationService;
     notificationGateway;
+    async onModuleInit() {
+        try {
+            const orphans = await this.taskRepo.find({
+                where: { createdById: (0, typeorm_2.IsNull)() },
+                select: ['id'],
+                withDeleted: true,
+            });
+            for (const t of orphans) {
+                const firstActivity = await this.taskActivityRepo.findOne({
+                    where: { taskId: t.id },
+                    order: { createdAt: 'ASC' },
+                });
+                if (firstActivity?.userId) {
+                    await this.taskRepo.update({ id: t.id }, { createdById: firstActivity.userId });
+                }
+            }
+            if (orphans.length > 0) {
+                console.log(`Task createdById backfill: ${orphans.length} task yoxlanıldı`);
+            }
+        }
+        catch (e) {
+            console.error('Task createdById backfill xətası:', e?.message);
+        }
+    }
     constructor(taskRepo, taskListRepo, taskStatusRepo, taskActivityRepo, assigneeDefaults, cls, activityLogService, notificationService, notificationGateway) {
         this.taskRepo = taskRepo;
         this.taskListRepo = taskListRepo;
@@ -58,6 +82,7 @@ let TaskService = class TaskService {
         const task = this.taskRepo.create({
             title: dto.title,
             description: dto.description ?? '',
+            createdById: creator?.id || null,
             taskListId: dto.taskListId,
             statusId: dto.statusId || null,
             startAt: dto.startAt ? new Date(dto.startAt) : new Date(),

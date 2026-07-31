@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException, Inject, forwardRef } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException, Inject, forwardRef, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, MoreThan, Between } from "typeorm";
+import { Repository, MoreThan, Between, IsNull } from "typeorm";
 import { TaskEntity } from "../../entities/task.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
 import { TaskStatusEntity } from "../../entities/task-status.entity";
@@ -19,7 +19,32 @@ import { NotificationGateway } from "../notification/notification.gateway";
 import { resolveFilterDateRange } from "../../shared/utils/filter-date.utils";
 
 @Injectable()
-export class TaskService {
+export class TaskService implements OnModuleInit {
+	// Köhnə taskların yaradanını ilk activity qeydindən bərpa et (bir dəfəlik backfill)
+	async onModuleInit() {
+		try {
+			const orphans = await this.taskRepo.find({
+				where: { createdById: IsNull() },
+				select: ['id'],
+				withDeleted: true,
+			})
+			for (const t of orphans) {
+				const firstActivity = await this.taskActivityRepo.findOne({
+					where: { taskId: t.id },
+					order: { createdAt: 'ASC' },
+				})
+				if (firstActivity?.userId) {
+					await this.taskRepo.update({ id: t.id }, { createdById: firstActivity.userId })
+				}
+			}
+			if (orphans.length > 0) {
+				console.log(`Task createdById backfill: ${orphans.length} task yoxlanıldı`)
+			}
+		} catch (e) {
+			console.error('Task createdById backfill xətası:', e?.message)
+		}
+	}
+
 	constructor(
 		@InjectRepository(TaskEntity)
 		private taskRepo: Repository<TaskEntity>,
@@ -48,6 +73,7 @@ export class TaskService {
 		const task = this.taskRepo.create({
 			title: dto.title,
 			description: dto.description ?? '',
+			createdById: creator?.id || null,
 			taskListId: dto.taskListId,
 			statusId: dto.statusId || null,
 			startAt: dto.startAt ? new Date(dto.startAt) : new Date(),

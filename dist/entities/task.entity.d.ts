@@ -8,6 +8,8 @@ export declare class TaskEntity extends BaseEntity {
     description: string;
     startAt: Date | null;
     dueAt: Date | null;
+    createdById: number | null;
+    createdBy: UserEntity;
     statusId: number;
     status: TaskStatusEntity;
     order: number;

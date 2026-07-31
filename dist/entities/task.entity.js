@@ -20,6 +20,8 @@ let TaskEntity = class TaskEntity extends typeorm_1.BaseEntity {
     description;
     startAt;
     dueAt;
+    createdById;
+    createdBy;
     statusId;
     status;
     order;
@@ -63,6 +65,15 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Object)
 ], TaskEntity.prototype, "dueAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], TaskEntity.prototype, "createdById", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'createdById' }),
+    __metadata("design:type", user_entity_1.UserEntity)
+], TaskEntity.prototype, "createdBy", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Number)

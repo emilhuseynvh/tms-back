@@ -21,6 +21,14 @@ export class TaskEntity extends BaseEntity {
 	@Column({ type: 'timestamp', nullable: true })
 	dueAt: Date | null
 
+	// Taskı yaradan istifadəçi
+	@Column({ nullable: true })
+	createdById: number | null
+
+	@ManyToOne(() => UserEntity, { nullable: true })
+	@JoinColumn({ name: 'createdById' })
+	createdBy: UserEntity
+
 	@Column({ nullable: true })
 	statusId: number
 

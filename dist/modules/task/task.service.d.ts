@@ -1,3 +1,4 @@
+import { OnModuleInit } from "@nestjs/common";
 import { Repository } from "typeorm";
 import { TaskEntity } from "../../entities/task.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
@@ -12,7 +13,7 @@ import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults
 import { ActivityLogService } from "../activity-log/activity-log.service";
 import { NotificationService } from "../notification/notification.service";
 import { NotificationGateway } from "../notification/notification.gateway";
-export declare class TaskService {
+export declare class TaskService implements OnModuleInit {
     private taskRepo;
     private taskListRepo;
     private taskStatusRepo;
@@ -22,6 +23,7 @@ export declare class TaskService {
     private activityLogService;
     private notificationService;
     private notificationGateway;
+    onModuleInit(): Promise<void>;
     constructor(taskRepo: Repository<TaskEntity>, taskListRepo: Repository<TaskListEntity>, taskStatusRepo: Repository<TaskStatusEntity>, taskActivityRepo: Repository<TaskActivityEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService, notificationGateway: NotificationGateway);
     create(dto: CreateTaskDto): Promise<TaskEntity>;
     listByTaskList(taskListId: number, filters?: FilterTaskDto): Promise<TaskEntity[]>;
