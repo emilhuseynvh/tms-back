@@ -8,6 +8,7 @@ import { NotificationEntity, NotificationType } from "../../entities/notificatio
 import { TaskEntity } from "../../entities/task.entity";
 import { UpdateNotificationSettingsDto } from "./dto/update-settings.dto";
 import { ClsService } from "nestjs-cls";
+import { resolveFilterDateRange } from "../../shared/utils/filter-date.utils";
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
@@ -236,32 +237,53 @@ export class NotificationService implements OnModuleInit {
 		filter: 'all' | 'unread' | 'read' = 'all',
 		page: number = 1,
 		limit: number = 20,
-		search?: string
+		search?: string,
+		person?: string,
+		startDate?: string,
+		endDate?: string
 	): Promise<{ data: NotificationEntity[], total: number, hasMore: boolean }> {
-		const base: any = { userId }
+		const qb = this.notificationRepo.createQueryBuilder('n')
+			.leftJoinAndSelect('n.task', 'task')
+			.leftJoinAndSelect('task.taskList', 'taskList')
+			.leftJoinAndSelect('taskList.folder', 'taskListFolder')
+			.leftJoinAndSelect('n.list', 'list')
+			.leftJoinAndSelect('list.folder', 'listFolder')
+			.leftJoinAndSelect('n.folder', 'folder')
+			.leftJoinAndSelect('n.space', 'space')
+			.where('n.userId = :userId', { userId })
 
 		if (filter === 'unread') {
-			base.isRead = false
+			qb.andWhere('n.isRead = :isRead', { isRead: false })
 		} else if (filter === 'read') {
-			base.isRead = true
+			qb.andWhere('n.isRead = :isRead', { isRead: true })
 		}
 
 		// Axtarış: başlıq və mesaj üzrə
 		const term = search?.trim()
-		const where = term
-			? [
-				{ ...base, title: Like(`%${term}%`) },
-				{ ...base, message: Like(`%${term}%`) },
-			]
-			: base
+		if (term) {
+			qb.andWhere('(n.title LIKE :term OR n.message LIKE :term)', { term: `%${term}%` })
+		}
 
-		const [data, total] = await this.notificationRepo.findAndCount({
-			where,
-			order: { createdAt: 'DESC' },
-			skip: (page - 1) * limit,
-			take: limit,
-			relations: ['task', 'task.taskList', 'task.taskList.folder', 'list', 'list.folder', 'folder', 'space']
-		})
+		// Şəxs: bildiriş mətnində keçən istifadəçi adına görə
+		const personTerm = person?.trim()
+		if (personTerm) {
+			qb.andWhere('(n.title LIKE :person OR n.message LIKE :person)', { person: `%${personTerm}%` })
+		}
+
+		// Tarix aralığı
+		const { start: rangeStart, end: rangeEnd } = resolveFilterDateRange(startDate, endDate)
+		if (rangeStart) {
+			qb.andWhere('n.createdAt >= :rangeStart', { rangeStart })
+		}
+		if (rangeEnd) {
+			qb.andWhere('n.createdAt <= :rangeEnd', { rangeEnd })
+		}
+
+		const [data, total] = await qb
+			.orderBy('n.createdAt', 'DESC')
+			.skip((page - 1) * limit)
+			.take(limit)
+			.getManyAndCount()
 
 		// Hər bildiriş üçün keçid URL-i hesabla (kliklə həmin yerə getmək üçün)
 		const buildListUrl = (list: any): string | null => {

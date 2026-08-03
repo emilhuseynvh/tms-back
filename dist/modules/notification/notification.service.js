@@ -22,6 +22,7 @@ const notification_settings_entity_1 = require("../../entities/notification-sett
 const notification_entity_1 = require("../../entities/notification.entity");
 const task_entity_1 = require("../../entities/task.entity");
 const nestjs_cls_1 = require("nestjs-cls");
+const filter_date_utils_1 = require("../../shared/utils/filter-date.utils");
 let NotificationService = class NotificationService {
     taskNotificationRepo;
     settingsRepo;
@@ -180,28 +181,42 @@ let NotificationService = class NotificationService {
         });
         return await this.notificationRepo.save(notification);
     }
-    async getUserNotifications(userId, filter = 'all', page = 1, limit = 20, search) {
-        const base = { userId };
+    async getUserNotifications(userId, filter = 'all', page = 1, limit = 20, search, person, startDate, endDate) {
+        const qb = this.notificationRepo.createQueryBuilder('n')
+            .leftJoinAndSelect('n.task', 'task')
+            .leftJoinAndSelect('task.taskList', 'taskList')
+            .leftJoinAndSelect('taskList.folder', 'taskListFolder')
+            .leftJoinAndSelect('n.list', 'list')
+            .leftJoinAndSelect('list.folder', 'listFolder')
+            .leftJoinAndSelect('n.folder', 'folder')
+            .leftJoinAndSelect('n.space', 'space')
+            .where('n.userId = :userId', { userId });
         if (filter === 'unread') {
-            base.isRead = false;
+            qb.andWhere('n.isRead = :isRead', { isRead: false });
         }
         else if (filter === 'read') {
-            base.isRead = true;
+            qb.andWhere('n.isRead = :isRead', { isRead: true });
         }
         const term = search?.trim();
-        const where = term
-            ? [
-                { ...base, title: (0, typeorm_2.Like)(`%${term}%`) },
-                { ...base, message: (0, typeorm_2.Like)(`%${term}%`) },
-            ]
-            : base;
-        const [data, total] = await this.notificationRepo.findAndCount({
-            where,
-            order: { createdAt: 'DESC' },
-            skip: (page - 1) * limit,
-            take: limit,
-            relations: ['task', 'task.taskList', 'task.taskList.folder', 'list', 'list.folder', 'folder', 'space']
-        });
+        if (term) {
+            qb.andWhere('(n.title LIKE :term OR n.message LIKE :term)', { term: `%${term}%` });
+        }
+        const personTerm = person?.trim();
+        if (personTerm) {
+            qb.andWhere('(n.title LIKE :person OR n.message LIKE :person)', { person: `%${personTerm}%` });
+        }
+        const { start: rangeStart, end: rangeEnd } = (0, filter_date_utils_1.resolveFilterDateRange)(startDate, endDate);
+        if (rangeStart) {
+            qb.andWhere('n.createdAt >= :rangeStart', { rangeStart });
+        }
+        if (rangeEnd) {
+            qb.andWhere('n.createdAt <= :rangeEnd', { rangeEnd });
+        }
+        const [data, total] = await qb
+            .orderBy('n.createdAt', 'DESC')
+            .skip((page - 1) * limit)
+            .take(limit)
+            .getManyAndCount();
         const buildListUrl = (list) => {
             if (!list)
                 return null;

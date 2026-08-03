@@ -36,9 +36,9 @@ let NotificationController = class NotificationController {
         this.notificationGateway = notificationGateway;
         this.cls = cls;
     }
-    async getMyNotifications(filter = 'all', page = '1', limit = '20', search) {
+    async getMyNotifications(filter = 'all', page = '1', limit = '20', search, person, startDate, endDate) {
         const user = this.cls.get('user');
-        return await this.notificationService.getUserNotifications(user.id, filter, parseInt(page), parseInt(limit), search);
+        return await this.notificationService.getUserNotifications(user.id, filter, parseInt(page), parseInt(limit), search, person, startDate, endDate);
     }
     async sendTaskNotification(body) {
         const user = this.cls.get('user');
@@ -88,12 +88,18 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'page', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'search', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'person', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'startDate', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'endDate', required: false }),
     __param(0, (0, common_1.Query)('filter')),
     __param(1, (0, common_1.Query)('page')),
     __param(2, (0, common_1.Query)('limit')),
     __param(3, (0, common_1.Query)('search')),
+    __param(4, (0, common_1.Query)('person')),
+    __param(5, (0, common_1.Query)('startDate')),
+    __param(6, (0, common_1.Query)('endDate')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], NotificationController.prototype, "getMyNotifications", null);
 __decorate([

@@ -167,6 +167,8 @@ let UserService = class UserService {
         }
         if (params.username !== undefined)
             currentUser.username = params.username;
+        if (params.shortName !== undefined)
+            currentUser.shortName = params.shortName || null;
         if (params.email !== undefined)
             currentUser.email = params.email;
         if (params.phone !== undefined)

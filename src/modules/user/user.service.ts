@@ -182,6 +182,7 @@ export class UserService {
 
         // Only update the fields that are provided
         if (params.username !== undefined) currentUser.username = params.username
+        if (params.shortName !== undefined) currentUser.shortName = params.shortName || null
         if (params.email !== undefined) currentUser.email = params.email
         if (params.phone !== undefined) currentUser.phone = params.phone
         if (params.browserNotificationsEnabled !== undefined) currentUser.browserNotificationsEnabled = params.browserNotificationsEnabled

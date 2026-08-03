@@ -46,7 +46,7 @@ export declare class NotificationService implements OnModuleInit {
         folderId?: number;
         listId?: number;
     }): Promise<NotificationEntity>;
-    getUserNotifications(userId: number, filter?: 'all' | 'unread' | 'read', page?: number, limit?: number, search?: string): Promise<{
+    getUserNotifications(userId: number, filter?: 'all' | 'unread' | 'read', page?: number, limit?: number, search?: string, person?: string, startDate?: string, endDate?: string): Promise<{
         data: NotificationEntity[];
         total: number;
         hasMore: boolean;

@@ -26,11 +26,17 @@ export class NotificationController {
 	@ApiQuery({ name: 'page', required: false })
 	@ApiQuery({ name: 'limit', required: false })
 	@ApiQuery({ name: 'search', required: false })
+	@ApiQuery({ name: 'person', required: false })
+	@ApiQuery({ name: 'startDate', required: false })
+	@ApiQuery({ name: 'endDate', required: false })
 	async getMyNotifications(
 		@Query('filter') filter: 'all' | 'unread' | 'read' = 'all',
 		@Query('page') page: string = '1',
 		@Query('limit') limit: string = '20',
-		@Query('search') search?: string
+		@Query('search') search?: string,
+		@Query('person') person?: string,
+		@Query('startDate') startDate?: string,
+		@Query('endDate') endDate?: string
 	) {
 		const user = this.cls.get('user')
 		return await this.notificationService.getUserNotifications(
@@ -38,7 +44,10 @@ export class NotificationController {
 			filter,
 			parseInt(page),
 			parseInt(limit),
-			search
+			search,
+			person,
+			startDate,
+			endDate
 		)
 	}
 
