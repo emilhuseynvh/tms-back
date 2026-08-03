@@ -25,17 +25,20 @@ export class NotificationController {
 	@ApiQuery({ name: 'filter', required: false, enum: ['all', 'unread', 'read'] })
 	@ApiQuery({ name: 'page', required: false })
 	@ApiQuery({ name: 'limit', required: false })
+	@ApiQuery({ name: 'search', required: false })
 	async getMyNotifications(
 		@Query('filter') filter: 'all' | 'unread' | 'read' = 'all',
 		@Query('page') page: string = '1',
-		@Query('limit') limit: string = '20'
+		@Query('limit') limit: string = '20',
+		@Query('search') search?: string
 	) {
 		const user = this.cls.get('user')
 		return await this.notificationService.getUserNotifications(
 			user.id,
 			filter,
 			parseInt(page),
-			parseInt(limit)
+			parseInt(limit),
+			search
 		)
 	}
 

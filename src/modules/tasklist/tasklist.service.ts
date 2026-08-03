@@ -190,10 +190,6 @@ export class TaskListService {
 		if (!taskList) throw new NotFoundException('Siyahı tapılmadı')
 
 		const user = this.cls.get('user')
-		const ownerId = taskList.folder?.ownerId || taskList.space?.ownerId
-		if (user.role !== 'admin' && ownerId !== user.id) {
-			throw new UnauthorizedException('Siyahını silmək üçün icazəniz yoxdur')
-		}
 
 		// Set deletedById before soft delete
 		taskList.deletedById = user.id

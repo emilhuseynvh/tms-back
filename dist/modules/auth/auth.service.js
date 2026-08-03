@@ -51,6 +51,7 @@ let AuthService = class AuthService {
                 email: true,
                 phone: true,
                 role: true,
+                browserNotificationsEnabled: true,
                 createdAt: true,
             }
         });

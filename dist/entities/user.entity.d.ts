@@ -4,6 +4,7 @@ export declare class UserEntity extends BaseEntity {
     id: number;
     username: string;
     shortName: string | null;
+    browserNotificationsEnabled: boolean;
     avatarId: number | null;
     phone: string;
     email: string;

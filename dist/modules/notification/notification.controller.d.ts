@@ -8,7 +8,7 @@ export declare class NotificationController {
     private notificationGateway;
     private cls;
     constructor(notificationService: NotificationService, notificationGateway: NotificationGateway, cls: ClsService);
-    getMyNotifications(filter?: 'all' | 'unread' | 'read', page?: string, limit?: string): Promise<{
+    getMyNotifications(filter?: 'all' | 'unread' | 'read', page?: string, limit?: string, search?: string): Promise<{
         data: import("../../entities/notification.entity").NotificationEntity[];
         total: number;
         hasMore: boolean;

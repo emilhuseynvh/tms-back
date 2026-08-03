@@ -180,14 +180,21 @@ let NotificationService = class NotificationService {
         });
         return await this.notificationRepo.save(notification);
     }
-    async getUserNotifications(userId, filter = 'all', page = 1, limit = 20) {
-        const where = { userId };
+    async getUserNotifications(userId, filter = 'all', page = 1, limit = 20, search) {
+        const base = { userId };
         if (filter === 'unread') {
-            where.isRead = false;
+            base.isRead = false;
         }
         else if (filter === 'read') {
-            where.isRead = true;
+            base.isRead = true;
         }
+        const term = search?.trim();
+        const where = term
+            ? [
+                { ...base, title: (0, typeorm_2.Like)(`%${term}%`) },
+                { ...base, message: (0, typeorm_2.Like)(`%${term}%`) },
+            ]
+            : base;
         const [data, total] = await this.notificationRepo.findAndCount({
             where,
             order: { createdAt: 'DESC' },

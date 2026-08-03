@@ -17,6 +17,7 @@ let UserEntity = class UserEntity extends typeorm_1.BaseEntity {
     id;
     username;
     shortName;
+    browserNotificationsEnabled;
     avatarId;
     phone;
     email;
@@ -38,6 +39,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 3, nullable: true }),
     __metadata("design:type", Object)
 ], UserEntity.prototype, "shortName", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], UserEntity.prototype, "browserNotificationsEnabled", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Object)

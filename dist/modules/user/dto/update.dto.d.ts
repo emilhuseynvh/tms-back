@@ -7,4 +7,5 @@ export declare class UpdateUserDto {
     email?: string;
     password?: string;
     role?: RoleEnum;
+    browserNotificationsEnabled?: boolean;
 }

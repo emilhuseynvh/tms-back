@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { LessThanOrEqual, MoreThan, Repository, IsNull } from "typeorm";
+import { LessThanOrEqual, MoreThan, Repository, IsNull, Like } from "typeorm";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { TaskNotificationEntity } from "../../entities/task-notification.entity";
 import { NotificationSettingsEntity } from "../../entities/notification-settings.entity";
@@ -235,15 +235,25 @@ export class NotificationService implements OnModuleInit {
 		userId: number,
 		filter: 'all' | 'unread' | 'read' = 'all',
 		page: number = 1,
-		limit: number = 20
+		limit: number = 20,
+		search?: string
 	): Promise<{ data: NotificationEntity[], total: number, hasMore: boolean }> {
-		const where: any = { userId }
+		const base: any = { userId }
 
 		if (filter === 'unread') {
-			where.isRead = false
+			base.isRead = false
 		} else if (filter === 'read') {
-			where.isRead = true
+			base.isRead = true
 		}
+
+		// Axtarış: başlıq və mesaj üzrə
+		const term = search?.trim()
+		const where = term
+			? [
+				{ ...base, title: Like(`%${term}%`) },
+				{ ...base, message: Like(`%${term}%`) },
+			]
+			: base
 
 		const [data, total] = await this.notificationRepo.findAndCount({
 			where,

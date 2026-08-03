@@ -184,6 +184,7 @@ export class UserService {
         if (params.username !== undefined) currentUser.username = params.username
         if (params.email !== undefined) currentUser.email = params.email
         if (params.phone !== undefined) currentUser.phone = params.phone
+        if (params.browserNotificationsEnabled !== undefined) currentUser.browserNotificationsEnabled = params.browserNotificationsEnabled
 
         await currentUser.save()
         return { message: 'Hesabınız uğurla yeniləndi!' }

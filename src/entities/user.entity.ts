@@ -14,6 +14,10 @@ export class UserEntity extends BaseEntity {
     @Column({ type: 'varchar', length: 3, nullable: true })
     shortName: string | null
 
+    // Brauzer bildirişləri aktivdirmi
+    @Column({ type: 'boolean', default: false })
+    browserNotificationsEnabled: boolean
+
     @Column({ nullable: true })
     avatarId: number | null
 

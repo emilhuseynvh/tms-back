@@ -22,6 +22,7 @@ class UpdateUserDto {
     email;
     password;
     role;
+    browserNotificationsEnabled;
 }
 exports.UpdateUserDto = UpdateUserDto;
 __decorate([
@@ -75,4 +76,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ required: false, enum: role_enum_1.RoleEnum }),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "role", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, swagger_1.ApiProperty)({ required: false, description: 'Brauzer bildirişləri aktivdirmi' }),
+    __metadata("design:type", Boolean)
+], UpdateUserDto.prototype, "browserNotificationsEnabled", void 0);
 //# sourceMappingURL=update.dto.js.map

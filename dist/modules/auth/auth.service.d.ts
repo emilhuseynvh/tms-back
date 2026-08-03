@@ -11,6 +11,7 @@ export declare class AuthService {
         id: number;
         username: string;
         shortName: string | null;
+        browserNotificationsEnabled: boolean;
         avatarId: number | null;
         phone: string;
         email: string;

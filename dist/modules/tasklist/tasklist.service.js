@@ -156,10 +156,6 @@ let TaskListService = class TaskListService {
         if (!taskList)
             throw new common_1.NotFoundException('Siyahı tapılmadı');
         const user = this.cls.get('user');
-        const ownerId = taskList.folder?.ownerId || taskList.space?.ownerId;
-        if (user.role !== 'admin' && ownerId !== user.id) {
-            throw new common_1.UnauthorizedException('Siyahını silmək üçün icazəniz yoxdur');
-        }
         taskList.deletedById = user.id;
         await this.taskListRepo.save(taskList);
         await this.taskListRepo.softDelete({ id });
