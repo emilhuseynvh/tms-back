@@ -250,7 +250,7 @@ export class SpaceService {
 		if (!this.hasActiveTaskFilters(filters)) {
 			const allTasks: any[] = []
 			taskLists.forEach((list) => {
-				allTasks.push(...list.tasks.map((t) => ({ ...t, listName: list.name })))
+				allTasks.push(...(list.tasks || []).map((t) => ({ ...t, listName: list.name })))
 			})
 			return { taskLists, allTasks }
 		}
@@ -311,11 +311,11 @@ export class SpaceService {
 			const allTasks: any[] = []
 			folders.forEach(folder => {
 				folder.taskLists.forEach(list => {
-					allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: folder.name })))
+					allTasks.push(...(list.tasks || []).map(t => ({ ...t, listName: list.name, folderName: folder.name })))
 				})
 			})
 			directLists.forEach(list => {
-				allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: null })))
+				allTasks.push(...(list.tasks || []).map(t => ({ ...t, listName: list.name, folderName: null })))
 			})
 			return { ...space, folders, directLists, allTasks }
 		}
@@ -331,7 +331,7 @@ export class SpaceService {
 			if (folderNameMatches && onlySearchFilter) {
 				filteredFolders.push(folder)
 				folder.taskLists.forEach(list => {
-					allTasks.push(...list.tasks.map(t => ({ ...t, listName: list.name, folderName: folder.name })))
+					allTasks.push(...(list.tasks || []).map(t => ({ ...t, listName: list.name, folderName: folder.name })))
 				})
 				continue
 			}

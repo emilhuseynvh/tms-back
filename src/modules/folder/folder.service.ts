@@ -135,7 +135,7 @@ export class FolderService {
 		if (!this.hasActiveTaskFilters(filters)) {
 			const allTasks: any[] = []
 			taskLists.forEach((list) => {
-				allTasks.push(...list.tasks.map((t) => ({ ...t, listName: list.name })))
+				allTasks.push(...(list.tasks || []).map((t) => ({ ...t, listName: list.name })))
 			})
 			return { taskLists, allTasks }
 		}
@@ -165,27 +165,91 @@ export class FolderService {
 		return { taskLists: filteredLists, allTasks }
 	}
 
+	private toPlainTask(task: any, listName?: string) {
+		return {
+			id: task.id,
+			title: task.title,
+			description: task.description,
+			startAt: task.startAt,
+			dueAt: task.dueAt,
+			createdById: task.createdById,
+			secondAssigneeId: task.secondAssigneeId,
+			statusId: task.statusId,
+			status: task.status
+				? { id: task.status.id, name: task.status.name, color: task.status.color }
+				: null,
+			order: task.order,
+			taskListId: task.taskListId,
+			parentId: task.parentId ?? null,
+			link: task.link,
+			assignees: (task.assignees || []).map((a: { id: number; name?: string; username?: string; email?: string }) => ({
+				id: a.id,
+				name: a.name,
+				username: a.username,
+				email: a.email,
+			})),
+			createdAt: task.createdAt,
+			updatedAt: task.updatedAt,
+			...(listName ? { listName } : {}),
+		}
+	}
+
+	private toPlainTaskLists(taskLists: TaskListEntity[]) {
+		return (taskLists || [])
+			.filter((l) => !l.isArchived && !l.deletedAt)
+			.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+			.map((list) => {
+				const tasks = (list.tasks || [])
+					.filter((t) => !t.isArchived && !t.deletedAt)
+					.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+					.map((t) => this.toPlainTask(t, list.name))
+				return {
+					id: list.id,
+					name: list.name,
+					type: list.type,
+					folderId: list.folderId,
+					spaceId: list.spaceId,
+					order: list.order,
+					createdAt: list.createdAt,
+					updatedAt: list.updatedAt,
+					tasks,
+				}
+			})
+	}
+
 	async getFullDetails(id: number, filters?: FilterFolderDetailsDto) {
 		const folder = await this.folderRepo.findOne({
 			where: { id, isArchived: false },
-			relations: ['taskLists', 'taskLists.tasks', 'taskLists.tasks.assignees', 'taskLists.tasks.status', 'space']
+			relations: {
+				space: true,
+				taskLists: {
+					tasks: {
+						assignees: true,
+						status: true,
+					},
+				},
+			},
 		})
 
 		if (!folder) throw new NotFoundException('Qovluq tapılmadı!')
 
-		const taskLists = folder.taskLists
-			?.filter(l => !l.isArchived && !l.deletedAt)
-			?.map(list => ({
-				...list,
-				tasks: list.tasks?.filter(t => !t.isArchived && !t.deletedAt) || []
-			})) || []
-
+		const taskLists = this.toPlainTaskLists(folder.taskLists)
 		const { taskLists: filteredLists, allTasks } = this.applyFolderFilters(taskLists, filters)
 
 		return {
-			...folder,
+			id: folder.id,
+			name: folder.name,
+			description: folder.description,
+			spaceId: folder.spaceId,
+			ownerId: folder.ownerId,
+			order: folder.order,
+			createdAt: folder.createdAt,
+			updatedAt: folder.updatedAt,
+			space: folder.space
+				? { id: folder.space.id, name: folder.space.name }
+				: null,
 			taskLists: filteredLists,
-			allTasks
+			allTasks,
 		}
 	}
 

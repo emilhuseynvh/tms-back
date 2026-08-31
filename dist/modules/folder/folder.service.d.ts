@@ -35,31 +35,27 @@ export declare class FolderService {
     private taskMatchesFilters;
     private hasActiveTaskFilters;
     private applyFolderFilters;
+    private toPlainTask;
+    private toPlainTaskLists;
     getFullDetails(id: number, filters?: FilterFolderDetailsDto): Promise<{
+        id: number;
+        name: string;
+        description: string;
+        spaceId: number;
+        ownerId: number;
+        order: number;
+        createdAt: Date;
+        updatedAt: Date;
+        space: {
+            id: number;
+            name: string;
+        } | null;
         taskLists: {
             id: number;
             name: string;
             tasks: any[];
         }[];
         allTasks: any[];
-        id: number;
-        name: string;
-        description: string;
-        order: number;
-        ownerId: number;
-        owner: UserEntity;
-        spaceId: number;
-        space: import("../../entities/space.entity").SpaceEntity;
-        assignees: UserEntity[];
-        isArchived: boolean;
-        archivedAt: Date | null;
-        archivedById: number | null;
-        archivedBy: UserEntity;
-        deletedById: number;
-        deletedBy: UserEntity;
-        createdAt: Date;
-        updatedAt: Date;
-        deletedAt: Date;
     }>;
     updateFolder(id: number, userId: number, dto: UpdateFolderDto): Promise<{
         message: string;
