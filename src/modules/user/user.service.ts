@@ -21,18 +21,30 @@ export class UserService {
 
 
     async getUserById(id: number) {
-        return await this.userRepo.findOne({
+        const user = await this.userRepo.findOne({
             where: { id },
             relations: ['avatar'],
+        })
+        if (!user) return null
+        delete (user as any).password
+        return user
+    }
+
+    /** Auth guard üçün — relation yoxdur ki, avatar join xətası 401-ə çevrilməsin */
+    async findForAuth(id: number) {
+        return await this.userRepo.findOne({
+            where: { id: Number(id) },
             select: {
                 id: true,
                 username: true,
-                avatar: true,
+                shortName: true,
+                avatarId: true,
                 email: true,
                 phone: true,
                 role: true,
+                browserNotificationsEnabled: true,
                 createdAt: true,
-            }
+            },
         })
     }
 
@@ -187,8 +199,17 @@ export class UserService {
         if (params.phone !== undefined) currentUser.phone = params.phone
         if (params.browserNotificationsEnabled !== undefined) currentUser.browserNotificationsEnabled = params.browserNotificationsEnabled
 
+        if (params.password && params.password.trim() !== '') {
+            currentUser.password = await hash(params.password, 10)
+        }
+
         await currentUser.save()
-        return { message: 'Hesabınız uğurla yeniləndi!' }
+        const saved = await this.userRepo.findOne({
+            where: { id: currentUser.id },
+            relations: ['avatar'],
+        })
+        if (saved) delete (saved as any).password
+        return { message: 'Hesabınız uğurla yeniləndi!', user: saved }
     }
 
     async deleteUser(id: number) {

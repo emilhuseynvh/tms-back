@@ -7,12 +7,14 @@ import { SpaceService } from "./space.service";
 import { SpaceController } from "./space.controller";
 import { ActivityLogModule } from "../activity-log/activity-log.module";
 import { NotificationModule } from "../notification/notification.module";
+import { FolderModule } from "../folder/folder.module";
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([SpaceEntity, TaskEntity, TaskListEntity]),
 		ActivityLogModule,
-		forwardRef(() => NotificationModule)
+		forwardRef(() => NotificationModule),
+		forwardRef(() => FolderModule),
 	],
 	controllers: [SpaceController],
 	providers: [SpaceService],

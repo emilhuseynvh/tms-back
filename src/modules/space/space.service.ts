@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { SpaceEntity } from "../../entities/space.entity";
@@ -15,6 +15,7 @@ import { NotificationType } from "../../entities/notification.entity";
 import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
 import { FilterSpaceDetailsDto } from "./dto/filter-space-details.dto";
 import { taskMatchesTaskDateFilters } from "../../shared/utils/filter-date.utils";
+import { FolderService } from "../folder/folder.service";
 
 @Injectable()
 export class SpaceService {
@@ -28,7 +29,9 @@ export class SpaceService {
 		private assigneeDefaults: AssigneeDefaultsService,
 		private cls: ClsService,
 		private activityLogService: ActivityLogService,
-		private notificationService: NotificationService
+		private notificationService: NotificationService,
+		@Inject(forwardRef(() => FolderService))
+		private folderService: FolderService
 	) { }
 
 	async create(ownerId: number, dto: CreateSpaceDto) {
@@ -76,10 +79,11 @@ export class SpaceService {
 	}
 
 	async listAll() {
-		return await this.spaceRepo.find({
+		const spaces = await this.spaceRepo.find({
 			order: { createdAt: 'DESC' },
 			relations: ['folders', 'taskLists']
 		})
+		return this.withVisibleFolders(spaces)
 	}
 
 	async listByOwner(ownerId: number) {
@@ -87,7 +91,7 @@ export class SpaceService {
 
 		// Admin bütün space-ləri görür
 		if (user?.role === 'admin') {
-			return await this.spaceRepo
+			const adminSpaces = await this.spaceRepo
 				.createQueryBuilder('space')
 				.leftJoinAndSelect('space.assignees', 'spaceAssignees')
 				.leftJoinAndSelect('space.owner', 'spaceOwner')
@@ -105,8 +109,11 @@ export class SpaceService {
 				.orderBy('space.order', 'ASC')
 				.addOrderBy('folders.order', 'ASC')
 				.addOrderBy('folderTaskLists.order', 'ASC')
+				.addOrderBy('folderTaskLists.createdAt', 'ASC')
 				.addOrderBy('taskLists.order', 'ASC')
+				.addOrderBy('taskLists.createdAt', 'ASC')
 				.getMany()
+			return this.withVisibleFolders(adminSpaces)
 		}
 
 		// User-in özünün yaratdığı space-ləri tap
@@ -180,7 +187,7 @@ export class SpaceService {
 			return []
 		}
 
-		return await this.spaceRepo
+		const memberSpaces = await this.spaceRepo
 			.createQueryBuilder('space')
 			.leftJoinAndSelect('space.assignees', 'spaceAssignees')
 			.leftJoinAndSelect('space.owner', 'spaceOwner')
@@ -199,8 +206,20 @@ export class SpaceService {
 			.orderBy('space.order', 'ASC')
 			.addOrderBy('folders.order', 'ASC')
 			.addOrderBy('folderTaskLists.order', 'ASC')
+			.addOrderBy('folderTaskLists.createdAt', 'ASC')
 			.addOrderBy('taskLists.order', 'ASC')
+			.addOrderBy('taskLists.createdAt', 'ASC')
 			.getMany()
+
+		return this.withVisibleFolders(memberSpaces)
+	}
+
+	private async withVisibleFolders<T extends { folders?: { id: number }[] }>(spaces: T[]): Promise<T[]> {
+		const visibleIds = await this.folderService.getVisibleFolderIdsForCurrentUser()
+		return spaces.map((space) => {
+			space.folders = this.folderService.filterVisibleFolders(space.folders, visibleIds)
+			return space
+		})
 	}
 
 	async getOne(id: number) {
@@ -211,7 +230,8 @@ export class SpaceService {
 
 		if (!space) throw new NotFoundException('Sahə tapılmadı!')
 
-		return space
+		const [withFolders] = await this.withVisibleFolders([space])
+		return withFolders
 	}
 
 	private taskMatchesFilters(task: { title?: string; description?: string; statusId?: number | null; startAt?: Date | string | null; dueAt?: Date | string | null; assignees?: { id: number }[] }, filters: FilterSpaceDetailsDto): boolean {
@@ -288,7 +308,10 @@ export class SpaceService {
 
 		if (!space) throw new NotFoundException('Sahə tapılmadı!')
 
-		const folders = space.folders
+		const visibleIds = await this.folderService.getVisibleFolderIdsForCurrentUser()
+		const visibleSpaceFolders = this.folderService.filterVisibleFolders(space.folders, visibleIds)
+
+		const folders = visibleSpaceFolders
 			?.filter(f => !f.isArchived && !f.deletedAt)
 			?.map(folder => ({
 				...folder,

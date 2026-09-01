@@ -2,6 +2,7 @@ import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { FolderEntity } from "../../entities/folder.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
+import { TaskEntity } from "../../entities/task.entity";
 import { FolderService } from "./folder.service";
 import { FolderController } from "./folder.controller";
 import { ActivityLogModule } from "../activity-log/activity-log.module";
@@ -9,7 +10,7 @@ import { NotificationModule } from "../notification/notification.module";
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([FolderEntity, TaskListEntity]),
+		TypeOrmModule.forFeature([FolderEntity, TaskListEntity, TaskEntity]),
 		ActivityLogModule,
 		forwardRef(() => NotificationModule)
 	],

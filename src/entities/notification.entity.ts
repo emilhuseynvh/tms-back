@@ -71,6 +71,13 @@ export class NotificationEntity extends BaseEntity {
 	@JoinColumn({ name: 'listId' })
 	list: TaskListEntity | null
 
+	@Column({ nullable: true })
+	actorId: number | null
+
+	@ManyToOne(() => UserEntity, { onDelete: 'SET NULL', nullable: true })
+	@JoinColumn({ name: 'actorId' })
+	actor: UserEntity | null
+
 	@CreateDateColumn()
 	createdAt: Date
 }

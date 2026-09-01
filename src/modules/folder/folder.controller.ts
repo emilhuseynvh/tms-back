@@ -16,6 +16,7 @@ export class FolderController {
 	) { }
 
 	@Get()
+	@Auth()
 	async listAll() {
 		return await this.folderService.listAll()
 	}
@@ -35,11 +36,13 @@ export class FolderController {
 	}
 
 	@Get('space/:spaceId')
+	@Auth()
 	async listBySpace(@Param('spaceId') spaceId: number) {
 		return await this.folderService.listBySpace(Number(spaceId))
 	}
 
 	@Get(':id/full')
+	@Auth()
 	async getFullDetails(@Param('id') id: number, @Query() filters: FilterFolderDetailsDto) {
 		return await this.folderService.getFullDetails(Number(id), filters)
 	}

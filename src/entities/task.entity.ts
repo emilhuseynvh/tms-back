@@ -29,6 +29,10 @@ export class TaskEntity extends BaseEntity {
 	@JoinColumn({ name: 'createdById' })
 	createdBy: UserEntity
 
+	/** Yaradandan sonra ilk təyin olunan şəxs (bir dəfə yazılır, çıxanda dəyişmir) */
+	@Column({ nullable: true })
+	secondAssigneeId: number | null
+
 	@Column({ nullable: true })
 	statusId: number
 

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException, Inject, forwardRef, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, MoreThan, Between, IsNull } from "typeorm";
+import { Repository, MoreThan, IsNull } from "typeorm";
 import { TaskEntity } from "../../entities/task.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
 import { TaskStatusEntity } from "../../entities/task-status.entity";
@@ -40,6 +40,20 @@ export class TaskService implements OnModuleInit {
 			if (orphans.length > 0) {
 				console.log(`Task createdById backfill: ${orphans.length} task yoxlanıldı`)
 			}
+
+			const withoutSecond = await this.taskRepo.find({
+				where: { secondAssigneeId: IsNull() },
+				relations: ['assignees'],
+				withDeleted: true,
+			})
+			for (const t of withoutSecond) {
+				const creatorStillAssigned = t.assignees?.some((a) => a.id === t.createdById)
+				if (!creatorStillAssigned) continue
+				const second = t.assignees.find((a) => a.id !== t.createdById)
+				if (second) {
+					await this.taskRepo.update({ id: t.id }, { secondAssigneeId: second.id })
+				}
+			}
 		} catch (e) {
 			console.error('Task createdById backfill xətası:', e?.message)
 		}
@@ -74,6 +88,7 @@ export class TaskService implements OnModuleInit {
 			title: dto.title,
 			description: dto.description ?? '',
 			createdById: creator?.id || null,
+			secondAssigneeId: this.resolveSecondAssigneeId(assigneeIds, creator?.id),
 			taskListId: dto.taskListId,
 			statusId: dto.statusId || null,
 			startAt: dto.startAt ? new Date(dto.startAt) : new Date(),
@@ -264,6 +279,10 @@ export class TaskService implements OnModuleInit {
 		if (dto.assigneeIds !== undefined) {
 			const prevIds = (task.assignees || []).map((a) => a.id)
 			const nextIds = dto.assigneeIds
+			if (!task.secondAssigneeId) {
+				const second = this.resolveSecondAssigneeId(nextIds, task.createdById)
+				if (second) task.secondAssigneeId = second
+			}
 
 			const addedUserIds = nextIds.filter(id => !prevIds.includes(id))
 			for (const userId of addedUserIds) {
@@ -347,6 +366,11 @@ export class TaskService implements OnModuleInit {
 		}
 
 		return updatedTask
+	}
+
+	private resolveSecondAssigneeId(assigneeIds: number[], creatorId?: number | null): number | null {
+		const second = assigneeIds.find((id) => id !== creatorId)
+		return second ?? null
 	}
 
 	private async ensureStatusExists(statusId: number) {
@@ -468,32 +492,54 @@ export class TaskService implements OnModuleInit {
 		const task = await this.taskRepo.findOne({ where: { id: params.taskId } })
 		if (!task) throw new NotFoundException('Task not found')
 
-		const currentListId = task.taskListId
-		const currentOrder = task.order
-
-		const total = await this.taskRepo.count({ where: { taskListId: currentListId } })
-		let targetIndex = Number.isFinite(params.targetIndex as unknown as number) ? Number(params.targetIndex) : currentOrder
-		targetIndex = Math.max(0, Math.min(total - 1, Math.floor(targetIndex)))
-
-		if (targetIndex === currentOrder) return task
-
-		if (targetIndex < currentOrder) {
-			// order >= targetIndex AND order < currentOrder
-			await this.taskRepo.increment(
-				{ taskListId: currentListId, order: Between(targetIndex, currentOrder - 1) },
-				'order',
-				1,
-			)
-		} else {
-			// order > currentOrder AND order <= targetIndex
-			await this.taskRepo.decrement(
-				{ taskListId: currentListId, order: Between(currentOrder + 1, targetIndex) },
-				'order',
-				1,
-			)
+		if (params.parentId !== undefined && params.parentId !== task.parentId) {
+			if (params.parentId) {
+				const parent = await this.taskRepo.findOne({ where: { id: params.parentId } })
+				if (!parent) throw new NotFoundException('Parent tapşırıq tapılmadı')
+				if (parent.taskListId !== task.taskListId) {
+					throw new BadRequestException('Parent eyni siyahıda olmalıdır')
+				}
+			}
+			task.parentId = params.parentId ?? null
+			await this.taskRepo.save(task)
 		}
-		task.order = targetIndex
-		return await this.taskRepo.save(task)
+
+		const parentId = task.parentId ?? null
+		const siblings = await this.taskRepo.find({
+			where: {
+				taskListId: task.taskListId,
+				parentId: parentId === null ? IsNull() : parentId,
+			},
+			order: { order: 'ASC', createdAt: 'ASC' },
+		})
+
+		const fromIndex = siblings.findIndex((t) => t.id === task.id)
+		if (fromIndex < 0) return task
+
+		let toIndex = Number.isFinite(Number(params.targetIndex)) ? Math.floor(Number(params.targetIndex)) : fromIndex
+		toIndex = Math.max(0, Math.min(siblings.length - 1, toIndex))
+
+		if (fromIndex === toIndex) {
+			if (siblings.some((t, i) => t.order !== i)) {
+				await this.persistSiblingOrder(siblings)
+			}
+			return task
+		}
+
+		const reordered = [...siblings]
+		const [moved] = reordered.splice(fromIndex, 1)
+		reordered.splice(toIndex, 0, moved)
+		await this.persistSiblingOrder(reordered)
+		return await this.taskRepo.findOne({ where: { id: task.id } })
+	}
+
+	private async persistSiblingOrder(siblings: TaskEntity[]) {
+		for (let i = 0; i < siblings.length; i++) {
+			if (siblings[i].order !== i) {
+				await this.taskRepo.update({ id: siblings[i].id }, { order: i })
+				siblings[i].order = i
+			}
+		}
 	}
 
 	async deleteTask(id: number) {

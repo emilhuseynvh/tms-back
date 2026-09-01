@@ -202,6 +202,7 @@ export class NotificationService implements OnModuleInit {
 				title: `"${task.title}" tapşırığı üzrə mesaj`,
 				message: `${sender.username || 'İstifadəçi'}: ${message}`,
 				taskId: task.id,
+				actorId: sender.id ?? null,
 			}))
 		}
 
@@ -216,8 +217,11 @@ export class NotificationService implements OnModuleInit {
 		taskId?: number,
 		spaceId?: number,
 		folderId?: number,
-		listId?: number
+		listId?: number,
+		actorId?: number | null
 	}): Promise<NotificationEntity> {
+		const currentUser = this.cls.get('user')
+		const actorId = data.actorId !== undefined ? data.actorId : (currentUser?.id ?? null)
 		const notification = this.notificationRepo.create({
 			userId: data.userId,
 			type: data.type,
@@ -227,6 +231,7 @@ export class NotificationService implements OnModuleInit {
 			spaceId: data.spaceId || null,
 			folderId: data.folderId || null,
 			listId: data.listId || null,
+			actorId,
 			isRead: false
 		})
 		return await this.notificationRepo.save(notification)
@@ -246,10 +251,16 @@ export class NotificationService implements OnModuleInit {
 			.leftJoinAndSelect('n.task', 'task')
 			.leftJoinAndSelect('task.taskList', 'taskList')
 			.leftJoinAndSelect('taskList.folder', 'taskListFolder')
+			.leftJoinAndSelect('taskListFolder.space', 'taskListFolderSpace')
+			.leftJoinAndSelect('taskList.space', 'taskListSpace')
 			.leftJoinAndSelect('n.list', 'list')
 			.leftJoinAndSelect('list.folder', 'listFolder')
+			.leftJoinAndSelect('listFolder.space', 'listFolderSpace')
+			.leftJoinAndSelect('list.space', 'listSpace')
 			.leftJoinAndSelect('n.folder', 'folder')
+			.leftJoinAndSelect('folder.space', 'folderSpace')
 			.leftJoinAndSelect('n.space', 'space')
+			.leftJoinAndSelect('n.actor', 'actor')
 			.where('n.userId = :userId', { userId })
 
 		if (filter === 'unread') {
@@ -267,7 +278,10 @@ export class NotificationService implements OnModuleInit {
 		// Şəxs: bildiriş mətnində keçən istifadəçi adına görə
 		const personTerm = person?.trim()
 		if (personTerm) {
-			qb.andWhere('(n.title LIKE :person OR n.message LIKE :person)', { person: `%${personTerm}%` })
+			qb.andWhere(
+				'(actor.username LIKE :person OR n.title LIKE :person OR n.message LIKE :person)',
+				{ person: `%${personTerm}%` }
+			)
 		}
 
 		// Tarix aralığı
@@ -299,22 +313,37 @@ export class NotificationService implements OnModuleInit {
 			return `${base}/${segment}/${list.id}`
 		}
 
-		data.forEach((n: any) => {
+		const mapped = data.map((n: any) => {
+			const list = n.task?.taskList || n.list || null
+			const folder = list?.folder || n.folder || null
+			const space = folder?.space || list?.space || n.space || null
+			const parts: string[] = []
+			if (space?.name) parts.push(space.name)
+			if (folder?.name) parts.push(folder.name)
+			if (list?.name) parts.push(list.name)
+			if (n.task?.title) parts.push(n.task.title)
+
 			let url: string | null = null
-			if (n.task?.taskList) {
-				url = buildListUrl(n.task.taskList)
-			} else if (n.list) {
-				url = buildListUrl(n.list)
-			} else if (n.folder) {
-				url = n.folder.spaceId ? `/tasks/space/${n.folder.spaceId}/folder/${n.folder.id}` : null
-			} else if (n.spaceId) {
-				url = `/tasks/space/${n.spaceId}`
+			if (list) {
+				url = buildListUrl(list)
+			} else if (folder) {
+				url = folder.spaceId ? `/tasks/space/${folder.spaceId}/folder/${folder.id}` : null
+			} else if (n.spaceId || space?.id) {
+				url = `/tasks/space/${n.spaceId || space.id}`
 			}
-			n.url = url
+
+			return {
+				...n,
+				actor: n.actor
+					? { id: n.actor.id, username: n.actor.username, shortName: n.actor.shortName }
+					: null,
+				location: parts.length ? parts.join(' / ') : null,
+				url,
+			}
 		})
 
 		return {
-			data,
+			data: mapped,
 			total,
 			hasMore: page * limit < total
 		}
@@ -382,7 +411,8 @@ export class NotificationService implements OnModuleInit {
 			type: NotificationType.TASK_DEADLINE,
 			title: 'Deadline yaxınlaşır',
 			message: `"${taskTitle}" tapşırığının bitmə vaxtına ${hoursLeft} saat qalıb`,
-			taskId
+			taskId,
+			actorId: null,
 		})
 	}
 

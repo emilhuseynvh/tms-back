@@ -6,7 +6,8 @@ import { ClsService } from "nestjs-cls";
 export class RoleGuard implements CanActivate {
     constructor(private cls: ClsService, private reflector: Reflector) { }
     async canActivate(context: ExecutionContext): Promise<boolean> {
-        const user = this.cls.get('user');
+        const request = context.switchToHttp().getRequest()
+        const user = this.cls.get('user') || request.user
 
         if (!user) throw new UnauthorizedException('User not found');
 

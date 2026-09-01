@@ -39,6 +39,7 @@ export class TaskListService {
 		list.content = dto.content || null
 		list.folderId = dto.folderId || null
 		list.spaceId = dto.spaceId || null
+		list.order = await this.nextOrder(dto.folderId || null, dto.spaceId || null)
 		list.assignees = assigneeIds.map((id) => ({ id } as UserEntity))
 
 		const savedList = await this.taskListRepo.save(list)
@@ -66,10 +67,22 @@ export class TaskListService {
 		return savedList
 	}
 
+	private async nextOrder(folderId: number | null, spaceId: number | null): Promise<number> {
+		const qb = this.taskListRepo.createQueryBuilder('list').select('MAX(list.order)', 'max')
+		if (folderId) {
+			qb.where('list.folderId = :folderId', { folderId })
+		} else {
+			qb.where('list.spaceId = :spaceId', { spaceId }).andWhere('list.folderId IS NULL')
+		}
+		const raw = await qb.getRawOne()
+		const max = raw?.max == null ? -1 : Number(raw.max)
+		return max + 1
+	}
+
 	async listBySpace(spaceId: number) {
 		return await this.taskListRepo.find({
 			where: { spaceId, folderId: IsNull() },
-			order: { order: 'ASC' },
+			order: { order: 'ASC', createdAt: 'ASC' },
 			relations: ['tasks']
 		})
 	}
@@ -112,6 +125,7 @@ export class TaskListService {
 
 		return await queryBuilder
 			.orderBy('taskList.order', 'ASC')
+			.addOrderBy('taskList.createdAt', 'ASC')
 			.addOrderBy('task.order', 'ASC')
 			.getMany()
 	}
@@ -207,8 +221,27 @@ export class TaskListService {
 	}
 
 	async reorderTaskLists(listIds: number[]) {
-		for (let i = 0; i < listIds.length; i++) {
-			await this.taskListRepo.update(listIds[i], { order: i })
+		const ids = (listIds || []).map((id) => Number(id)).filter((id) => Number.isFinite(id))
+		if (ids.length === 0) return { message: "Sıralama yeniləndi" }
+
+		const first = await this.taskListRepo.findOne({ where: { id: ids[0] } })
+		if (!first) throw new NotFoundException('Siyahı tapılmadı')
+
+		const siblings = await this.taskListRepo.find({
+			where: first.folderId
+				? { folderId: first.folderId }
+				: { spaceId: first.spaceId, folderId: IsNull() },
+			order: { order: 'ASC', createdAt: 'ASC' },
+		})
+
+		const idSet = new Set(ids)
+		const ordered = [
+			...ids.map((id) => siblings.find((s) => s.id === id)).filter(Boolean),
+			...siblings.filter((s) => !idSet.has(s.id)),
+		]
+
+		for (let i = 0; i < ordered.length; i++) {
+			await this.taskListRepo.update(ordered[i].id, { order: i })
 		}
 		return { message: "Sıralama yeniləndi" }
 	}
@@ -222,6 +255,7 @@ export class TaskListService {
 
 		taskList.folderId = targetFolderId
 		taskList.spaceId = targetSpaceId
+		taskList.order = await this.nextOrder(targetFolderId, targetSpaceId)
 		await this.taskListRepo.save(taskList)
 
 		await this.activityLogService.log(

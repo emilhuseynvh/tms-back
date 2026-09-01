@@ -16,6 +16,7 @@ export class SpaceController {
 	) { }
 
 	@Get()
+	@Auth()
 	async listAll() {
 		return await this.spaceService.listAll()
 	}
@@ -28,11 +29,13 @@ export class SpaceController {
 	}
 
 	@Get(':id')
+	@Auth()
 	async getOne(@Param('id') id: number) {
 		return await this.spaceService.getOne(Number(id))
 	}
 
 	@Get(':id/full')
+	@Auth()
 	async getFullDetails(@Param('id') id: number, @Query() filters: FilterSpaceDetailsDto) {
 		return await this.spaceService.getFullDetails(Number(id), filters)
 	}
