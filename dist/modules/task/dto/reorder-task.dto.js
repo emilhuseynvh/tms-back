@@ -16,6 +16,7 @@ const class_validator_1 = require("class-validator");
 class ReorderTaskDto {
     taskId;
     targetIndex;
+    parentId;
 }
 exports.ReorderTaskDto = ReorderTaskDto;
 __decorate([
@@ -25,9 +26,21 @@ __decorate([
     __metadata("design:type", Number)
 ], ReorderTaskDto.prototype, "taskId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ type: Number, example: 0 }),
+    (0, swagger_1.ApiProperty)({ type: Number, example: 0, description: 'Yeni sıra (eyni parent altındakı qardaşlar arasında, 0-dan)' }),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], ReorderTaskDto.prototype, "targetIndex", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, nullable: true, description: 'Yeni parent. null = kök tapşırıq' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (value === null || value === undefined || value === '')
+            return value === '' ? undefined : value;
+        return Number(value);
+    }),
+    (0, class_validator_1.ValidateIf)((_, v) => v !== null && v !== undefined),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Object)
+], ReorderTaskDto.prototype, "parentId", void 0);
 //# sourceMappingURL=reorder-task.dto.js.map

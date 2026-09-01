@@ -46,6 +46,8 @@ let NotificationEntity = class NotificationEntity extends typeorm_1.BaseEntity {
     folder;
     listId;
     list;
+    actorId;
+    actor;
     createdAt;
 };
 exports.NotificationEntity = NotificationEntity;
@@ -114,6 +116,15 @@ __decorate([
     (0, typeorm_1.JoinColumn)({ name: 'listId' }),
     __metadata("design:type", Object)
 ], NotificationEntity.prototype, "list", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], NotificationEntity.prototype, "actorId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { onDelete: 'SET NULL', nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'actorId' }),
+    __metadata("design:type", Object)
+], NotificationEntity.prototype, "actor", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

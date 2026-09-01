@@ -22,6 +22,7 @@ let TaskEntity = class TaskEntity extends typeorm_1.BaseEntity {
     dueAt;
     createdById;
     createdBy;
+    secondAssigneeId;
     statusId;
     status;
     order;
@@ -74,6 +75,10 @@ __decorate([
     (0, typeorm_1.JoinColumn)({ name: 'createdById' }),
     __metadata("design:type", user_entity_1.UserEntity)
 ], TaskEntity.prototype, "createdBy", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Object)
+], TaskEntity.prototype, "secondAssigneeId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Number)

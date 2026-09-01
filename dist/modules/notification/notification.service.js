@@ -163,11 +163,14 @@ let NotificationService = class NotificationService {
                 title: `"${task.title}" tapşırığı üzrə mesaj`,
                 message: `${sender.username || 'İstifadəçi'}: ${message}`,
                 taskId: task.id,
+                actorId: sender.id ?? null,
             }));
         }
         return { message: `${targetIds.length} istifadəçiyə bildiriş göndərildi!`, notifications };
     }
     async createNotification(data) {
+        const currentUser = this.cls.get('user');
+        const actorId = data.actorId !== undefined ? data.actorId : (currentUser?.id ?? null);
         const notification = this.notificationRepo.create({
             userId: data.userId,
             type: data.type,
@@ -177,6 +180,7 @@ let NotificationService = class NotificationService {
             spaceId: data.spaceId || null,
             folderId: data.folderId || null,
             listId: data.listId || null,
+            actorId,
             isRead: false
         });
         return await this.notificationRepo.save(notification);
@@ -186,10 +190,16 @@ let NotificationService = class NotificationService {
             .leftJoinAndSelect('n.task', 'task')
             .leftJoinAndSelect('task.taskList', 'taskList')
             .leftJoinAndSelect('taskList.folder', 'taskListFolder')
+            .leftJoinAndSelect('taskListFolder.space', 'taskListFolderSpace')
+            .leftJoinAndSelect('taskList.space', 'taskListSpace')
             .leftJoinAndSelect('n.list', 'list')
             .leftJoinAndSelect('list.folder', 'listFolder')
+            .leftJoinAndSelect('listFolder.space', 'listFolderSpace')
+            .leftJoinAndSelect('list.space', 'listSpace')
             .leftJoinAndSelect('n.folder', 'folder')
+            .leftJoinAndSelect('folder.space', 'folderSpace')
             .leftJoinAndSelect('n.space', 'space')
+            .leftJoinAndSelect('n.actor', 'actor')
             .where('n.userId = :userId', { userId });
         if (filter === 'unread') {
             qb.andWhere('n.isRead = :isRead', { isRead: false });
@@ -203,7 +213,7 @@ let NotificationService = class NotificationService {
         }
         const personTerm = person?.trim();
         if (personTerm) {
-            qb.andWhere('(n.title LIKE :person OR n.message LIKE :person)', { person: `%${personTerm}%` });
+            qb.andWhere('(actor.username LIKE :person OR n.title LIKE :person OR n.message LIKE :person)', { person: `%${personTerm}%` });
         }
         const { start: rangeStart, end: rangeEnd } = (0, filter_date_utils_1.resolveFilterDateRange)(startDate, endDate);
         if (rangeStart) {
@@ -232,24 +242,40 @@ let NotificationService = class NotificationService {
             const segment = list.type === 'meeting' ? 'note' : 'list';
             return `${base}/${segment}/${list.id}`;
         };
-        data.forEach((n) => {
+        const mapped = data.map((n) => {
+            const list = n.task?.taskList || n.list || null;
+            const folder = list?.folder || n.folder || null;
+            const space = folder?.space || list?.space || n.space || null;
+            const parts = [];
+            if (space?.name)
+                parts.push(space.name);
+            if (folder?.name)
+                parts.push(folder.name);
+            if (list?.name)
+                parts.push(list.name);
+            if (n.task?.title)
+                parts.push(n.task.title);
             let url = null;
-            if (n.task?.taskList) {
-                url = buildListUrl(n.task.taskList);
+            if (list) {
+                url = buildListUrl(list);
             }
-            else if (n.list) {
-                url = buildListUrl(n.list);
+            else if (folder) {
+                url = folder.spaceId ? `/tasks/space/${folder.spaceId}/folder/${folder.id}` : null;
             }
-            else if (n.folder) {
-                url = n.folder.spaceId ? `/tasks/space/${n.folder.spaceId}/folder/${n.folder.id}` : null;
+            else if (n.spaceId || space?.id) {
+                url = `/tasks/space/${n.spaceId || space.id}`;
             }
-            else if (n.spaceId) {
-                url = `/tasks/space/${n.spaceId}`;
-            }
-            n.url = url;
+            return {
+                ...n,
+                actor: n.actor
+                    ? { id: n.actor.id, username: n.actor.username, shortName: n.actor.shortName }
+                    : null,
+                location: parts.length ? parts.join(' / ') : null,
+                url,
+            };
         });
         return {
-            data,
+            data: mapped,
             total,
             hasMore: page * limit < total
         };
@@ -305,7 +331,8 @@ let NotificationService = class NotificationService {
             type: notification_entity_1.NotificationType.TASK_DEADLINE,
             title: 'Deadline yaxınlaşır',
             message: `"${taskTitle}" tapşırığının bitmə vaxtına ${hoursLeft} saat qalıb`,
-            taskId
+            taskId,
+            actorId: null,
         });
     }
     async notifyTaskUpdated(taskId, userId, taskTitle, updatedBy) {

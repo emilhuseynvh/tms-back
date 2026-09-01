@@ -45,6 +45,7 @@ export declare class NotificationService implements OnModuleInit {
         spaceId?: number;
         folderId?: number;
         listId?: number;
+        actorId?: number | null;
     }): Promise<NotificationEntity>;
     getUserNotifications(userId: number, filter?: 'all' | 'unread' | 'read', page?: number, limit?: number, search?: string, person?: string, startDate?: string, endDate?: string): Promise<{
         data: NotificationEntity[];

@@ -18,6 +18,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const folder_entity_1 = require("../../entities/folder.entity");
 const tasklist_entity_1 = require("../../entities/tasklist.entity");
+const task_entity_1 = require("../../entities/task.entity");
 const nestjs_cls_1 = require("nestjs-cls");
 const activity_log_service_1 = require("../activity-log/activity-log.service");
 const activity_log_entity_1 = require("../../entities/activity-log.entity");
@@ -28,13 +29,15 @@ const filter_date_utils_1 = require("../../shared/utils/filter-date.utils");
 let FolderService = class FolderService {
     folderRepo;
     taskListRepo;
+    taskRepo;
     assigneeDefaults;
     cls;
     activityLogService;
     notificationService;
-    constructor(folderRepo, taskListRepo, assigneeDefaults, cls, activityLogService, notificationService) {
+    constructor(folderRepo, taskListRepo, taskRepo, assigneeDefaults, cls, activityLogService, notificationService) {
         this.folderRepo = folderRepo;
         this.taskListRepo = taskListRepo;
+        this.taskRepo = taskRepo;
         this.assigneeDefaults = assigneeDefaults;
         this.cls = cls;
         this.activityLogService = activityLogService;
@@ -82,18 +85,90 @@ let FolderService = class FolderService {
             assignees: savedFolder.assignees || []
         };
     }
+    async getVisibleFolderIdsForCurrentUser() {
+        const user = this.cls.get('user');
+        if (!user)
+            return new Set();
+        if (user.role === 'admin')
+            return null;
+        const userId = user.id;
+        const ids = new Set();
+        const addRows = (rows, keys) => {
+            for (const row of rows) {
+                for (const key of keys) {
+                    if (row[key] != null) {
+                        ids.add(Number(row[key]));
+                        break;
+                    }
+                }
+            }
+        };
+        const owned = await this.folderRepo.find({
+            where: { ownerId: userId, isArchived: false },
+            select: ['id'],
+        });
+        owned.forEach((f) => ids.add(f.id));
+        const assignedFolders = await this.folderRepo
+            .createQueryBuilder('folder')
+            .innerJoin('folder.assignees', 'assignee', 'assignee.id = :userId', { userId })
+            .where('folder.deletedAt IS NULL')
+            .andWhere('folder.isArchived = false')
+            .select('folder.id', 'id')
+            .getRawMany();
+        addRows(assignedFolders, ['id', 'folder_id']);
+        const viaLists = await this.taskListRepo
+            .createQueryBuilder('list')
+            .innerJoin('list.assignees', 'assignee', 'assignee.id = :userId', { userId })
+            .where('list.folderId IS NOT NULL')
+            .andWhere('list.deletedAt IS NULL')
+            .andWhere('list.isArchived = false')
+            .select('DISTINCT list.folderId', 'id')
+            .getRawMany();
+        addRows(viaLists, ['id', 'folderId', 'folder_id']);
+        const viaTasks = await this.taskRepo
+            .createQueryBuilder('task')
+            .innerJoin('task.assignees', 'assignee', 'assignee.id = :userId', { userId })
+            .innerJoin('task.taskList', 'list')
+            .where('list.folderId IS NOT NULL')
+            .andWhere('task.deletedAt IS NULL')
+            .andWhere('task.isArchived = false')
+            .select('DISTINCT list.folderId', 'id')
+            .getRawMany();
+        addRows(viaTasks, ['id', 'folderId', 'folder_id']);
+        return ids;
+    }
+    filterVisibleFolders(folders, visibleIds) {
+        const list = folders || [];
+        if (visibleIds === null)
+            return list;
+        return list.filter((folder) => visibleIds.has(folder.id));
+    }
+    async assertFolderVisible(folderId) {
+        const visibleIds = await this.getVisibleFolderIdsForCurrentUser();
+        if (visibleIds === null)
+            return;
+        if (!visibleIds.has(folderId)) {
+            throw new common_1.ForbiddenException('Bu qovluğa giriş icazəniz yoxdur');
+        }
+    }
     async listAll() {
-        return await this.folderRepo.find({ order: { order: 'ASC' } });
+        const folders = await this.folderRepo.find({ order: { order: 'ASC' } });
+        const visibleIds = await this.getVisibleFolderIdsForCurrentUser();
+        return this.filterVisibleFolders(folders, visibleIds);
     }
     async listByOwner(ownerId) {
-        return await this.folderRepo.find({ where: { ownerId }, order: { order: 'ASC' } });
+        const folders = await this.folderRepo.find({ where: { ownerId }, order: { order: 'ASC' } });
+        const visibleIds = await this.getVisibleFolderIdsForCurrentUser();
+        return this.filterVisibleFolders(folders, visibleIds);
     }
     async listBySpace(spaceId) {
-        return await this.folderRepo.find({
+        const folders = await this.folderRepo.find({
             where: { spaceId },
             order: { order: 'ASC' },
             relations: ['taskLists']
         });
+        const visibleIds = await this.getVisibleFolderIdsForCurrentUser();
+        return this.filterVisibleFolders(folders, visibleIds);
     }
     taskMatchesFilters(task, filters) {
         if (filters.search) {
@@ -181,7 +256,16 @@ let FolderService = class FolderService {
     toPlainTaskLists(taskLists) {
         return (taskLists || [])
             .filter((l) => !l.isArchived && !l.deletedAt)
-            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            .sort((a, b) => {
+            const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+            if (orderDiff !== 0)
+                return orderDiff;
+            const aTime = new Date(a.createdAt).getTime();
+            const bTime = new Date(b.createdAt).getTime();
+            if (aTime !== bTime)
+                return aTime - bTime;
+            return a.id - b.id;
+        })
             .map((list) => {
             const tasks = (list.tasks || [])
                 .filter((t) => !t.isArchived && !t.deletedAt)
@@ -215,6 +299,7 @@ let FolderService = class FolderService {
         });
         if (!folder)
             throw new common_1.NotFoundException('Qovluq tapılmadı!');
+        await this.assertFolderVisible(folder.id);
         const taskLists = this.toPlainTaskLists(folder.taskLists);
         const { taskLists: filteredLists, allTasks } = this.applyFolderFilters(taskLists, filters);
         return {
@@ -320,7 +405,9 @@ exports.FolderService = FolderService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(folder_entity_1.FolderEntity)),
     __param(1, (0, typeorm_1.InjectRepository)(tasklist_entity_1.TaskListEntity)),
+    __param(2, (0, typeorm_1.InjectRepository)(task_entity_1.TaskEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         assignee_defaults_service_1.AssigneeDefaultsService,
         nestjs_cls_1.ClsService,

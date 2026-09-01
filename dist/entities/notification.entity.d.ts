@@ -33,5 +33,7 @@ export declare class NotificationEntity extends BaseEntity {
     folder: FolderEntity | null;
     listId: number | null;
     list: TaskListEntity | null;
+    actorId: number | null;
+    actor: UserEntity | null;
     createdAt: Date;
 }

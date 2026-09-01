@@ -23,31 +23,39 @@ let AuthGuard = class AuthGuard {
         this.clsService = clsService;
     }
     async canActivate(context) {
-        let request = context.switchToHttp().getRequest();
-        console.log(request.headers?.AUTHORIZATION);
-        const authorization = request.headers?.authorization ||
+        const request = context.switchToHttp().getRequest();
+        const raw = request.headers?.authorization ||
             request.headers?.Authorization ||
             request.headers?.AUTHORIZATION;
-        if (!authorization) {
+        const authorization = Array.isArray(raw) ? raw[0] : raw;
+        if (!authorization || typeof authorization !== 'string') {
             throw new common_1.UnauthorizedException('Authorization header missing');
         }
-        const [scheme, token] = authorization.split(' ');
+        const [scheme, ...tokenParts] = authorization.trim().split(/\s+/);
+        const token = tokenParts.join(' ').trim();
         if (!scheme || scheme.toLowerCase() !== 'bearer' || !token) {
             throw new common_1.UnauthorizedException('Invalid Authorization header format');
         }
+        let payload;
         try {
-            let payload = this.jwtService.verify(token);
-            if (!payload.userId)
-                throw new common_1.UnauthorizedException();
-            let user = await this.userService.getUserById(payload.userId);
-            if (!user)
-                throw new common_1.UnauthorizedException();
-            this.clsService.set('user', user);
-            return true;
+            payload = this.jwtService.verify(token);
         }
-        catch (error) {
+        catch {
+            throw new common_1.UnauthorizedException('Token etibarsızdır və ya müddəti bitib');
+        }
+        const userId = payload?.userId ?? payload?.sub ?? payload?.id;
+        if (userId == null || userId === '') {
             throw new common_1.UnauthorizedException();
         }
+        const user = await this.userService.findForAuth(userId);
+        if (!user) {
+            throw new common_1.UnauthorizedException();
+        }
+        request.user = user;
+        if (this.clsService.isActive()) {
+            this.clsService.set('user', user);
+        }
+        return true;
     }
 };
 AuthGuard = __decorate([

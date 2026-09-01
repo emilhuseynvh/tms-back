@@ -29,6 +29,7 @@ export declare class TaskService implements OnModuleInit {
     listByTaskList(taskListId: number, filters?: FilterTaskDto): Promise<TaskEntity[]>;
     private loadChildren;
     update(id: number, dto: UpdateTaskDto): Promise<TaskEntity | null>;
+    private resolveSecondAssigneeId;
     private ensureStatusExists;
     private collectChanges;
     private logTaskActivity;
@@ -36,7 +37,8 @@ export declare class TaskService implements OnModuleInit {
     private moveTaskToListSafely;
     private syncDescendantsTaskListIdInRepo;
     private logTaskCreation;
-    reorder(params: ReorderTaskDto): Promise<TaskEntity>;
+    reorder(params: ReorderTaskDto): Promise<TaskEntity | null>;
+    private persistSiblingOrder;
     deleteTask(id: number): Promise<{
         message: string;
     }>;

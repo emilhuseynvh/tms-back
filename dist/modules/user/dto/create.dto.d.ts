@@ -1,7 +1,7 @@
 import { RoleEnum } from "../../../shared/enums/role.enum";
 export declare class CreateUserDto {
     username: string;
-    shortName?: string;
+    shortName?: string | null;
     avatarId?: number;
     phone: string;
     email: string;

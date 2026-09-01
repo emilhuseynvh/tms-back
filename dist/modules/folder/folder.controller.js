@@ -63,6 +63,7 @@ let FolderController = class FolderController {
 exports.FolderController = FolderController;
 __decorate([
     (0, common_1.Get)(),
+    (0, auth_decorator_1.Auth)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
@@ -84,6 +85,7 @@ __decorate([
 ], FolderController.prototype, "myFolders", null);
 __decorate([
     (0, common_1.Get)('space/:spaceId'),
+    (0, auth_decorator_1.Auth)(),
     __param(0, (0, common_1.Param)('spaceId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -91,6 +93,7 @@ __decorate([
 ], FolderController.prototype, "listBySpace", null);
 __decorate([
     (0, common_1.Get)(':id/full'),
+    (0, auth_decorator_1.Auth)(),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),

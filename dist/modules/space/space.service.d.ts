@@ -10,6 +10,7 @@ import { ActivityLogService } from "../activity-log/activity-log.service";
 import { NotificationService } from "../notification/notification.service";
 import { AssigneeDefaultsService } from "../../shared/services/assignee-defaults.service";
 import { FilterSpaceDetailsDto } from "./dto/filter-space-details.dto";
+import { FolderService } from "../folder/folder.service";
 export declare class SpaceService {
     private spaceRepo;
     private taskRepo;
@@ -18,7 +19,8 @@ export declare class SpaceService {
     private cls;
     private activityLogService;
     private notificationService;
-    constructor(spaceRepo: Repository<SpaceEntity>, taskRepo: Repository<TaskEntity>, taskListRepo: Repository<TaskListEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService);
+    private folderService;
+    constructor(spaceRepo: Repository<SpaceEntity>, taskRepo: Repository<TaskEntity>, taskListRepo: Repository<TaskListEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService, folderService: FolderService);
     create(ownerId: number, dto: CreateSpaceDto): Promise<{
         taskLists: TaskListEntity[];
         folders: never[];
@@ -39,6 +41,7 @@ export declare class SpaceService {
     }>;
     listAll(): Promise<SpaceEntity[]>;
     listByOwner(ownerId: number): Promise<SpaceEntity[]>;
+    private withVisibleFolders;
     getOne(id: number): Promise<SpaceEntity>;
     private taskMatchesFilters;
     private hasActiveTaskFilters;

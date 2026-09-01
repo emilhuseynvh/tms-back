@@ -33,13 +33,22 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "username", void 0);
 __decorate([
-    (0, class_transformer_1.Type)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (value === undefined)
+            return undefined;
+        if (value === null)
+            return null;
+        if (typeof value !== 'string')
+            return value;
+        const next = value.toUpperCase().trim();
+        return next === '' ? null : next;
+    }),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateIf)((_, v) => v !== null && v !== undefined),
+    (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(3),
-    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.toUpperCase().trim() : value)),
     (0, swagger_1.ApiProperty)({ required: false, description: 'Qısa ad — maks. 3 böyük hərf' }),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], UpdateUserDto.prototype, "shortName", void 0);
 __decorate([
     (0, class_transformer_1.Type)(),

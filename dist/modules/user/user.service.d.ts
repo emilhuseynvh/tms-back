@@ -11,6 +11,7 @@ export declare class UserService {
     private cls;
     constructor(userRepo: Repository<UserEntity>, uploadRepo: Repository<UploadsEntity>, cls: ClsService);
     getUserById(id: number): Promise<UserEntity | null>;
+    findForAuth(id: number): Promise<UserEntity | null>;
     list(role?: RoleEnum, search?: string): Promise<UserEntity[]>;
     findByEmail(email: string): Promise<UserEntity | null>;
     create(params: CreateUserDto): Promise<{
@@ -24,6 +25,7 @@ export declare class UserService {
     }>;
     updateMe(params: UpdateUserDto): Promise<{
         message: string;
+        user: UserEntity | null;
     }>;
     deleteUser(id: number): Promise<{
         message: string;

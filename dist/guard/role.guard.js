@@ -21,7 +21,8 @@ let RoleGuard = class RoleGuard {
         this.reflector = reflector;
     }
     async canActivate(context) {
-        const user = this.cls.get('user');
+        const request = context.switchToHttp().getRequest();
+        const user = this.cls.get('user') || request.user;
         if (!user)
             throw new common_1.UnauthorizedException('User not found');
         const roles = this.reflector.get('roles', context.getHandler());

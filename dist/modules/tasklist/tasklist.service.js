@@ -50,6 +50,7 @@ let TaskListService = class TaskListService {
         list.content = dto.content || null;
         list.folderId = dto.folderId || null;
         list.spaceId = dto.spaceId || null;
+        list.order = await this.nextOrder(dto.folderId || null, dto.spaceId || null);
         list.assignees = assigneeIds.map((id) => ({ id }));
         const savedList = await this.taskListRepo.save(list);
         for (const userId of assigneeIds) {
@@ -66,10 +67,22 @@ let TaskListService = class TaskListService {
         await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_CREATE, savedList.id, savedList.name, `"${savedList.name}" siyahısı yaradıldı`, assigneeIds.length ? { assignees: assigneeIds } : undefined);
         return savedList;
     }
+    async nextOrder(folderId, spaceId) {
+        const qb = this.taskListRepo.createQueryBuilder('list').select('MAX(list.order)', 'max');
+        if (folderId) {
+            qb.where('list.folderId = :folderId', { folderId });
+        }
+        else {
+            qb.where('list.spaceId = :spaceId', { spaceId }).andWhere('list.folderId IS NULL');
+        }
+        const raw = await qb.getRawOne();
+        const max = raw?.max == null ? -1 : Number(raw.max);
+        return max + 1;
+    }
     async listBySpace(spaceId) {
         return await this.taskListRepo.find({
             where: { spaceId, folderId: (0, typeorm_2.IsNull)() },
-            order: { order: 'ASC' },
+            order: { order: 'ASC', createdAt: 'ASC' },
             relations: ['tasks']
         });
     }
@@ -98,6 +111,7 @@ let TaskListService = class TaskListService {
         }
         return await queryBuilder
             .orderBy('taskList.order', 'ASC')
+            .addOrderBy('taskList.createdAt', 'ASC')
             .addOrderBy('task.order', 'ASC')
             .getMany();
     }
@@ -176,6 +190,7 @@ let TaskListService = class TaskListService {
         const oldSpaceId = taskList.spaceId;
         taskList.folderId = targetFolderId;
         taskList.spaceId = targetSpaceId;
+        taskList.order = await this.nextOrder(targetFolderId, targetSpaceId);
         await this.taskListRepo.save(taskList);
         await this.activityLogService.log(activity_log_entity_1.ActivityType.LIST_UPDATE, id, taskList.name, `"${taskList.name}" siyahısı köçürüldü`, { oldFolderId, oldSpaceId, newFolderId: targetFolderId, newSpaceId: targetSpaceId });
         return { message: "Siyahı köçürüldü" };

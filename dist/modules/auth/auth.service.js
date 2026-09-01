@@ -43,22 +43,11 @@ let AuthService = class AuthService {
         const user = await this.userRepo.findOne({
             where: { id: userId },
             relations: ['avatar'],
-            select: {
-                id: true,
-                username: true,
-                shortName: true,
-                avatarId: true,
-                avatar: true,
-                email: true,
-                phone: true,
-                role: true,
-                browserNotificationsEnabled: true,
-                createdAt: true,
-            }
         });
         if (!user) {
             throw new common_1.UnauthorizedException('İstifadəçi tapılmadı!');
         }
+        delete user.password;
         return user;
     }
 };

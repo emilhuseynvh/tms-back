@@ -26,6 +26,7 @@ const notification_service_1 = require("../notification/notification.service");
 const notification_entity_1 = require("../../entities/notification.entity");
 const assignee_defaults_service_1 = require("../../shared/services/assignee-defaults.service");
 const filter_date_utils_1 = require("../../shared/utils/filter-date.utils");
+const folder_service_1 = require("../folder/folder.service");
 let SpaceService = class SpaceService {
     spaceRepo;
     taskRepo;
@@ -34,7 +35,8 @@ let SpaceService = class SpaceService {
     cls;
     activityLogService;
     notificationService;
-    constructor(spaceRepo, taskRepo, taskListRepo, assigneeDefaults, cls, activityLogService, notificationService) {
+    folderService;
+    constructor(spaceRepo, taskRepo, taskListRepo, assigneeDefaults, cls, activityLogService, notificationService, folderService) {
         this.spaceRepo = spaceRepo;
         this.taskRepo = taskRepo;
         this.taskListRepo = taskListRepo;
@@ -42,6 +44,7 @@ let SpaceService = class SpaceService {
         this.cls = cls;
         this.activityLogService = activityLogService;
         this.notificationService = notificationService;
+        this.folderService = folderService;
     }
     async create(ownerId, dto) {
         const assigneeIds = await this.assigneeDefaults.mergeResourceAssignees(dto.assigneeIds, ownerId);
@@ -74,15 +77,16 @@ let SpaceService = class SpaceService {
         };
     }
     async listAll() {
-        return await this.spaceRepo.find({
+        const spaces = await this.spaceRepo.find({
             order: { createdAt: 'DESC' },
             relations: ['folders', 'taskLists']
         });
+        return this.withVisibleFolders(spaces);
     }
     async listByOwner(ownerId) {
         const user = this.cls.get('user');
         if (user?.role === 'admin') {
-            return await this.spaceRepo
+            const adminSpaces = await this.spaceRepo
                 .createQueryBuilder('space')
                 .leftJoinAndSelect('space.assignees', 'spaceAssignees')
                 .leftJoinAndSelect('space.owner', 'spaceOwner')
@@ -100,8 +104,11 @@ let SpaceService = class SpaceService {
                 .orderBy('space.order', 'ASC')
                 .addOrderBy('folders.order', 'ASC')
                 .addOrderBy('folderTaskLists.order', 'ASC')
+                .addOrderBy('folderTaskLists.createdAt', 'ASC')
                 .addOrderBy('taskLists.order', 'ASC')
+                .addOrderBy('taskLists.createdAt', 'ASC')
                 .getMany();
+            return this.withVisibleFolders(adminSpaces);
         }
         const ownedSpaceIds = await this.spaceRepo
             .createQueryBuilder('space')
@@ -159,7 +166,7 @@ let SpaceService = class SpaceService {
         if (uniqueSpaceIds.length === 0) {
             return [];
         }
-        return await this.spaceRepo
+        const memberSpaces = await this.spaceRepo
             .createQueryBuilder('space')
             .leftJoinAndSelect('space.assignees', 'spaceAssignees')
             .leftJoinAndSelect('space.owner', 'spaceOwner')
@@ -178,8 +185,18 @@ let SpaceService = class SpaceService {
             .orderBy('space.order', 'ASC')
             .addOrderBy('folders.order', 'ASC')
             .addOrderBy('folderTaskLists.order', 'ASC')
+            .addOrderBy('folderTaskLists.createdAt', 'ASC')
             .addOrderBy('taskLists.order', 'ASC')
+            .addOrderBy('taskLists.createdAt', 'ASC')
             .getMany();
+        return this.withVisibleFolders(memberSpaces);
+    }
+    async withVisibleFolders(spaces) {
+        const visibleIds = await this.folderService.getVisibleFolderIdsForCurrentUser();
+        return spaces.map((space) => {
+            space.folders = this.folderService.filterVisibleFolders(space.folders, visibleIds);
+            return space;
+        });
     }
     async getOne(id) {
         const space = await this.spaceRepo.findOne({
@@ -188,7 +205,8 @@ let SpaceService = class SpaceService {
         });
         if (!space)
             throw new common_1.NotFoundException('Sahə tapılmadı!');
-        return space;
+        const [withFolders] = await this.withVisibleFolders([space]);
+        return withFolders;
     }
     taskMatchesFilters(task, filters) {
         if (filters.search) {
@@ -252,7 +270,9 @@ let SpaceService = class SpaceService {
         });
         if (!space)
             throw new common_1.NotFoundException('Sahə tapılmadı!');
-        const folders = space.folders
+        const visibleIds = await this.folderService.getVisibleFolderIdsForCurrentUser();
+        const visibleSpaceFolders = this.folderService.filterVisibleFolders(space.folders, visibleIds);
+        const folders = visibleSpaceFolders
             ?.filter(f => !f.isArchived && !f.deletedAt)
             ?.map(folder => ({
             ...folder,
@@ -380,12 +400,14 @@ exports.SpaceService = SpaceService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(space_entity_1.SpaceEntity)),
     __param(1, (0, typeorm_1.InjectRepository)(task_entity_1.TaskEntity)),
     __param(2, (0, typeorm_1.InjectRepository)(tasklist_entity_1.TaskListEntity)),
+    __param(7, (0, common_1.Inject)((0, common_1.forwardRef)(() => folder_service_1.FolderService))),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         assignee_defaults_service_1.AssigneeDefaultsService,
         nestjs_cls_1.ClsService,
         activity_log_service_1.ActivityLogService,
-        notification_service_1.NotificationService])
+        notification_service_1.NotificationService,
+        folder_service_1.FolderService])
 ], SpaceService);
 //# sourceMappingURL=space.service.js.map

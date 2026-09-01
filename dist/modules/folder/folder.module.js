@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const folder_entity_1 = require("../../entities/folder.entity");
 const tasklist_entity_1 = require("../../entities/tasklist.entity");
+const task_entity_1 = require("../../entities/task.entity");
 const folder_service_1 = require("./folder.service");
 const folder_controller_1 = require("./folder.controller");
 const activity_log_module_1 = require("../activity-log/activity-log.module");
@@ -21,7 +22,7 @@ exports.FolderModule = FolderModule;
 exports.FolderModule = FolderModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([folder_entity_1.FolderEntity, tasklist_entity_1.TaskListEntity]),
+            typeorm_1.TypeOrmModule.forFeature([folder_entity_1.FolderEntity, tasklist_entity_1.TaskListEntity, task_entity_1.TaskEntity]),
             activity_log_module_1.ActivityLogModule,
             (0, common_1.forwardRef)(() => notification_module_1.NotificationModule)
         ],

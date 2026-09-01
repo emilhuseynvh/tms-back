@@ -60,6 +60,7 @@ let SpaceController = class SpaceController {
 exports.SpaceController = SpaceController;
 __decorate([
     (0, common_1.Get)(),
+    (0, auth_decorator_1.Auth)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
@@ -73,6 +74,7 @@ __decorate([
 ], SpaceController.prototype, "mySpaces", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, auth_decorator_1.Auth)(),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -80,6 +82,7 @@ __decorate([
 ], SpaceController.prototype, "getOne", null);
 __decorate([
     (0, common_1.Get)(':id/full'),
+    (0, auth_decorator_1.Auth)(),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),

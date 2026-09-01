@@ -16,6 +16,7 @@ const space_service_1 = require("./space.service");
 const space_controller_1 = require("./space.controller");
 const activity_log_module_1 = require("../activity-log/activity-log.module");
 const notification_module_1 = require("../notification/notification.module");
+const folder_module_1 = require("../folder/folder.module");
 let SpaceModule = class SpaceModule {
 };
 exports.SpaceModule = SpaceModule;
@@ -24,7 +25,8 @@ exports.SpaceModule = SpaceModule = __decorate([
         imports: [
             typeorm_1.TypeOrmModule.forFeature([space_entity_1.SpaceEntity, task_entity_1.TaskEntity, tasklist_entity_1.TaskListEntity]),
             activity_log_module_1.ActivityLogModule,
-            (0, common_1.forwardRef)(() => notification_module_1.NotificationModule)
+            (0, common_1.forwardRef)(() => notification_module_1.NotificationModule),
+            (0, common_1.forwardRef)(() => folder_module_1.FolderModule),
         ],
         controllers: [space_controller_1.SpaceController],
         providers: [space_service_1.SpaceService],

@@ -31,18 +31,29 @@ let UserService = class UserService {
         this.cls = cls;
     }
     async getUserById(id) {
-        return await this.userRepo.findOne({
+        const user = await this.userRepo.findOne({
             where: { id },
             relations: ['avatar'],
+        });
+        if (!user)
+            return null;
+        delete user.password;
+        return user;
+    }
+    async findForAuth(id) {
+        return await this.userRepo.findOne({
+            where: { id: Number(id) },
             select: {
                 id: true,
                 username: true,
-                avatar: true,
+                shortName: true,
+                avatarId: true,
                 email: true,
                 phone: true,
                 role: true,
+                browserNotificationsEnabled: true,
                 createdAt: true,
-            }
+            },
         });
     }
     async list(role, search) {
@@ -175,8 +186,17 @@ let UserService = class UserService {
             currentUser.phone = params.phone;
         if (params.browserNotificationsEnabled !== undefined)
             currentUser.browserNotificationsEnabled = params.browserNotificationsEnabled;
+        if (params.password && params.password.trim() !== '') {
+            currentUser.password = await (0, bcrypt_1.hash)(params.password, 10);
+        }
         await currentUser.save();
-        return { message: 'Hesabınız uğurla yeniləndi!' };
+        const saved = await this.userRepo.findOne({
+            where: { id: currentUser.id },
+            relations: ['avatar'],
+        });
+        if (saved)
+            delete saved.password;
+        return { message: 'Hesabınız uğurla yeniləndi!', user: saved };
     }
     async deleteUser(id) {
         let user = this.cls.get('user');

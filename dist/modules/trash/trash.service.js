@@ -48,11 +48,13 @@ let TrashService = class TrashService {
         const foldersQuery = this.folderRepo.createQueryBuilder('folder')
             .withDeleted()
             .leftJoinAndSelect('folder.owner', 'owner')
+            .leftJoinAndSelect('folder.space', 'space')
             .leftJoinAndSelect('folder.deletedBy', 'deletedBy')
             .where('folder.deletedAt IS NOT NULL');
         const listsQuery = this.taskListRepo.createQueryBuilder('list')
             .withDeleted()
             .leftJoinAndSelect('list.folder', 'folder')
+            .leftJoinAndSelect('folder.space', 'folderSpace')
             .leftJoinAndSelect('list.space', 'space')
             .leftJoinAndSelect('folder.owner', 'folderOwner')
             .leftJoinAndSelect('space.owner', 'spaceOwner')
@@ -62,6 +64,7 @@ let TrashService = class TrashService {
             .withDeleted()
             .leftJoinAndSelect('task.taskList', 'taskList')
             .leftJoinAndSelect('taskList.folder', 'folder')
+            .leftJoinAndSelect('folder.space', 'folderSpace')
             .leftJoinAndSelect('taskList.space', 'space')
             .leftJoinAndSelect('folder.owner', 'folderOwner')
             .leftJoinAndSelect('space.owner', 'spaceOwner')
@@ -79,6 +82,51 @@ let TrashService = class TrashService {
             listsQuery.orderBy('list.deletedAt', 'DESC').getMany(),
             tasksQuery.orderBy('task.deletedAt', 'DESC').getMany()
         ]);
+        const alive = (e) => e && !e.deletedAt;
+        folders.forEach((f) => {
+            const space = f.space;
+            f.context = {
+                spaceName: space?.name || null,
+                folderName: null,
+                listName: null,
+                url: alive(space) ? `/tasks/space/${space.id}` : null,
+            };
+        });
+        lists.forEach((l) => {
+            const folder = l.folder;
+            const space = l.space || folder?.space;
+            let url = null;
+            if (alive(folder) && alive(space)) {
+                url = `/tasks/space/${space.id}/folder/${folder.id}`;
+            }
+            else if (!folder && alive(space)) {
+                url = `/tasks/space/${space.id}`;
+            }
+            l.context = {
+                spaceName: space?.name || null,
+                folderName: folder?.name || null,
+                listName: null,
+                url,
+            };
+        });
+        tasks.forEach((t) => {
+            const list = t.taskList;
+            const folder = list?.folder;
+            const space = list?.space || folder?.space;
+            let url = null;
+            if (alive(list) && alive(space)) {
+                const segment = list.type === 'meeting' ? 'note' : 'list';
+                url = folder && alive(folder)
+                    ? `/tasks/space/${space.id}/folder/${folder.id}/${segment}/${list.id}`
+                    : (!folder ? `/tasks/space/${space.id}/${segment}/${list.id}` : null);
+            }
+            t.context = {
+                spaceName: space?.name || null,
+                folderName: folder?.name || null,
+                listName: list?.name || null,
+                url,
+            };
+        });
         return { spaces, folders, lists, tasks };
     }
     async restoreSpace(id) {

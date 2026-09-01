@@ -1,6 +1,7 @@
 import { Repository } from "typeorm";
 import { FolderEntity } from "../../entities/folder.entity";
 import { TaskListEntity } from "../../entities/tasklist.entity";
+import { TaskEntity } from "../../entities/task.entity";
 import { UserEntity } from "../../entities/user.entity";
 import { CreateFolderDto } from "./dto/create-folder.dto";
 import { UpdateFolderDto } from "./dto/update-folder.dto";
@@ -12,11 +13,12 @@ import { FilterFolderDetailsDto } from "./dto/filter-folder-details.dto";
 export declare class FolderService {
     private folderRepo;
     private taskListRepo;
+    private taskRepo;
     private assigneeDefaults;
     private cls;
     private activityLogService;
     private notificationService;
-    constructor(folderRepo: Repository<FolderEntity>, taskListRepo: Repository<TaskListEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService);
+    constructor(folderRepo: Repository<FolderEntity>, taskListRepo: Repository<TaskListEntity>, taskRepo: Repository<TaskEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService);
     create(ownerId: number, dto: CreateFolderDto): Promise<{
         id: number;
         name: string;
@@ -29,6 +31,11 @@ export declare class FolderService {
         defaultListId: number;
         assignees: UserEntity[];
     }>;
+    getVisibleFolderIdsForCurrentUser(): Promise<Set<number> | null>;
+    filterVisibleFolders<T extends {
+        id: number;
+    }>(folders: T[] | undefined, visibleIds: Set<number> | null): T[];
+    assertFolderVisible(folderId: number): Promise<void>;
     listAll(): Promise<FolderEntity[]>;
     listByOwner(ownerId: number): Promise<FolderEntity[]>;
     listBySpace(spaceId: number): Promise<FolderEntity[]>;

@@ -15,6 +15,7 @@ export declare class TaskListService {
     private notificationService;
     constructor(taskListRepo: Repository<TaskListEntity>, assigneeDefaults: AssigneeDefaultsService, cls: ClsService, activityLogService: ActivityLogService, notificationService: NotificationService);
     create(dto: CreateTaskListDto): Promise<TaskListEntity>;
+    private nextOrder;
     listBySpace(spaceId: number): Promise<TaskListEntity[]>;
     getOne(id: number): Promise<TaskListEntity>;
     listByFolder(folderId: number, filters?: FilterTaskListDto): Promise<TaskListEntity[]>;

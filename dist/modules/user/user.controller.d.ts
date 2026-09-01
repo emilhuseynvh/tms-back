@@ -12,6 +12,7 @@ export declare class UserController {
     }>;
     updateMe(body: UpdateUserDto): Promise<{
         message: string;
+        user: import("../../entities/user.entity").UserEntity | null;
     }>;
     updateUser(id: number, body: UpdateUserDto): Promise<{
         message: string;

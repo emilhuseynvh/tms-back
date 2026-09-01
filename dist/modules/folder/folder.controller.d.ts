@@ -23,30 +23,24 @@ export declare class FolderController {
     myFolders(): Promise<import("../../entities/folder.entity").FolderEntity[]>;
     listBySpace(spaceId: number): Promise<import("../../entities/folder.entity").FolderEntity[]>;
     getFullDetails(id: number, filters: FilterFolderDetailsDto): Promise<{
+        id: number;
+        name: string;
+        description: string;
+        spaceId: number;
+        ownerId: number;
+        order: number;
+        createdAt: Date;
+        updatedAt: Date;
+        space: {
+            id: number;
+            name: string;
+        } | null;
         taskLists: {
             id: number;
             name: string;
             tasks: any[];
         }[];
         allTasks: any[];
-        id: number;
-        name: string;
-        description: string;
-        order: number;
-        ownerId: number;
-        owner: import("../../entities/user.entity").UserEntity;
-        spaceId: number;
-        space: import("../../entities/space.entity").SpaceEntity;
-        assignees: import("../../entities/user.entity").UserEntity[];
-        isArchived: boolean;
-        archivedAt: Date | null;
-        archivedById: number | null;
-        archivedBy: import("../../entities/user.entity").UserEntity;
-        deletedById: number;
-        deletedBy: import("../../entities/user.entity").UserEntity;
-        createdAt: Date;
-        updatedAt: Date;
-        deletedAt: Date;
     }>;
     reorderFolders(spaceId: number, body: {
         folderIds: number[];
