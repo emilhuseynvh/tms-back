@@ -177,8 +177,41 @@ let TaskListService = class TaskListService {
         return { message: "Siyahı uğurla silindi" };
     }
     async reorderTaskLists(listIds) {
-        for (let i = 0; i < listIds.length; i++) {
-            await this.taskListRepo.update(listIds[i], { order: i });
+        const ids = (listIds || []).map((id) => Number(id)).filter((id) => Number.isFinite(id));
+        if (ids.length === 0)
+            return { message: "Sıralama yeniləndi" };
+        const firstId = ids[0];
+        const first = await this.taskListRepo.findOne({ where: { id: firstId } });
+        if (!first)
+            throw new common_1.NotFoundException('Siyahı tapılmadı');
+        let siblings;
+        if (first.folderId != null) {
+            siblings = await this.taskListRepo.find({
+                where: { folderId: first.folderId },
+                order: { order: 'ASC', createdAt: 'ASC' },
+            });
+        }
+        else if (first.spaceId != null) {
+            siblings = await this.taskListRepo.find({
+                where: { spaceId: first.spaceId, folderId: (0, typeorm_2.IsNull)() },
+                order: { order: 'ASC', createdAt: 'ASC' },
+            });
+        }
+        else {
+            throw new common_1.BadRequestException('Siyahının space və ya folder bağlantısı yoxdur');
+        }
+        const idSet = new Set(ids);
+        const ordered = [
+            ...ids
+                .map((id) => siblings.find((s) => s.id === id))
+                .filter((s) => Boolean(s)),
+            ...siblings.filter((s) => !idSet.has(s.id)),
+        ];
+        for (let i = 0; i < ordered.length; i++) {
+            const item = ordered[i];
+            if (!item)
+                continue;
+            await this.taskListRepo.update(item.id, { order: i });
         }
         return { message: "Sıralama yeniləndi" };
     }

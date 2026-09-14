@@ -224,24 +224,37 @@ export class TaskListService {
 		const ids = (listIds || []).map((id) => Number(id)).filter((id) => Number.isFinite(id))
 		if (ids.length === 0) return { message: "Sıralama yeniləndi" }
 
-		const first = await this.taskListRepo.findOne({ where: { id: ids[0] } })
+		const firstId = ids[0]
+		const first = await this.taskListRepo.findOne({ where: { id: firstId } })
 		if (!first) throw new NotFoundException('Siyahı tapılmadı')
 
-		const siblings = await this.taskListRepo.find({
-			where: first.folderId
-				? { folderId: first.folderId }
-				: { spaceId: first.spaceId, folderId: IsNull() },
-			order: { order: 'ASC', createdAt: 'ASC' },
-		})
+		let siblings: TaskListEntity[]
+		if (first.folderId != null) {
+			siblings = await this.taskListRepo.find({
+				where: { folderId: first.folderId },
+				order: { order: 'ASC', createdAt: 'ASC' },
+			})
+		} else if (first.spaceId != null) {
+			siblings = await this.taskListRepo.find({
+				where: { spaceId: first.spaceId, folderId: IsNull() },
+				order: { order: 'ASC', createdAt: 'ASC' },
+			})
+		} else {
+			throw new BadRequestException('Siyahının space və ya folder bağlantısı yoxdur')
+		}
 
 		const idSet = new Set(ids)
-		const ordered = [
-			...ids.map((id) => siblings.find((s) => s.id === id)).filter(Boolean),
+		const ordered: TaskListEntity[] = [
+			...ids
+				.map((id) => siblings.find((s) => s.id === id))
+				.filter((s): s is TaskListEntity => Boolean(s)),
 			...siblings.filter((s) => !idSet.has(s.id)),
 		]
 
 		for (let i = 0; i < ordered.length; i++) {
-			await this.taskListRepo.update(ordered[i].id, { order: i })
+			const item = ordered[i]
+			if (!item) continue
+			await this.taskListRepo.update(item.id, { order: i })
 		}
 		return { message: "Sıralama yeniləndi" }
 	}
