@@ -14,3 +14,4 @@ export default new DataSource({
     synchronize: true,
     logging: false
 })
+
